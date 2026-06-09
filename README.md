@@ -1,6 +1,6 @@
 # agentic-sop-to-work
 
-[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.1-blue)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-2-8A2BE2)](plugins/agentic-sop-kit/skills)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fs0912758806p%2Fagentic-sop-to-work%2Fmain%2Fplugins%2Fagentic-sop-kit%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue&prefix=v)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-2-8A2BE2)](plugins/agentic-sop-kit/skills)
 
 > Turn human SOPs into **deterministic, gated, human-approved** agentic workflows — and keep them from quietly rotting back into a "mega agent."
 > 把人工 SOP 變成「**確定性引擎 ＋ 誠實硬閘門 ＋ 人核准**」的 agentic workflow，並防止它悄悄退化回「mega agent」。
