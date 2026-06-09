@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Meta-測試：Stop hook（hooks/stop_regression.py）的 block-on-fail 與 stop_hook_active+重試上限防迴圈。
 在 kit 拋棄式複本上操作；以 SOPKIT_MAX_FIX_RETRIES=2 加速。不登記入 registry。"""
 import json

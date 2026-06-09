@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """單元測試：report skill（受測功能登錄表登記）。stdlib unittest；subprocess 跑真實 CLI。"""
 import json
 import os

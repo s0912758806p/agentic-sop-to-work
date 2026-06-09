@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Agentic Workflow 編排層：依 flow.json 的 SOP 順序，把各「單一工具 skill」串成完整流程（A→B→C）。
 
 逐步以子程序執行各 skill（同一 python3），串接 artifact（上一步 out = 下一步 in），

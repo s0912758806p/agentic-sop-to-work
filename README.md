@@ -151,8 +151,8 @@ agentic-sop-to-work/
 ### Updating
 After you change the plugin, `git push`; users run `/plugin marketplace update agentic-sop-to-work` to get the latest (or remove and re-add it). **Bump the `version` in `plugins/agentic-sop-kit/.claude-plugin/plugin.json` on every meaningful change** so Claude Code knows an update exists.
 
-### License
-MIT — see [`LICENSE`](LICENSE).
+### License & attribution
+MIT — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). You may use, modify, and redistribute this freely, **but the MIT License requires keeping the copyright and license notice** in copies — including individual files (e.g. a single skill or `kit/lib/kit.py`). Canonical source: <https://github.com/s0912758806p/agentic-sop-to-work> — please keep attribution when reusing.
 
 ---
 
@@ -249,5 +249,5 @@ agentic-sop-to-work/
 ### 更新
 改完 plugin 內容後 `git push`；使用者端執行 `/plugin marketplace update agentic-sop-to-work` 取得最新版（或移除後重加）。**每次有意義的變更都調高 `plugins/agentic-sop-kit/.claude-plugin/plugin.json` 的 `version`**，Claude Code 才認得出有更新。
 
-### 授權
-MIT — 見 [`LICENSE`](LICENSE)。
+### 授權與標註
+MIT — 見 [`LICENSE`](LICENSE) 與 [`NOTICE`](NOTICE)。你可自由使用、修改、再散布，**但 MIT 授權要求在副本中保留版權與授權聲明**——包括單一檔案（例如某個 skill 或 `kit/lib/kit.py`）。正式來源：<https://github.com/s0912758806p/agentic-sop-to-work>——再利用時請保留出處標註。

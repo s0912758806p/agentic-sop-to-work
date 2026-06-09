@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Skill B 工具：compute — 讀 readings artifact，計算統計（count/sum/mean/min/max），輸出 stats artifact。
 單一工具（python3 stdlib statistics）。trace 由上游透傳（保留來源追溯）。"""
 import os

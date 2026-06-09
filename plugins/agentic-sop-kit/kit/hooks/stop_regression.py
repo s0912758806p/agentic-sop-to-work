@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Stop hook：Claude 每次「準備停止」時，自動跑回歸驗證（tests/verify.py）。
 
 行為（對應任務 2）：

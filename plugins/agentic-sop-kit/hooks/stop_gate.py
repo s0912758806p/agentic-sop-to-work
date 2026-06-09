@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Plugin Stop hook — PROJECT-SCOPED regression gate.
 
 Runs the CURRENT project's agentic-sop-kit/tests/verify.py when present, and

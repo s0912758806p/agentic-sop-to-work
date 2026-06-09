@@ -1,0 +1,19 @@
+agentic-sop-to-work — agentic-sop-kit
+Copyright (c) 2026 s0912758806p
+Canonical source: https://github.com/s0912758806p/agentic-sop-to-work
+
+Licensed under the MIT License; see the LICENSE file for the full text.
+
+ATTRIBUTION NOTICE
+This software (the "agentic-sop-kit" methodology, skills, kit, hooks, and
+related files) is designed to be copied file-by-file into other projects.
+The MIT License permits that — but it REQUIRES that the above copyright
+notice and the MIT permission notice be retained in all copies or
+substantial portions of the Software, including individual files such as
+`kit/lib/kit.py` or any single skill directory.
+
+If you reuse or redistribute any part, please keep this attribution and,
+where practical, a link back to the canonical source above.
+
+本軟體採 MIT 授權：可自由使用／修改／再散布，但必須在所有副本（含單一檔案）
+中保留上述版權聲明與 MIT 授權聲明。再利用時請保留出處標註並連回正式來源。

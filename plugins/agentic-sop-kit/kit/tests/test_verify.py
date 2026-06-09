@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Meta-測試：驗證 verify.py 自身的行為（建置/開發期跑，不登記入 registry——避免 verify 套 verify 遞迴）。
 在 KIT 的「拋棄式複本」上操作，絕不碰真實 kit 狀態。
 涵蓋：--all 建基線 → 無變更略過 → 注入 bug 得 exit2 並寫 fail 紀錄 → 修好得 exit0 → 未登記 skill 得 exit3。"""

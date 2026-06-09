@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """agentic-sop-kit 自我測試（stdlib unittest；可在任何專案 `python3 selftest.py` 跑）。
 
 涵蓋驗收 (a)(c) + 對抗驗證找到的修正：

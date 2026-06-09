@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """聚合依賴檢查（驗收 c）：彙總編排層 + flow.json 內**每一個** skill 宣告的依賴，缺任一 → 明確列出並 exit 1。
 
 用法：python3 check_deps.py

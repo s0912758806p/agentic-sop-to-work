@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Agentic-SOP kit — 可攜核心（無任何硬編碼專案路徑）。
 
 設計原則（對應任務 1 驗收）：

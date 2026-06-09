@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """整合測試：整條 workflow（extract→compute→report）串起來，驗證交接處資料傳遞正確 + 失敗會明確傳播。
 stdlib unittest；以 subprocess 跑 workflow/run.py（真實編排層）。"""
 import json

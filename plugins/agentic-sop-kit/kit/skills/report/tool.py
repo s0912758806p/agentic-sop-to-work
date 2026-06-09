@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Skill C 工具：report — 讀 stats artifact，輸出 Markdown DRAFT 報告（含來源追溯區），標 DRAFT、需人覆核。
 單一工具（python3 stdlib）。輸出為 .md（非 JSON）。"""
 import os

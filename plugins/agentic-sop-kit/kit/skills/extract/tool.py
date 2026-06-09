@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 s0912758806p
+# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Skill A 工具：extract — 從文字輸入抽取讀數（key: value），輸出 readings artifact（含來源追溯）。
 
 數值文法：整數/小數、千分位逗號(1,234)、科學記號(1.2e3)、帶單位(250 mg → 250)。
