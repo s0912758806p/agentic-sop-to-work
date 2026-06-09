@@ -1,5 +1,7 @@
 # agentic-sop-to-work
 
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.1-blue)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-2-8A2BE2)](plugins/agentic-sop-kit/skills)
+
 > Turn human SOPs into **deterministic, gated, human-approved** agentic workflows — and keep them from quietly rotting back into a "mega agent."
 > 把人工 SOP 變成「**確定性引擎 ＋ 誠實硬閘門 ＋ 人核准**」的 agentic workflow，並防止它悄悄退化回「mega agent」。
 
@@ -12,6 +14,47 @@ A [Claude Code](https://claude.com/claude-code) **plugin marketplace** that publ
 /plugin install agentic-sop-kit@agentic-sop-to-work
 /reload-plugins
 ```
+
+### 🗺️ The three-stage chain · 三段鏈
+
+```mermaid
+flowchart TB
+    H["👤 Human SOP<br/>a process done by hand"]
+    SOP["📄 One SOP — fixed template<br/>purpose · preconditions · steps(+tool) · decisions · done"]
+
+    subgraph S2["② Decompose — one skill = one tool · deps · params · I/O contract · test"]
+        direction TB
+        KA["🔧 extract"]
+        KB["🔧 compute"]
+        KC["🔧 report"]
+        KA -- "readings@1" --> KB
+        KB -- "stats@1" --> KC
+    end
+
+    subgraph S3["③ Orchestrate — flow.json · run.py · hook · /sop-flow"]
+        direction TB
+        RUN["run.py — chain artifacts in SOP order"]
+        DRAFT["📝 DRAFT"]
+        STOP(["✋ Human-approval STOP"])
+        RUN --> DRAFT --> STOP
+    end
+
+    H -- "① Record" --> SOP
+    SOP -- "decomposition rules" --> KA
+    KC --> RUN
+
+    GATE{{"🚦 Stop-hook regression gate<br/>change-detect → affected unit + integration tests → retry cap"}}
+    KC -. "on every change" .-> GATE
+    GATE -. "fail: decision:block → fix" .-> KA
+    GATE -. "all pass: release" .-> STOP
+
+    style H fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+    style STOP fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+    style GATE fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style SOP fill:#FFF8E1,stroke:#F9A825
+```
+
+*Human SOP → single-tool Skills → orchestrated Workflow — a Stop-hook regression gate guards every change, and every output stops for human approval.<br>Human SOP → 單一工具 Skill → 編排成 Workflow——Stop-hook 回歸閘門守住每次變更，每個產出都停在人核准。*
 
 ---
 
