@@ -1,6 +1,6 @@
 {
   "name": "agentic-sop-to-work",
-  "owner": { "name": "agentic-sop-to-work", "url": "https://github.com/s0912758806p/agentic-sop-to-work" },
+  "owner": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
   "description": "Marketplace for agentic-sop tooling (methodology skills + kit + project-scoped gate).",
   "plugins": [
     {

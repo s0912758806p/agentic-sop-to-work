@@ -33,3 +33,6 @@ agentic-sop-to-work/
 
 ## 更新
 改完 plugin 內容後 `git push`；使用者端執行 `/plugin marketplace update agentic-sop-to-work` 取得最新版（或移除後重加）。記得在每次有意義的變更時調高 `plugins/agentic-sop-kit/.claude-plugin/plugin.json` 的 `version`。
+
+## License
+MIT — 見 [`LICENSE`](LICENSE)。
