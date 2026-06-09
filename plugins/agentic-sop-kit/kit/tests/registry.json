@@ -16,8 +16,8 @@
     }
   },
   "integration": {
-    "description": "整條 workflow 串接 + 交接處資料正確 + 失敗傳播；外加 kit 安裝/依賴驗收回歸。",
-    "tests": ["tests/integration/test_flow.py", "selftest.py"],
-    "watch": ["workflow", "SOP.md", "lib", "check_deps.py"]
+    "description": "整條 workflow 串接 + 交接處資料正確 + 失敗傳播；外加 kit 安裝/依賴驗收回歸、產生器（new_skill / export_claude_skill）。",
+    "tests": ["tests/integration/test_flow.py", "selftest.py", "tests/test_new_skill.py", "tests/test_export.py"],
+    "watch": ["workflow", "SOP.md", "lib", "check_deps.py", "new_skill.py", "export_claude_skill.py"]
   }
 }

@@ -93,9 +93,10 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 
 ## 用本 kit 新建一條流程（A→B→C…）
 1. 用 `templates/human_sop_template.md` 寫下你的 Human SOP（標出每步工具）。
-2. 依拆解規則，每個「步驟×工具」用 `templates/skill_template/` 複製出一個 `skills/<name>/`（**去掉 `.tmpl`**：`tool.py.tmpl`→`tool.py`、`SKILL.md.tmpl`→`SKILL.md`），填 DEPS / I-O / run()。
+2. 依拆解規則，每個「步驟×工具」用 **`python3 new_skill.py --name <name>`** scaffold 出 `skills/<name>/`（自動去 `.tmpl`、替換名稱、建單元測試骨架並登記 `tests/registry.json`）；接著填 DEPS / I-O / run()。（也可手動複製 `templates/skill_template/`。）
 3. 在 `workflow/flow.json` 按 SOP 順序列出 steps 與接線。
 4. `python3 check_deps.py` → `python3 workflow/run.py` 驗證；安裝 `commands/` + `hooks/` 讓 agent 觸發。
+5. **完成工具後**，用 **`python3 export_claude_skill.py --skill <name> --project .`**（或 `--all`）產出可被 Claude 載入、對話即可觸發的 **runner skill**（寫到 `.claude/skills/`）——它只去執行你那支確定性工具並回報 DRAFT，不讓模型自行重做（守住控制流鐵則）。導入時加 `bootstrap.py --with-claude-skills` 會順便產生。
 
 ## 目錄結構
 ```

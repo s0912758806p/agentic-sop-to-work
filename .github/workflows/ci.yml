@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Validate manifests + skill frontmatter
+        run: python3 .github/scripts/validate_manifests.py
+      - name: Kit self-test
+        run: python3 plugins/agentic-sop-kit/kit/selftest.py
+      - name: Kit regression (verify --all)
+        run: python3 plugins/agentic-sop-kit/kit/tests/verify.py --all

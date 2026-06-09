@@ -86,11 +86,28 @@ def merge_hooks(project):
     print(f"✅ 合併 hooks → {settings_path}（新增 {added} 條：SessionStart 依賴檢查 + Stop 自動回歸）")
 
 
+def export_claude_skills(project):
+    """順便把每個已登記的 skill 產成「對話可觸發的 runner skill」到 <project>/.claude/skills/。"""
+    sys.path.insert(0, KIT_SRC)
+    try:
+        import export_claude_skill as ex
+        reg = _load_json(os.path.join(KIT_SRC, "tests", "registry.json"))
+        names = list(reg.get("skills", {}).keys())
+        for n in names:
+            ex.export_one(n, project=project)
+        print(f"✅ 產出 {len(names)} 支對話可觸發的 runner skill → "
+              f"{os.path.join(project, '.claude', 'skills')}")
+    except SystemExit as e:
+        print(f"⚠️  runner skill 匯出略過：{e}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="一鍵把 agentic-sop-kit 導入目標專案")
     ap.add_argument("--project", required=True, help="目標專案根目錄")
     ap.add_argument("--force", action="store_true", help="覆蓋既有的 <project>/agentic-sop-kit/")
     ap.add_argument("--no-hooks", action="store_true", help="只複製 kit + slash command，不裝 hooks")
+    ap.add_argument("--with-claude-skills", action="store_true",
+                    help="順便把已登記的 skill 產成對話可觸發的 runner skill 到 .claude/skills/")
     args = ap.parse_args()
 
     project = os.path.abspath(os.path.expanduser(args.project))
@@ -105,6 +122,8 @@ def main():
         print("ℹ️  --no-hooks：略過 hook 安裝")
     else:
         merge_hooks(project)
+    if args.with_claude_skills:
+        export_claude_skills(project)
 
     print("\n下一步（在目標專案）：")
     print(f"  python3 {DEST_NAME}/check_deps.py        # 驗依賴（缺項明確報錯）")

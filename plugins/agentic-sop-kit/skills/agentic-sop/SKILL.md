@@ -1,6 +1,6 @@
 ---
 name: agentic-sop
-description: 把人工流程／Human SOP 轉成「確定性引擎 + 誠實硬閘門 + 人核准」的 agentic workflow 時的方法論與落地入口——適用任何專案、尤其未來新開發項目。當使用者要把一份人工 SOP／手動流程自動化、建立或新增 agent 工具、設計 SOP→Skill→Workflow 的拆解與閘門、或開一個新的 agent 工作流專案時，主動套用本技能：它給三階段拆解規則、七階段迴圈、跨專案鐵則（不臆造／DRAFT＋人核准／確定性用程式／硬閘門確定性），並指示導入可攜的 agentic-sop-kit（含自動回歸 Stop-hook＝真正的強制層）。即使沒講「方法論」或「SOP」，只要意圖是把流程工程化成自動代理工作流就應觸發。不適用：稽核／檢視既有工作流是否退化成 mega agent（改用 agentic-workflow-audit）；直接執行既有 GMP 產生器（cr-form-gen／lir-mir-draft／template-doc-gen）。
+description: Methodology + entry point to turn a human SOP into a deterministic, gated, human-approved agentic workflow — build/extend agent tools and design the SOP->Skill->Workflow decomposition with hard gates. ｜ 把人工流程／Human SOP 轉成「確定性引擎 + 誠實硬閘門 + 人核准」的 agentic workflow 時的方法論與落地入口——適用任何專案、尤其未來新開發項目。當使用者要把一份人工 SOP／手動流程自動化、建立或新增 agent 工具、設計 SOP→Skill→Workflow 的拆解與閘門、或開一個新的 agent 工作流專案時，主動套用本技能：它給三階段拆解規則、七階段迴圈、跨專案鐵則（不臆造／DRAFT＋人核准／確定性用程式／硬閘門確定性），並指示導入可攜的 agentic-sop-kit（含自動回歸 Stop-hook＝真正的強制層）。即使沒講「方法論」或「SOP」，只要意圖是把流程工程化成自動代理工作流就應觸發。不適用：稽核／檢視既有工作流是否退化成 mega agent（改用 agentic-workflow-audit）；直接執行既有 GMP 產生器（cr-form-gen／lir-mir-draft／template-doc-gen）。
 ---
 
 # Agentic SOP — 把人工流程做成可治理的 agent 工作流
