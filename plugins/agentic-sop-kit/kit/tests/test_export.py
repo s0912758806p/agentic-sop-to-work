@@ -33,6 +33,28 @@ class Export(unittest.TestCase):
                     os.path.exists(os.path.join(d, ".claude", "skills", n, "SKILL.md")),
                     f"{n} runner skill should be generated")
 
+    def test_remove_roundtrip(self):
+        with tempfile.TemporaryDirectory() as d:
+            ex.export_one("extract", project=d)
+            path = os.path.join(d, ".claude", "skills", "extract", "SKILL.md")
+            self.assertTrue(os.path.exists(path))
+            self.assertTrue(ex.remove_one("extract", project=d))
+            self.assertFalse(os.path.exists(path))
+            # idempotent: removing again is a no-op (returns False), not an error
+            self.assertFalse(ex.remove_one("extract", project=d))
+
+    def test_remove_refuses_foreign_skill(self):
+        # a hand-written skill (no generated marker) must NOT be deleted without --force
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, ".claude", "skills", "mine")
+            os.makedirs(p)
+            with open(os.path.join(p, "SKILL.md"), "w", encoding="utf-8") as f:
+                f.write("---\nname: mine\ndescription: hand-written\n---\nmine\n")
+            self.assertFalse(ex.remove_one("mine", project=d))               # refused
+            self.assertTrue(os.path.exists(os.path.join(p, "SKILL.md")))     # untouched
+            self.assertTrue(ex.remove_one("mine", project=d, force=True))    # --force overrides
+            self.assertFalse(os.path.exists(os.path.join(p, "SKILL.md")))
+
 
 if __name__ == "__main__":
     unittest.main()
