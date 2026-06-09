@@ -1,0 +1,27 @@
+{
+  "_comment": "把本片段的 hooks 區段合併進目標專案 .claude/settings.json。$CLAUDE_PROJECT_DIR 為 Claude Code 提供的專案根目錄環境變數；若 kit 不在 <專案>/agentic-sop-kit/ 則改路徑。SessionStart：開場依賴檢查（缺項明確報錯）。Stop：Claude 準備停止時自動跑回歸驗證（變更偵測→兩層測試→失敗以 decision:block 餵回去修；stop_hook_active+重試上限防迴圈）。",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/agentic-sop-kit/check_deps.py\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/agentic-sop-kit/hooks/stop_regression.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

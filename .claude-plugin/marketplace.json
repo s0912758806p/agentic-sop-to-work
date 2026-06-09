@@ -1,0 +1,12 @@
+{
+  "name": "agentic-sop-to-work",
+  "owner": { "name": "agentic-sop-to-work", "url": "https://github.com/s0912758806p/agentic-sop-to-work" },
+  "description": "Marketplace for agentic-sop tooling (methodology skills + kit + project-scoped gate).",
+  "plugins": [
+    {
+      "name": "agentic-sop-kit",
+      "source": "./plugins/agentic-sop-kit",
+      "description": "Human-SOP → agentic-workflow methodology: agentic-sop + agentic-workflow-audit skills, the /sop-flow command, a project-scoped Stop-hook regression gate, and the bundled portable kit."
+    }
+  ]
+}

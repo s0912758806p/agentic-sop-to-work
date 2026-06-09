@@ -1,0 +1,7 @@
+# 範例輸入：QC 讀數（每行 key: value；非數值行會被忽略）
+assay purity: 99.4
+moisture: 0.3
+ph: 7.1
+weight mg: 250
+note: this line has no number
+related impurity: 0.12

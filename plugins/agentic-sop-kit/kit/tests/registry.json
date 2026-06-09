@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "description": "受測功能登錄表：每納入一個工具 skill，就在 skills 下登記它的目錄與單元測試；整合層登記跨 skill 串接測試。verify.py 會交叉比對 workflow/flow.json——任何 flow 用到卻未登記測試的 skill 會 fail-loud（exit 3）。",
+  "skills": {
+    "extract": {
+      "dir": "skills/extract",
+      "tests": ["tests/unit/test_extract.py"]
+    },
+    "compute": {
+      "dir": "skills/compute",
+      "tests": ["tests/unit/test_compute.py"]
+    },
+    "report": {
+      "dir": "skills/report",
+      "tests": ["tests/unit/test_report.py"]
+    }
+  },
+  "integration": {
+    "description": "整條 workflow 串接 + 交接處資料正確 + 失敗傳播；外加 kit 安裝/依賴驗收回歸。",
+    "tests": ["tests/integration/test_flow.py", "selftest.py"],
+    "watch": ["workflow", "SOP.md", "lib", "check_deps.py"]
+  }
+}

@@ -1,0 +1,24 @@
+"""Skill <X> 工具：<skill-name> — <一句話>。單一工具；路徑由 --in/--out 參數化，無硬編碼。"""
+import os
+import sys
+
+# 可攜：相對本檔解析 kit lib（複製到任何專案皆可）
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "lib"))
+import kit  # noqa: E402
+
+# 完整宣告本 skill「那一個工具」的依賴；缺任一項 → require_deps 明確報錯（非靜默）。
+DEPS = [{"kind": "python", "min": "3.8"}]   # 例：+ {"kind":"module","name":"..."} / {"kind":"env","name":"..."} / {"kind":"exe","name":"..."}
+WHO = "<skill-name>"
+
+
+def run(inp, out):
+    """讀上游（kit.read_artifact(inp) 或原始輸入）→ 做本工具的單一工作 → 寫下游。
+    缺值不臆造；產出 artifact 用 kit.artifact(schema, WHO, data, trace)。"""
+    up = kit.read_artifact(inp)           # 若 inp 是原始輸入而非 artifact，改成自行讀取
+    data = {}                              # TODO: 本工具的處理結果
+    trace = up.get("trace", [])            # 透傳/補充來源追溯
+    kit.write_artifact(kit.artifact("<schema@ver>", WHO, data, trace), out)
+
+
+if __name__ == "__main__":
+    kit.skill_main(DEPS, WHO, run)         # 自動：require_deps(DEPS) → 解析 --in/--out → run()

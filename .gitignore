@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# agentic-sop-kit runtime state (regenerated; never distributed)
+.verify_state.json
+.retry_count
+regression_log.jsonl

@@ -1,0 +1,10 @@
+{
+  "name": "measurement-report",
+  "description": "範例流程：依 SOP 順序串接三個單一工具 skill —— extract(A) → compute(B) → report(C)。",
+  "input_default": "example/inputs/sample_readings.txt",
+  "steps": [
+    {"skill": "extract", "tool": "skills/extract/tool.py", "in": "$INPUT",            "out": "$RUN/a.readings.json"},
+    {"skill": "compute", "tool": "skills/compute/tool.py", "in": "$RUN/a.readings.json", "out": "$RUN/b.stats.json"},
+    {"skill": "report",  "tool": "skills/report/tool.py",  "in": "$RUN/b.stats.json",   "out": "$RUN/report.md"}
+  ]
+}

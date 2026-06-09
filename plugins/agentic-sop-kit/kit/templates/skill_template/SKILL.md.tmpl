@@ -1,0 +1,31 @@
+---
+name: <skill-name>
+description: Use when <觸發條件>. Single tool. Reusable standalone.
+---
+
+# Skill <X> — <skill-name>（<一句話>）
+
+SOP 流程的第 <n> 步。<做什麼>。
+
+## 綁定的單一工具
+- `<工具，如 python3 / 某 CLI>`。**本 skill 只此一個工具。**
+
+## 依賴（完整宣告；缺項由 kit.require_deps 明確報錯，非靜默）
+- <python>=3.8 / 模組 X / 環境變數 Y / 可執行檔 Z …全部列出>
+
+## 參數化（無硬編碼專案值）
+- 輸入：`--in <…>`；輸出：`--out <…>`（其餘專案專屬值改走環境變數/config）
+
+## 介面（與上下游 skill 的資料格式）
+- **輸入 artifact**：`<schema@ver>`（讀 `data.<…>`）
+- **輸出 artifact**：`<schema@ver>`（`data.<…>` + 透傳 `trace`）
+
+## 執行
+`python3 skills/<skill-name>/tool.py --in <…> --out <…>`
+
+## 獨立重用
+`skills/<skill-name>/` + `lib/kit.py` 可單獨抽出放別專案；無硬編碼，依 `--in/--out` 即運作。
+
+## 測試（納入即登記，否則 verify.py 會 fail-loud）
+- 寫 `tests/unit/test_<skill-name>.py`（subprocess 跑本工具 CLI；至少涵蓋正常值 + fail-loud 邊界）。
+- 在 `tests/registry.json` 的 `skills.<skill-name>` 登記 `{"dir": "skills/<skill-name>", "tests": ["tests/unit/test_<skill-name>.py"]}`。

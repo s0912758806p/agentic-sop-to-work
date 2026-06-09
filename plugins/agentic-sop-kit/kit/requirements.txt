@@ -1,0 +1,10 @@
+# agentic-sop-kit 依賴清單
+#
+# 範例流程（extract / compute / report）+ 編排層：**僅需 Python 標準庫**（python >= 3.8）。
+# 無第三方套件 → 複製到空白專案即可 `python3` 執行（驗收 a）。
+#
+# 權威依賴宣告在程式內（各 skill 的 DEPS + lib/kit.py::require_deps）；
+# 安裝後請先跑：  python3 check_deps.py   （缺項會明確列出並 exit 1）。
+#
+# 當你新增需要第三方套件的 skill 時，把套件加在下方、並在該 skill 的 DEPS 加
+# {"kind":"module","name":"<import 名>","hint":"pip install <套件>"}。
