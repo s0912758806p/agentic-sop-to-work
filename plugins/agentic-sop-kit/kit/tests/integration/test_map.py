@@ -61,7 +61,8 @@ class Map(unittest.TestCase):
             base = os.path.join(d, "runs")
             r = _run(self._write(d, flow), "--out-base", base, "--run-id", "t1")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-            out = json.load(open(os.path.join(base, "t1", "b.json")))
+            with open(os.path.join(base, "t1", "b.json")) as fh:
+                out = json.load(fh)
             self.assertEqual(out["data"]["items"], [2, 4, 6])
             self.assertEqual(out["data"]["count"], 3)
 
@@ -79,7 +80,7 @@ class Map(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             emit = _emit_tool(d, "emit", {"items": 5})
             dbl = _double_tool(d)
-            flow = {"name": "map-nonlist", "input_default": emit, "steps": [
+            flow = {"name": "map-bad", "input_default": emit, "steps": [
                 {"skill": "emit", "tool": emit, "in": "$INPUT", "out": "$RUN/a.json"},
                 {"skill": "dbl", "tool": dbl, "map_over": "items", "in": "$RUN/a.json", "out": "$RUN/b.json"}]}
             r = _run(self._write(d, flow), "--out-base", os.path.join(d, "runs"))

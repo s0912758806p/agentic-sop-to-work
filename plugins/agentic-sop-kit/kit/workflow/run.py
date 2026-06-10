@@ -29,7 +29,7 @@ def _run_map(st, tool, ip, op):
     src = kit.read_artifact(ip) if os.path.exists(ip) else {}
     items = (src.get("data") or {}).get(st["map_over"])
     if not isinstance(items, list):
-        return False, f"map_over '{st['map_over']}' 不是清單（input data 內）"
+        return False, f"map_over '{st['map_over']}' is not a list（input data 內非清單）"
     base = os.path.dirname(op)
     name = st.get("skill", "map")
     results, trace = [], []
