@@ -51,6 +51,12 @@ class ResolveBranch(unittest.TestCase):
         self.assertIsNone(goto)
         self.assertIn("no", reason.lower())
 
+    def test_default_first_still_routes_to_match(self):
+        cases = [{"default": True, "goto": "release"},
+                 {"when": {"path": "s", "op": "==", "value": "OOS"}, "goto": "investigate"}]
+        goto, _ = flow.resolve_branch(cases, {"s": "OOS"})
+        self.assertEqual(goto, "investigate")  # placement-independent: when wins over earlier default
+
 
 if __name__ == "__main__":
     unittest.main()

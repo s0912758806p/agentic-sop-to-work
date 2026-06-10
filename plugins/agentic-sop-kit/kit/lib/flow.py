@@ -46,10 +46,17 @@ def eval_predicate(when, data):
 
 
 def resolve_branch(cases, data):
-    """First case whose `when` matches (or a `default` case) wins. Returns (goto, reason); (None, reason) if none."""
+    """First case whose `when` matches wins; otherwise the `default` case (placement-independent).
+
+    A `when` match always takes precedence over `default`, regardless of where `default` is listed.
+    Returns (goto, reason); (None, reason) if neither a `when` nor a `default` matches.
+    """
+    default_case = None
     for case in cases:
-        if case.get("default"):
-            return case.get("goto"), "default"
         if "when" in case and eval_predicate(case["when"], data):
             return case.get("goto"), "matched"
+        if case.get("default") and default_case is None:
+            default_case = case
+    if default_case is not None:
+        return default_case.get("goto"), "default"
     return None, "no case matched and no default"
