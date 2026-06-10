@@ -12,6 +12,14 @@
   - `Stop` → 若目前專案有 `agentic-sop-kit/tests/verify.py` 就跑回歸閘門（變更偵測 → 兩層測試 → 失敗以 `decision:block` 餵回去修；重試上限防迴圈），否則略過。
 - **`kit/`**：可攜的 `agentic-sop-kit` 副本（含 `bootstrap.py`、`SOP.md`、`lib/`、`workflow/`、`tests/`、`templates/`、範例 skills）。
 
+## 引擎能力（kit 的 `run.py` 編排器，v1.5）
+除了線性 demo，引擎還支援以下能力——**全部確定性、由程式決定、附加式**（既有流程照常運作）：
+- **每步硬閘門**（產出後驗、fail 即停、零 LLM）：`cmd_gate`（exit 0）／`schema_gate`（必填欄位）／`trace_gate`（值須 verbatim 溯源 → 擋臆造）／`recompute_gate`（數字重算相符）。
+- **`cmd` 步驟**（指令只來自 `flow.json` 白名單；會改動環境的需 `--allow-mutations`）＋ **`--plan`** 乾跑（執行前列出所有操作、標示 mutating，不執行）。
+- **forward-only 條件分支**（`branch`／`cases`／`goto`）與 **`map_over`**（對清單每項各跑一次、收集）——控制流由程式決定，不交給模型。
+- **跨領域範例**：`kit/workflow/examples/` 的免依賴 FE／BE／DB／AI 流程（各示範一個閘門）。
+詳見 `kit/SOP.md`（方法論）與 `kit/workflow/examples/README.md`。
+
 ## 安裝（從 GitHub）
 在 Claude Code（含 Claude Desktop 的 **Code 分頁**）執行：
 ```
