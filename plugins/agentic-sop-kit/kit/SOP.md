@@ -1,5 +1,11 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
+## 執行期硬閘門（lib/gates.py）與步驟型態
+flow.json 每步可選掛 deterministic 閘門（產出後驗、fail 即停）：
+`cmd_gate`（指令 exit 0）/ `schema_gate`（必填欄位）/ `trace_gate`（值須 verbatim 溯源、防臆造）/ `recompute_gate`（數字重算相符）。
+指令型步驟：`{"cmd":"...","out":"...","gate":{"type":"cmd_gate"}}`；會改動環境的標 `"mutates":true`，需 `--allow-mutations` 才跑。
+`python3 workflow/run.py --plan` 先列出所有操作（不執行），mutating 操作會標示。
+
 本 kit 是一份**可複製到任何專案就能用**的轉換方法論 + 可運行範例。三個階段、各有**固定產物**與**交接介面**；
 無硬編碼、依賴完整宣告（缺項明確報錯）。範例流程 `extract → compute → report` 是本 SOP 的 worked instance。
 
