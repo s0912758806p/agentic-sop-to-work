@@ -1,5 +1,12 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
+## 條件分支（branch，forward-only）
+flow.json 可放分支步驟，依**上一步 artifact 的 data** 由程式（非模型）決定走向：
+`{"branch":"$RUN/c.json","cases":[{"when":{"path":"severity","op":"==","value":"OOS"},"goto":"investigate"},{"default":true,"goto":"release"}]}`
+- `goto` 對應某步的 `skill`/`id`，且**只能往前跳**（forward-only）→ 無迴圈、確定性。
+- 運算子白名單：`== != < <= > >= in exists`；型別不符回 false、不丟例外。
+- 複雜判斷可由一支確定性 router skill 輸出 `data.route`，再用 `{"path":"route","op":"==",...}` 分流。
+
 ## 執行期硬閘門（lib/gates.py）與步驟型態
 flow.json 每步可選掛 deterministic 閘門（產出後驗、fail 即停）：
 `cmd_gate`（指令 exit 0）/ `schema_gate`（必填欄位）/ `trace_gate`（值須 verbatim 溯源、防臆造）/ `recompute_gate`（數字重算相符）。
