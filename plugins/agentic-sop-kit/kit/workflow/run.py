@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 import kit  # noqa: E402
 import gates  # noqa: E402
+from flow import resolve_branch  # noqa: E402
 
 FLOW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flow.json")
 BANNER = "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
@@ -79,27 +80,57 @@ def main(argv=None):
         return v.replace("$INPUT", inp).replace("$RUN", run)
 
     print(f"flow={flow['name']} run={rid}")
+
+    name2idx = {}
+    for idx, st in enumerate(flow["steps"]):
+        key = st.get("id") or st.get("skill")
+        if key and key not in name2idx:
+            name2idx[key] = idx
+
     steps = []
-    for st in flow["steps"]:
+    last_out = None
+
+    def _fail(label, err):
+        mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "failed_step": label,
+                "error": (err or "")[-1000:], "steps": steps,
+                "human_review_required": True, "banner": BANNER}
+        kit.write_artifact(mani, os.path.join(run, "run_manifest.json"))
+        print("  ❌ 步驟失敗：", (err or "")[:300])
+        raise SystemExit(2)
+
+    i, n = 0, len(flow["steps"])
+    while i < n:
+        st = flow["steps"][i]
+        if "branch" in st:
+            art = resolve(st["branch"])
+            data = kit.read_artifact(art).get("data", {}) if os.path.exists(art) else {}
+            goto, why = resolve_branch(st.get("cases", []), data)
+            if goto is None:
+                _fail(f"branch@{i}", f"branch 無可用分支：{why}")
+            if goto not in name2idx:
+                _fail(f"branch@{i}", f"branch goto 指向不存在的步驟：{goto!r}")
+            target = name2idx[goto]
+            if target <= i:
+                _fail(f"branch@{i}", f"branch goto 必須往前（forward-only）：{goto!r}")
+            steps.append({"skill": f"branch→{goto}", "ok": True, "out": art, "error": ""})
+            print(f"  [BRANCH] → {goto}")
+            i = target
+            continue
         op = resolve(st["out"])
         ok, err = _run_step(st, resolve, inp, a.allow_mutations)
         if ok and st.get("gate"):
-            ok, gerr = gates.run_gate(st["gate"]["type"], kit.read_artifact(op), st["gate"].get("args"))
-            if not ok:
-                err = f"gate {st['gate']['type']} failed: {gerr}"
-        cmd_text = st.get("cmd", "")
-        label = st.get("skill") or ("cmd: " + cmd_text[:40] + ("…" if len(cmd_text) > 40 else ""))
+            ok2, gerr = gates.run_gate(st["gate"]["type"], kit.read_artifact(op), st["gate"].get("args"))
+            if not ok2:
+                ok, err = False, f"gate {st['gate']['type']} failed: {gerr}"
+        label = st.get("skill") or ("cmd: " + (st.get("cmd", "")[:40] + ("…" if len(st.get("cmd", "")) > 40 else "")))
         steps.append({"skill": label, "ok": ok, "out": op, "error": (err or "")[:600]})
         print(f"  [{'OK' if ok else 'FAIL'}] {label} → {op}")
         if not ok:
-            mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "failed_step": label,
-                    "error": (err or "")[-1000:], "steps": steps,
-                    "human_review_required": True, "banner": BANNER}
-            kit.write_artifact(mani, os.path.join(run, "run_manifest.json"))
-            print("  ❌ 步驟失敗：", (err or "")[:300])
-            raise SystemExit(2)
+            _fail(label, err)
+        last_out = op
+        i += 1
 
-    final = steps[-1]["out"]
+    final = last_out
     mani = {"flow": flow["name"], "run_id": rid, "state": "OK_FOR_REVIEW", "steps": steps,
             "final_output": final, "human_review_required": True, "banner": BANNER}
     kit.write_artifact(mani, os.path.join(run, "run_manifest.json"))
