@@ -39,7 +39,45 @@ def schema_gate(artifact, args):
     return True, "ok"
 
 
-REGISTRY = {"cmd_gate": cmd_gate, "schema_gate": schema_gate}
+def trace_gate(artifact, args):
+    """Every value under args['fields'] must appear verbatim among the artifact's trace sources."""
+    found, values = _get(artifact.get("data", {}), args.get("fields"))
+    if not found:
+        return False, f"trace_gate: path not found: {args.get('fields')!r}"
+    sourced = {str(t.get("value")) for t in artifact.get("trace", [])}
+    vals = values if isinstance(values, list) else [values]
+    unsourced = [str(v) for v in vals if str(v) not in sourced]
+    if unsourced:
+        return False, f"values not traceable to input (possible fabrication): {unsourced}"
+    return True, "ok"
+
+
+def recompute_gate(artifact, args):
+    """Re-derive an aggregate over a list path and compare to a stated value path."""
+    data = artifact.get("data", {})
+    ok_over, items = _get(data, args.get("over"))
+    ok_eq, claimed = _get(data, args.get("equals"))
+    if not (ok_over and ok_eq):
+        return False, f"recompute_gate: path missing (over={args.get('over')!r}, equals={args.get('equals')!r})"
+    if not isinstance(items, list):
+        return False, "recompute_gate: 'over' is not a list"
+    op = args.get("op")
+    if op == "count":
+        actual = len(items)
+    elif op == "sum":
+        try:
+            actual = sum(float(x) for x in items)
+        except (TypeError, ValueError) as e:
+            return False, f"recompute_gate: sum failed: {e}"
+    else:
+        return False, f"recompute_gate: unknown op {op!r}"
+    if float(actual) != float(claimed):
+        return False, f"recompute mismatch: computed {actual} vs stated {claimed}"
+    return True, "ok"
+
+
+REGISTRY = {"cmd_gate": cmd_gate, "schema_gate": schema_gate,
+            "trace_gate": trace_gate, "recompute_gate": recompute_gate}
 
 
 def run_gate(gate_type, artifact, args=None):
