@@ -30,6 +30,8 @@ def _run_step(st, resolve, inp, allow_mutations):
             return False, ("此步驟標記 mutates:true（會改動環境）。"
                            "請人工確認後加 --allow-mutations 重跑。指令：" + st["cmd"])
         r = subprocess.run(st["cmd"], shell=True, capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"  [WARN] cmd exited {r.returncode} — attach a cmd_gate to enforce exit==0")
         kit.write_artifact(kit.artifact("cmd@1", "cmd",
                            {"command": st["cmd"], "exit": r.returncode,
                             "stdout": (r.stdout or "")[-4000:], "stderr": (r.stderr or "")[-4000:]}), op)
@@ -62,7 +64,8 @@ def main(argv=None):
     ap.add_argument("--allow-mutations", action="store_true", help="authorize steps marked mutates:true")
     a = ap.parse_args(argv)
 
-    flow = json.load(open(a.flow, encoding="utf-8"))
+    with open(a.flow, encoding="utf-8") as f:
+        flow = json.load(f)
 
     if a.plan:
         _print_plan(flow)
@@ -84,7 +87,8 @@ def main(argv=None):
             ok, gerr = gates.run_gate(st["gate"]["type"], kit.read_artifact(op), st["gate"].get("args"))
             if not ok:
                 err = f"gate {st['gate']['type']} failed: {gerr}"
-        label = st.get("skill") or ("cmd:" + st.get("cmd", "")[:40])
+        cmd_text = st.get("cmd", "")
+        label = st.get("skill") or ("cmd: " + cmd_text[:40] + ("…" if len(cmd_text) > 40 else ""))
         steps.append({"skill": label, "ok": ok, "out": op, "error": (err or "")[:600]})
         print(f"  [{'OK' if ok else 'FAIL'}] {label} → {op}")
         if not ok:
