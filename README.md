@@ -85,6 +85,14 @@ LLM agents fail in predictable ways. This kit is built to block each one:
 
 > **Which load and auto-trigger?** Only the two **Skills** above are loaded by Claude and fire from conversation. The example tool skills in `kit/` (`extract`/`compute`/`report`) are **not** conversation-triggered — they run deterministically via `/sop-flow` / `run.py`.
 
+### Engine capabilities (the `run.py` orchestrator)
+Beyond the linear demo, the engine supports these — all **deterministic, code-decided, and additive** (existing flows keep working):
+- **Per-step gates** (run after a step, block on failure, zero LLM): `cmd_gate` (exit 0), `schema_gate` (required fields), `trace_gate` (every value traces verbatim to input → blocks fabrication), `recompute_gate` (re-derive a number, must match).
+- **`cmd` steps** — run an allowlisted command from `flow.json`; mutating commands need explicit `--allow-mutations`.
+- **`--plan`** — dry-run that lists every operation (mutations flagged) without executing.
+- **Branching** (`branch`/`cases`/`goto`, forward-only) and **`map_over`** (run a tool once per list item) — control flow decided by code, never the model.
+- **Cross-domain examples** — dependency-free FE / BE / DB / AI flows (one gate each) in [`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/).
+
 ### How it works — the three-stage chain
 ```
 Human SOP ──(1: record)──▶ one SOP (fixed template)
@@ -186,6 +194,14 @@ LLM agent 的失敗是可預期的，本 kit 逐一封堵：
 | **可攜 kit**（`kit/`） | 複製到任何專案就能用的方法論 ＋ 可運行範例：`bootstrap.py`、`SOP.md`、`lib/`、`workflow/`、`tests/`、`templates/` 與範例 skills。 |
 
 > **哪些會被載入、自動觸發？** 只有上面那兩支 **Skills** 會被 Claude 載入、由對話觸發。`kit/` 裡的範例工具 skill（`extract`／`compute`／`report`）**不會**對話觸發——它們由 `/sop-flow`／`run.py` 確定性執行。
+
+### 引擎能力（`run.py` 編排器）
+除了線性 demo，引擎還支援以下能力，**全部確定性、由程式決定、且為附加**（既有流程照常運作）：
+- **每步硬閘門**（產出後驗、fail 即停、零 LLM）：`cmd_gate`（exit 0）、`schema_gate`（必填欄位）、`trace_gate`（值須 verbatim 溯源 → 擋臆造）、`recompute_gate`（數字重算相符）。
+- **`cmd` 步驟** — 跑 `flow.json` 內白名單指令；會改動環境的需明確 `--allow-mutations`。
+- **`--plan`** — 乾跑：執行前列出所有操作（標示 mutating），不執行。
+- **條件分支**（`branch`/`cases`/`goto`，forward-only）與 **`map_over`**（對清單每項各跑一次）— 控制流由程式決定，不交給模型。
+- **跨領域範例** — 免依賴的 FE／BE／DB／AI 流程（各一個閘門）：[`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/)。
 
 ### 怎麼運作 — 三段鏈
 ```
