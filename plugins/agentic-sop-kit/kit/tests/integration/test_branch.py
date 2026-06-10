@@ -44,14 +44,18 @@ class Branch(unittest.TestCase):
 
     def test_routes_to_investigate(self):
         with tempfile.TemporaryDirectory() as d:
-            fp = os.path.join(d, "f.json"); json.dump(self._flow(d, "OOS"), open(fp, "w"))
+            fp = os.path.join(d, "f.json")
+            with open(fp, "w") as fh:
+                json.dump(self._flow(d, "OOS"), fh)
             r = _run(fp, "--out-base", os.path.join(d, "runs"))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("investigate", r.stdout)
 
     def test_routes_to_release_via_default(self):
         with tempfile.TemporaryDirectory() as d:
-            fp = os.path.join(d, "f.json"); json.dump(self._flow(d, "OK"), open(fp, "w"))
+            fp = os.path.join(d, "f.json")
+            with open(fp, "w") as fh:
+                json.dump(self._flow(d, "OK"), fh)
             r = _run(fp, "--out-base", os.path.join(d, "runs"))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("release", r.stdout)
@@ -62,10 +66,25 @@ class Branch(unittest.TestCase):
             flow = {"name": "bad", "input_default": t, "steps": [
                 {"skill": "a", "tool": t, "in": "$INPUT", "out": "$RUN/a.json"},
                 {"branch": "$RUN/a.json", "cases": [{"default": True, "goto": "a"}]}]}
-            fp = os.path.join(d, "f.json"); json.dump(flow, open(fp, "w"))
+            fp = os.path.join(d, "f.json")
+            with open(fp, "w") as fh:
+                json.dump(flow, fh)
             r = _run(fp, "--out-base", os.path.join(d, "runs"))
             self.assertEqual(r.returncode, 2)
             self.assertIn("forward", (r.stdout + r.stderr).lower())
+
+    def test_unknown_goto_fails(self):
+        with tempfile.TemporaryDirectory() as d:
+            t = _emit_tool(d, "a", {"x": 1})
+            flow = {"name": "bad2", "input_default": t, "steps": [
+                {"skill": "a", "tool": t, "in": "$INPUT", "out": "$RUN/a.json"},
+                {"branch": "$RUN/a.json", "cases": [{"default": True, "goto": "nope"}]}]}
+            fp = os.path.join(d, "f.json")
+            with open(fp, "w") as fh:
+                json.dump(flow, fh)
+            r = _run(fp, "--out-base", os.path.join(d, "runs"))
+            self.assertEqual(r.returncode, 2)
+            self.assertIn("nope", r.stdout + r.stderr)
 
 
 if __name__ == "__main__":
