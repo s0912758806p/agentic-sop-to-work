@@ -15,3 +15,6 @@ regression_log.jsonl
 
 # Brainstorming / design specs — kept local (not part of the public surface)
 docs/superpowers/
+
+# kit run-scoped output (regenerated; never distributed)
+runs/
