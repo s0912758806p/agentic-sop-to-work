@@ -23,6 +23,31 @@ FLOW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flow.json")
 BANNER = "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
 
 
+def _run_map(st, tool, ip, op):
+    """Run `tool` once per item of the top-level list `st['map_over']` in the input artifact's data;
+    collect each output's data into a map@1 artifact. Fail-loud on any item failure (no silent drop)."""
+    src = kit.read_artifact(ip) if os.path.exists(ip) else {}
+    items = (src.get("data") or {}).get(st["map_over"])
+    if not isinstance(items, list):
+        return False, f"map_over '{st['map_over']}' 不是清單（input data 內）"
+    base = os.path.dirname(op)
+    name = st.get("skill", "map")
+    results, trace = [], []
+    for idx, item in enumerate(items):
+        item_in = os.path.join(base, f"{name}.item{idx}.in.json")
+        item_out = os.path.join(base, f"{name}.item{idx}.out.json")
+        kit.write_artifact(kit.artifact("map-item@1", "map", item, []), item_in)
+        r = subprocess.run([sys.executable, tool, "--in", item_in, "--out", item_out],
+                           capture_output=True, text=True)
+        if r.returncode != 0 or not os.path.exists(item_out):
+            return False, f"map item {idx} 失敗：{(r.stderr or r.stdout or '').strip()[-300:]}"
+        out_art = kit.read_artifact(item_out)
+        results.append(out_art.get("data"))
+        trace.extend(out_art.get("trace", []))
+    kit.write_artifact(kit.artifact("map@1", name, {"items": results, "count": len(results)}, trace), op)
+    return True, ""
+
+
 def _run_step(st, resolve, inp, allow_mutations):
     """Run one step (tool or cmd). Returns (ok, error)."""
     op = resolve(st["out"])
@@ -38,6 +63,8 @@ def _run_step(st, resolve, inp, allow_mutations):
                             "stdout": (r.stdout or "")[-4000:], "stderr": (r.stderr or "")[-4000:]}), op)
         return True, ""   # cmd always records; cmd_gate decides pass/fail
     tool, ip = kit.kit_path(st["tool"]), resolve(st["in"])
+    if "map_over" in st:
+        return _run_map(st, tool, ip, op)
     r = subprocess.run([sys.executable, tool, "--in", ip, "--out", op], capture_output=True, text=True)
     ok = (r.returncode == 0) and os.path.exists(op)
     return ok, (r.stderr or r.stdout or "").strip()
