@@ -92,6 +92,29 @@ class RecomputeGate(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("mismatch", reason)
 
+    def test_count_mismatch(self):
+        art = {"data": {"rows": [1, 2], "n": 5}}
+        ok, reason = gates.run_gate("recompute_gate", art, {"op": "count", "over": "rows", "equals": "n"})
+        self.assertFalse(ok)
+        self.assertIn("mismatch", reason)
+
+    def test_unknown_op(self):
+        art = {"data": {"rows": [1], "n": 1}}
+        ok, reason = gates.run_gate("recompute_gate", art, {"op": "median", "over": "rows", "equals": "n"})
+        self.assertFalse(ok)
+        self.assertIn("unknown op", reason)
+
+    def test_sum_float_isclose(self):
+        art = {"data": {"vals": [0.1, 0.2], "total": 0.3}}
+        ok, _ = gates.run_gate("recompute_gate", art, {"op": "sum", "over": "vals", "equals": "total"})
+        self.assertTrue(ok)
+
+    def test_non_numeric_claimed_does_not_raise(self):
+        art = {"data": {"rows": [1], "n": "two"}}
+        ok, reason = gates.run_gate("recompute_gate", art, {"op": "count", "over": "rows", "equals": "n"})
+        self.assertFalse(ok)
+        self.assertIn("numeric", reason)
+
 
 if __name__ == "__main__":
     unittest.main()

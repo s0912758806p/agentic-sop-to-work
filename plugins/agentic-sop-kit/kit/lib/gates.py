@@ -7,6 +7,7 @@ Each gate is a pure function gate(artifact: dict, args: dict) -> (ok: bool, reas
 Gates only READ the artifact — no side effects, no network, no LLM. Run AFTER a step
 writes its output artifact; a False result stops the run like a failed step.
 """
+import math
 
 
 def _get(data, path):
@@ -40,7 +41,11 @@ def schema_gate(artifact, args):
 
 
 def trace_gate(artifact, args):
-    """Every value under args['fields'] must appear verbatim among the artifact's trace sources."""
+    """Every value under args['fields'] must appear verbatim among the artifact's trace sources.
+
+    Comparison is by str(value): store trace values as the string form you expect
+    (e.g. "12.0" for a float 12.0).
+    """
     found, values = _get(artifact.get("data", {}), args.get("fields"))
     if not found:
         return False, f"trace_gate: path not found: {args.get('fields')!r}"
@@ -53,7 +58,12 @@ def trace_gate(artifact, args):
 
 
 def recompute_gate(artifact, args):
-    """Re-derive an aggregate over a list path and compare to a stated value path."""
+    """Re-derive an aggregate over a list path and compare to a stated value path.
+
+    op="count" uses exact integer equality; op="sum" uses a tolerant float compare
+    (math.isclose) to avoid float-representation false negatives. Never raises: a
+    non-numeric stated value returns (False, reason), preserving the gate contract.
+    """
     data = artifact.get("data", {})
     ok_over, items = _get(data, args.get("over"))
     ok_eq, claimed = _get(data, args.get("equals"))
@@ -71,7 +81,15 @@ def recompute_gate(artifact, args):
             return False, f"recompute_gate: sum failed: {e}"
     else:
         return False, f"recompute_gate: unknown op {op!r}"
-    if float(actual) != float(claimed):
+    try:
+        claimed_num = float(claimed)
+    except (TypeError, ValueError):
+        return False, f"recompute_gate: stated value not numeric: {claimed!r}"
+    if op == "count":
+        matched = actual == claimed_num
+    else:
+        matched = math.isclose(actual, claimed_num, rel_tol=1e-9, abs_tol=1e-12)
+    if not matched:
         return False, f"recompute mismatch: computed {actual} vs stated {claimed}"
     return True, "ok"
 
