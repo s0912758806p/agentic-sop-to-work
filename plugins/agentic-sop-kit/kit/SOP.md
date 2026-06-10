@@ -138,3 +138,7 @@ agentic-sop-kit/
   example/inputs/             # 範例輸入
   runs/<run_id>/              # run-scoped 產物（執行後生成）
 ```
+
+## 跨領域範例（workflow/examples/）
+四個免依賴範例流程證明「同一引擎、四領域都跑得起來」：`fe.json`(cmd_gate)、`be.json`(schema_gate)、`db.json`(recompute_gate)、`ai.json`(trace_gate)。
+跑：`python3 workflow/run.py --flow workflow/examples/be.json`（先 `--plan` 看操作）。詳見 `workflow/examples/README.md`。
