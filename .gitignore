@@ -12,3 +12,6 @@ regression_log.jsonl
 
 # Local / private owner notes (never committed or pushed)
 *.local.md
+
+# Brainstorming / design specs — kept local (not part of the public surface)
+docs/superpowers/
