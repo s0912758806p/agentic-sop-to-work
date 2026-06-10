@@ -1,5 +1,11 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
+## 批次 map（map_over，循序 fan-out）
+工具步驟可加 `map_over: "<key>"`（指向**輸入 artifact data 的頂層清單鍵**）：引擎對清單**每一項**各跑一次該工具（依序、隔離），把每次輸出的 `data` 收進 `map@1` artifact 的 `data.items`（並附 `data.count`）。
+`{"skill":"check","tool":"skills/check/tool.py","map_over":"items","in":"$RUN/x.json","out":"$RUN/y.json"}`
+- **fail-loud**：任一項失敗即整步失敗（不靜默丟）。可在 map 步驟掛 `gate`（如 `recompute_gate` 驗 `count`）。
+- 鍵為頂層、循序執行（並行屬 YAGNI、未做）。
+
 ## 條件分支（branch，forward-only）
 flow.json 可放分支步驟，依**上一步 artifact 的 data** 由程式（非模型）決定走向：
 `{"branch":"$RUN/c.json","cases":[{"when":{"path":"severity","op":"==","value":"OOS"},"goto":"investigate"},{"default":true,"goto":"release"}]}`
