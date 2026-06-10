@@ -41,5 +41,43 @@ class GateOnStep(unittest.TestCase):
             self.assertIn("name", r.stdout + r.stderr)
 
 
+class CmdStep(unittest.TestCase):
+    def test_cmd_runs_and_cmd_gate_passes(self):
+        with tempfile.TemporaryDirectory() as d:
+            flow = _write(d, "flow.json", {
+                "name": "cmd-demo", "input_default": __file__,
+                "steps": [{"cmd": sys.executable + " --version",
+                           "out": "$RUN/b.json", "gate": {"type": "cmd_gate"}}]})
+            r = _run(flow, "--out-base", os.path.join(d, "runs"))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_mutating_cmd_blocked_without_flag(self):
+        with tempfile.TemporaryDirectory() as d:
+            flow = _write(d, "flow.json", {
+                "name": "mut", "input_default": __file__,
+                "steps": [{"cmd": sys.executable + " --version", "mutates": True, "out": "$RUN/m.json"}]})
+            r = _run(flow, "--out-base", os.path.join(d, "runs"))
+            self.assertEqual(r.returncode, 2)
+            self.assertIn("allow-mutations", r.stdout + r.stderr)
+            r2 = _run(flow, "--out-base", os.path.join(d, "runs2"), "--allow-mutations")
+            self.assertEqual(r2.returncode, 0, r2.stdout + r2.stderr)
+
+
+class Plan(unittest.TestCase):
+    def test_plan_lists_without_executing(self):
+        with tempfile.TemporaryDirectory() as d:
+            marker = os.path.join(d, "ran.txt")
+            script = os.path.join(d, "mk.py")
+            with open(script, "w", encoding="utf-8") as f:
+                f.write("open(r%r, 'w').write('x')\n" % marker)
+            flow = _write(d, "flow.json", {
+                "name": "plan-demo", "input_default": __file__,
+                "steps": [{"cmd": sys.executable + " " + script, "mutates": True, "out": "$RUN/p.json"}]})
+            r = _run(flow, "--plan")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("MUTATES", r.stdout)
+            self.assertFalse(os.path.exists(marker), "--plan must not execute anything")
+
+
 if __name__ == "__main__":
     unittest.main()
