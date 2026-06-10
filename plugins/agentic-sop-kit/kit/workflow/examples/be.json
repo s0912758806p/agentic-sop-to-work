@@ -1,0 +1,8 @@
+{
+  "name": "example-be",
+  "input_default": "example/inputs/sample_readings.txt",
+  "steps": [
+    {"skill": "be_api", "tool": "skills/be_api/tool.py", "in": "$INPUT", "out": "$RUN/be.json",
+     "gate": {"type": "schema_gate", "args": {"required": ["id", "name"]}}}
+  ]
+}

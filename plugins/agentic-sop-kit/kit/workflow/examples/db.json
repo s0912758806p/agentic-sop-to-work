@@ -1,0 +1,8 @@
+{
+  "name": "example-db",
+  "input_default": "example/inputs/sample_readings.txt",
+  "steps": [
+    {"skill": "db_rows", "tool": "skills/db_rows/tool.py", "in": "$INPUT", "out": "$RUN/db.json",
+     "gate": {"type": "recompute_gate", "args": {"op": "sum", "over": "rows", "equals": "total"}}}
+  ]
+}

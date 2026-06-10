@@ -1,0 +1,8 @@
+{
+  "name": "example-ai",
+  "input_default": "example/inputs/ai_source.json",
+  "steps": [
+    {"skill": "ai_claims", "tool": "skills/ai_claims/tool.py", "in": "$INPUT", "out": "$RUN/ai.json",
+     "gate": {"type": "trace_gate", "args": {"fields": "claims"}}}
+  ]
+}

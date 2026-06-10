@@ -1,0 +1,7 @@
+{
+  "name": "example-fe",
+  "input_default": "example/inputs/sample_readings.txt",
+  "steps": [
+    {"cmd": "python3 --version", "out": "$RUN/fe.json", "gate": {"type": "cmd_gate"}}
+  ]
+}
