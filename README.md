@@ -64,7 +64,7 @@ flowchart LR
 
 **Engine (`run.py`)** — deterministic, code-decided, additive:
 - **Per-step gates** (block on fail, zero LLM): `cmd_gate` · `schema_gate` · `trace_gate` (no fabrication) · `recompute_gate`.
-- **`cmd` steps** (allowlisted; mutations need `--allow-mutations`) · **`--plan`** dry-run.
+- **`cmd` steps** (allowlisted; mutations need `--allow-mutations`) · **`--plan`** dry-run (lists every step + validates branch gotos).
 - **`branch`** (forward-only) · **`map_over`** (per-item) — control flow in code, never the model.
 - **Examples** — dependency-free FE / BE / DB / AI flows in [`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/).
 
@@ -114,7 +114,7 @@ agentic-sop-to-work/
 
 **引擎（`run.py`）** — 確定性、由程式決定、附加式：
 - **每步硬閘門**（fail 即停、零 LLM）：`cmd_gate` · `schema_gate` · `trace_gate`（防臆造）· `recompute_gate`。
-- **`cmd` 步驟**（白名單；會改動環境的需 `--allow-mutations`）· **`--plan`** 乾跑。
+- **`cmd` 步驟**（白名單；會改動環境的需 `--allow-mutations`）· **`--plan`** 乾跑（列出每步＋靜態驗證 branch goto）。
 - **`branch`**（forward-only）· **`map_over`**（逐項）— 控制流由程式決定，不交給模型。
 - **範例** — 免依賴的 FE／BE／DB／AI 流程：[`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/)。
 
