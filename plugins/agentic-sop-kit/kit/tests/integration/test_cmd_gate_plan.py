@@ -79,5 +79,39 @@ class Plan(unittest.TestCase):
             self.assertFalse(os.path.exists(marker), "--plan must not execute anything")
 
 
+    def test_plan_shows_branch_and_map(self):
+        with tempfile.TemporaryDirectory() as d:
+            t = os.path.join(d, "t.py")
+            with open(t, "w", encoding="utf-8") as f:
+                f.write("import json,argparse\n"
+                        "a=argparse.ArgumentParser();a.add_argument('--in');a.add_argument('--out');x=a.parse_args()\n"
+                        "json.dump({'schema':'t@1','produced_by':'t','data':{'flag':'x','items':[1]},'trace':[]},open(x.out,'w'))\n")
+            flow = _write(d, "flow.json", {
+                "name": "pbm", "input_default": t, "steps": [
+                    {"skill": "c", "tool": t, "in": "$INPUT", "out": "$RUN/c.json"},
+                    {"branch": "$RUN/c.json", "cases": [{"default": True, "goto": "m"}]},
+                    {"skill": "m", "tool": t, "map_over": "items", "in": "$RUN/c.json", "out": "$RUN/m.json"}]})
+            r = _run(flow, "--plan")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("branch", r.stdout)
+            self.assertIn("map_over", r.stdout)
+            self.assertNotIn("tool: None", r.stdout)   # a branch step must NOT print "tool: None"
+
+    def test_plan_flags_bad_goto(self):
+        with tempfile.TemporaryDirectory() as d:
+            t = os.path.join(d, "t.py")
+            with open(t, "w", encoding="utf-8") as f:
+                f.write("import json,argparse\n"
+                        "a=argparse.ArgumentParser();a.add_argument('--in');a.add_argument('--out');x=a.parse_args()\n"
+                        "json.dump({'schema':'t@1','produced_by':'t','data':{},'trace':[]},open(x.out,'w'))\n")
+            flow = _write(d, "flow.json", {
+                "name": "pbad", "input_default": t, "steps": [
+                    {"skill": "a", "tool": t, "in": "$INPUT", "out": "$RUN/a.json"},
+                    {"branch": "$RUN/a.json", "cases": [{"default": True, "goto": "nope"}]}]})
+            r = _run(flow, "--plan")
+            self.assertEqual(r.returncode, 2)
+            self.assertIn("goto", (r.stdout + r.stderr).lower())
+
+
 if __name__ == "__main__":
     unittest.main()

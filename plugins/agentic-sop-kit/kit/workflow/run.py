@@ -71,15 +71,51 @@ def _run_step(st, resolve, inp, allow_mutations):
 
 
 def _print_plan(flow):
+    """List every operation without executing; statically validate branch gotos.
+    Returns an exit code: 0 = clean, 2 = structural problem(s) found."""
+    steps = flow["steps"]
+    name2idx, dups = {}, []
+    for idx, st in enumerate(steps):
+        key = st.get("id") or st.get("skill")
+        if key:
+            if key in name2idx:
+                dups.append(key)
+            else:
+                name2idx[key] = idx
     print(f"PLAN flow={flow['name']} (dry run — nothing executed)")
-    for i, st in enumerate(flow["steps"], 1):
-        if "cmd" in st:
-            mut = " [MUTATES — needs --allow-mutations]" if st.get("mutates") else ""
-            print(f"  {i}. cmd: {st['cmd']}{mut}")
+    problems = []
+    for i, st in enumerate(steps):
+        n = i + 1
+        if "branch" in st:
+            print(f"  {n}. branch (reads {st['branch']}):")
+            for c in st.get("cases", []):
+                goto = c.get("goto")
+                cond = "default" if c.get("default") else f"when {c.get('when')}"
+                if goto not in name2idx:
+                    tag = "  ✗ unknown goto"
+                    problems.append(f"step {n} goto {goto!r}: no such step")
+                elif name2idx[goto] <= i:
+                    tag = "  ✗ not forward-only"
+                    problems.append(f"step {n} goto {goto!r}: not forward-only")
+                else:
+                    tag = ""
+                print(f"       {cond} → {goto}{tag}")
+        elif "cmd" in st:
+            mut = "  [MUTATES — needs --allow-mutations]" if st.get("mutates") else ""
+            print(f"  {n}. cmd: {st['cmd']}{mut}")
         else:
-            print(f"  {i}. tool: {st.get('tool')}")
+            mp = f"  [map_over={st['map_over']!r} · per-item]" if "map_over" in st else ""
+            print(f"  {n}. tool: {st.get('tool')}{mp}")
         if st.get("gate"):
             print(f"       gate: {st['gate']['type']}")
+    for dname in sorted(set(dups)):
+        problems.append(f"duplicate step name {dname!r}: branch goto resolves to the first")
+    if problems:
+        print("  ⚠️ structural problems:")
+        for p in problems:
+            print(f"    - {p}")
+        return 2
+    return 0
 
 
 def main(argv=None):
@@ -96,8 +132,7 @@ def main(argv=None):
         flow = json.load(f)
 
     if a.plan:
-        _print_plan(flow)
-        raise SystemExit(0)
+        raise SystemExit(_print_plan(flow))
 
     inp = a.input or kit.kit_path(flow["input_default"])
     run = kit.run_dir(a.out_base, a.run_id)
