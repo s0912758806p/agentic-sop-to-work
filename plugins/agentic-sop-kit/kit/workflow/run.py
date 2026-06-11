@@ -91,25 +91,34 @@ def _print_plan(flow):
             for c in st.get("cases", []):
                 goto = c.get("goto")
                 cond = "default" if c.get("default") else f"when {c.get('when')}"
-                if goto not in name2idx:
+                disp = goto if goto is not None else "(missing 'goto')"
+                if goto is None:
+                    tag = "  ✗ missing goto"
+                    problems.append(f"step {n}: a case is missing its 'goto' key")
+                elif goto not in name2idx:
                     tag = "  ✗ unknown goto"
                     problems.append(f"step {n} goto {goto!r}: no such step")
                 elif name2idx[goto] <= i:
                     tag = "  ✗ not forward-only"
                     problems.append(f"step {n} goto {goto!r}: not forward-only")
+                elif goto in dups:
+                    tag = "  ✗ ambiguous (duplicate name)"
+                    problems.append(f"step {n} goto {goto!r}: ambiguous — duplicate step name")
                 else:
                     tag = ""
-                print(f"       {cond} → {goto}{tag}")
+                print(f"       {cond} → {disp}{tag}")
         elif "cmd" in st:
             mut = "  [MUTATES — needs --allow-mutations]" if st.get("mutates") else ""
             print(f"  {n}. cmd: {st['cmd']}{mut}")
-        else:
+        elif "tool" in st:
             mp = f"  [map_over={st['map_over']!r} · per-item]" if "map_over" in st else ""
-            print(f"  {n}. tool: {st.get('tool')}{mp}")
+            print(f"  {n}. tool: {st['tool']}{mp}")
+        else:
+            tag = "  ✗ malformed (no tool/cmd/branch)"
+            problems.append(f"step {n}: has no tool/cmd/branch key")
+            print(f"  {n}.{tag}")
         if st.get("gate"):
             print(f"       gate: {st['gate']['type']}")
-    for dname in sorted(set(dups)):
-        problems.append(f"duplicate step name {dname!r}: branch goto resolves to the first")
     if problems:
         print("  ⚠️ structural problems:")
         for p in problems:

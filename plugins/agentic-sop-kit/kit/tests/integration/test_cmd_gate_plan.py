@@ -112,6 +112,35 @@ class Plan(unittest.TestCase):
             self.assertEqual(r.returncode, 2)
             self.assertIn("goto", (r.stdout + r.stderr).lower())
 
+    def test_plan_flags_backward_goto(self):
+        with tempfile.TemporaryDirectory() as d:
+            t = os.path.join(d, "t.py")
+            with open(t, "w", encoding="utf-8") as f:
+                f.write("import json,argparse\n"
+                        "a=argparse.ArgumentParser();a.add_argument('--in');a.add_argument('--out');x=a.parse_args()\n"
+                        "json.dump({'schema':'t@1','produced_by':'t','data':{},'trace':[]},open(x.out,'w'))\n")
+            flow = _write(d, "flow.json", {
+                "name": "pback", "input_default": t, "steps": [
+                    {"skill": "a", "tool": t, "in": "$INPUT", "out": "$RUN/a.json"},
+                    {"branch": "$RUN/a.json", "cases": [{"default": True, "goto": "a"}]}]})
+            r = _run(flow, "--plan")
+            self.assertEqual(r.returncode, 2)
+            self.assertIn("forward", (r.stdout + r.stderr).lower())
+
+    def test_plan_duplicate_name_without_goto_is_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            t = os.path.join(d, "t.py")
+            with open(t, "w", encoding="utf-8") as f:
+                f.write("import json,argparse\n"
+                        "a=argparse.ArgumentParser();a.add_argument('--in');a.add_argument('--out');x=a.parse_args()\n"
+                        "json.dump({'schema':'t@1','produced_by':'t','data':{},'trace':[]},open(x.out,'w'))\n")
+            flow = _write(d, "flow.json", {
+                "name": "pdup", "input_default": t, "steps": [
+                    {"skill": "a", "tool": t, "in": "$INPUT", "out": "$RUN/a.json"},
+                    {"skill": "a", "tool": t, "in": "$RUN/a.json", "out": "$RUN/a2.json"}]})
+            r = _run(flow, "--plan")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)  # branchless dup → not a problem, matches runtime
+
 
 if __name__ == "__main__":
     unittest.main()
