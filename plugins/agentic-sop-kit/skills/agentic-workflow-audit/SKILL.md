@@ -1,6 +1,6 @@
 ---
 name: agentic-workflow-audit
-description: Read-only auditor that judges whether a project is a truly decomposed agentic workflow or a disguised mega-agent (task boundaries, I/O contracts, programmatic success criteria, per-step SOPs, control-flow ownership, failure rollback). ｜ 稽核一個專案是否真正採用「拆解式 agentic workflow」——把流程拆成一串有明確邊界的小 Task、每步有獨立 SOP、步驟間有 input/output 契約、有可程式化檢查的成功標準、失敗時能帶錯誤上下文回退自我修復——而不是一個偽裝成模組化、實際上控制流全攪在一起的 mega agent。只要使用者要你檢視、檢查、稽核、review 一個 agent / LLM pipeline 的架構，或問「我的 workflow 有沒有拆好」「是不是偷偷變成 mega agent 了」「task 邊界 / SOP / 成功標準對不對」「我的 agent 設計合不合理」，就使用本技能——即使他沒講出「稽核」兩個字，任何要評估 agent 系統結構、模組化程度或控制流的請求都應觸發本技能。
+description: Use when reviewing or auditing an existing agent / LLM-pipeline architecture — e.g. 'is my workflow actually decomposed or secretly a mega-agent?', 'are my task boundaries and success criteria right?' — even without the word 'audit'. ｜ 要檢視／review／稽核既有 agent 或 LLM pipeline 的架構，或問「有沒有拆好」「是不是變成 mega agent」「task 邊界／成功標準對不對」時使用；任何評估既有 agent 系統結構的請求都觸發。不適用：要新建或自動化流程（改用 agentic-sop）。
 ---
 
 # Agentic Workflow 稽核
