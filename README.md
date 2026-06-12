@@ -74,7 +74,7 @@ flowchart LR
 - **`cmd` steps** (allowlisted; mutations need `--allow-mutations`) · **`--plan`** dry-run (lists every step + validates branch gotos).
 - **`branch`** (forward-only) · **`map_over`** (per-item) — control flow in code, never the model.
 - **Examples** — dependency-free FE / BE / DB / AI flows in [`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/).
-- **Capped auto fix-loop** — on a gate failure, `/sop-flow` auto-fixes & re-runs (`run.py --max-fix-retries`, default 3, code-enforced per run-id); exhausted → stop for a human; never patches output to pass.
+- **Capped auto fix-loop** — on a gate failure, `/sop-flow` auto-fixes & re-runs (`run.py --max-fix-retries`; code-enforced per run-id, capped by `SOPKIT_MAX_FIX_RETRIES`, default 3 — the same knob as the Stop-hook regression loop); exhausted → stop for a human; never patches output to pass.
 
 **Iron rules** — facts only from inputs (`【待補】` for gaps) · deterministic work in code, gates hermetic & LLM-free · DRAFT + human approval · gates check truth, not keywords. **Real enforcement is the Stop-hook, not prose.**
 
@@ -125,7 +125,7 @@ agentic-sop-to-work/
 - **`cmd` 步驟**（白名單；會改動環境的需 `--allow-mutations`）· **`--plan`** 乾跑（列出每步＋靜態驗證 branch goto）。
 - **`branch`**（forward-only）· **`map_over`**（逐項）— 控制流由程式決定，不交給模型。
 - **範例** — 免依賴的 FE／BE／DB／AI 流程：[`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/)。
-- **封頂自動修復 fix-loop**——閘門失敗時 `/sop-flow` 自動修復並重跑（`run.py --max-fix-retries`，預設 3、依 run-id 程式強制上限）；用盡才停下交人；永不為過關竄改輸出。
+- **封頂自動修復 fix-loop**——閘門失敗時 `/sop-flow` 自動修復並重跑（`run.py --max-fix-retries`，依 run-id 程式強制上限；與 Stop-hook 回歸共用 `SOPKIT_MAX_FIX_RETRIES`、預設 3）；用盡才停下交人；永不為過關竄改輸出。
 
 **鐵則** — 事實只來自輸入（缺標 `【待補】`）· 確定性用程式、閘門 hermetic 零 LLM · DRAFT ＋ 人核准 · 閘門查真相不查關鍵字。**真正的強制力在 Stop-hook，不在散文。**
 

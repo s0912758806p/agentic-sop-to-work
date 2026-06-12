@@ -5,7 +5,7 @@
 步驟執行器在 lib/engine.py（run_step / run_map / print_plan）。退出碼：0 = 完成（DRAFT）；2 = 失敗。
 
 失敗時 manifest 帶機器可讀 `failure{step,gate_type,message,artifact}`，供上層定向修復。
-`--max-fix-retries N`（預設 3）對同一 `--run-id` 封頂自動修復重試：這支引擎只負責**程式強制的上限**
+`--max-fix-retries N`（預設讀 `SOPKIT_MAX_FIX_RETRIES`、否則 3；與 Stop-hook 回歸共用同一上限）對同一 `--run-id` 封頂自動修復重試：這支引擎只負責**程式強制的上限**
 ——同一 run-id 執行超過 1+N 次即拒跑、寫 `fix_exhausted`；實際的修復（重生/改輸入）由 `/sop-flow`
 的 Claude 層執行，引擎本身維持零 LLM、確定性。"""
 import argparse
@@ -31,8 +31,8 @@ def main(argv=None):
     ap.add_argument("--out-base", default=None)
     ap.add_argument("--plan", action="store_true", help="list operations (and validate) without executing")
     ap.add_argument("--allow-mutations", action="store_true", help="authorize steps marked mutates:true")
-    ap.add_argument("--max-fix-retries", type=int, default=3,
-                    help="code-enforced ceiling on auto-fix re-runs per --run-id (default 3); "
+    ap.add_argument("--max-fix-retries", type=int, default=int(os.environ.get("SOPKIT_MAX_FIX_RETRIES", "3")),
+                    help="code-enforced ceiling on auto-fix re-runs per --run-id (default: $SOPKIT_MAX_FIX_RETRIES or 3, shared with the Stop-hook regression loop); "
                          "the fixing itself is done by the /sop-flow Claude layer, not here")
     a = ap.parse_args(argv)
 
