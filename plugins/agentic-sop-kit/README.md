@@ -18,6 +18,7 @@
 - **`cmd` 步驟**（指令只來自 `flow.json` 白名單；會改動環境的需 `--allow-mutations`）＋ **`--plan`** 乾跑（執行前列出所有操作、標示 mutating，不執行）。
 - **forward-only 條件分支**（`branch`／`cases`／`goto`）與 **`map_over`**（對清單每項各跑一次、收集）——控制流由程式決定，不交給模型。
 - **跨領域範例**：`kit/workflow/examples/` 的免依賴 FE／BE／DB／AI 流程（各示範一個閘門）。
+- **封頂自動修復 fix-loop**：閘門失敗時 `/sop-flow` 自動修復重跑（`run.py --max-fix-retries`，預設 3、程式強制上限），用盡才交人；永不竄改輸出過關（與 Stop-hook 回歸的 `SOPKIT_MAX_FIX_RETRIES` 是不同層的兩個機制）。
 詳見 `kit/SOP.md`（方法論）與 `kit/workflow/examples/README.md`。
 
 ## 安裝（從 GitHub）
