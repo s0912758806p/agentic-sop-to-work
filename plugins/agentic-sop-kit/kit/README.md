@@ -43,7 +43,7 @@ python3 agentic-sop-kit/workflow/run.py --input /path/to/your_input.txt
 - 每次 agent 準備停止前跑 `tests/verify.py`：**變更偵測**（SOP/任一 skill/編排層自上次通過後沒變 → 直接放行、不跑測試）→ 有變動才跑**單元層（受影響 skill）＋整合層（整條串接）**。
 - 結果寫進 `tests/regression_log.jsonl`（時間、變更項、pass/fail、指標）。
 - **全 pass = 正常**，放行；**任一 fail** → hook 以 `decision:block` 把失敗原因餵回 agent 去修；保留紀錄供人決定修正或回滾。
-- **防迴圈**：`stop_hook_active` + 重試上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停手、提示人工介入。
+- **防迴圈**：`stop_hook_active` + 重試上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停手、提示人工介入。同一上限亦套用於 `run.py` 的 in-run fix-loop（兩層共用一個旋鈕）。
 - 「更好」指標（步數/時間/成功率）只記入 log，由**人**回看趨勢判斷，hook 不自動下結論。
 
 手動全量驗證（建立基線 / 不靠 hook）：`python3 agentic-sop-kit/tests/verify.py --all`
