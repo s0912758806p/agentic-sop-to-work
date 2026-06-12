@@ -9,6 +9,13 @@ description: Use when turning a human SOP or manual process into an agentic work
 - **用**：要把人工 SOP／手動流程自動化、建新 agent 工具、設計「拆解＋閘門」、或開新的 agent 工作流專案時。任何專案皆適用，尤其未來新項目。
 - **不用**：稽核既有工作流是否退化成 mega agent → 用 `agentic-workflow-audit`；執行既有 GMP 產生器 → 用該工具自己的 skill。
 
+## 開場：先判斷輸入型態（intake 分流）
+觸發後**第一件事**——看使用者怎麼來，別急著動工：
+- **已有正式輸入**（寫好的 spec／既有 requirement 或 runner skill／已填好的 `templates/human_sop_template.md`）→ **照原樣採用**、不重寫，直接進下面的拆解。
+- **只有自然語言需求/任務** → 先用 `templates/human_sop_template.md` **起草一份 Human SOP**：能由輸入得到的填上、未知的標【待補】（**絕不臆造**）；草稿好 **STOP 給人看一眼**（「這樣有抓到你的流程嗎？改／確認」）→ 確認後才續入拆解。
+- **判不準** → 問一個澄清問題，別猜路。
+草稿 SOP 也是 **DRAFT**（受「DRAFT＋人核准」約束）；本步只動生成層，**不碰引擎/閘門**。
+
 ## 核心模型（三段鏈，缺一不可）
 Human SOP → **工具 Skill（SKILL.md）** → Agentic Workflow（編排 + 誠實閘門 + hook）。
 中間的 Skill 環最易被忘：**工具一改，SKILL.md 必須同次更新**。每支工具實作同一條七階段迴圈：
