@@ -20,5 +20,8 @@ description: Run the agentic-sop-kit workflow (extract→compute→report) and r
 
 ### 兩種情況都適用
 - 產出一律是 **DRAFT** → 提醒需人覆核、永不自動歸檔進受控系統。
-- 任一步 `"state":"FAILED"`（如缺依賴）→ **據實回報 manifest 的 error / stderr**，不得佯稱成功。
+- 任一步 `"state":"FAILED"` → **封頂自動修復（fix-loop，最多 3 次）**，再不行才交人：
+  1. 讀 manifest 的 `failure{step,gate_type,message,artifact}` 分類：**輸入問題／生成層輸出**（schema/trace 等）→ 修輸入或重生該段，**用相同 `--run-id` 重跑**（引擎對同 run-id 計數、超過 `--max-fix-retries 3` 會自行拒跑＝程式封頂）；**工具碼/recompute/cmd bug** → 診斷並提修正建議、不盲跑、不偷改輸出，交人；**判斷/受控步驟** → 不自動修，交人。
+  2. `fix_exhausted:true` 或不可自動修 → **STOP，據實回報每次嘗試與原因**，不得佯稱成功。
+  3. **永不為過關竄改輸出**（閘門查真相）；最終一律 **DRAFT、需人核准**，永不自動歸檔。
 - 事實只來自輸入與工具輸出；缺值標【待補】，絕不臆造。

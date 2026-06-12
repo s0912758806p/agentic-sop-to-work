@@ -74,7 +74,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 
 把零散的單一工具 skill **依 SOP 實際順序**串成完整流程：
 - **`workflow/flow.json`**：宣告順序與 I/O 接線（`$INPUT`、`$RUN` 佔位；上一步 `out` = 下一步 `in`）。
-- **`workflow/run.py`**：逐步以子程序跑各 skill、串接 artifact、產 run-scoped `run_manifest.json`、**人核准 STOP**；任一步失敗（含缺依賴）→ 立即停止、回報該步 stderr。
+- **`workflow/run.py`**：逐步以子程序跑各 skill、串接 artifact、產 run-scoped `run_manifest.json`、**人核准 STOP**；任一步失敗（含缺依賴）→ 立即停止、回報該步 stderr。 失敗時 manifest 帶 `failure{step,gate_type,message,artifact}`；`/sop-flow` 據此做**封頂自動修復**（同 run-id ≤ `--max-fix-retries` 次，程式強制上限），終點仍 DRAFT＋人核准。
 - **`commands/sop-flow.md`**：slash command，讓 agent 在目標專案 `/sop-flow` 觸發流程。
 - **`hooks/settings.snippet.json`**：hook 設定。
   - **SessionStart**：跑 `check_deps.py`，缺依賴在 session 開場就明確報錯。
