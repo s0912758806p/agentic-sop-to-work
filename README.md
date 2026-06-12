@@ -15,6 +15,13 @@
 
 ### 🗺️ At a glance · 運作一覽
 
+![Agentic-SOP flow — Human SOP → single-tool skills → run.py → per-step gate → DRAFT → human approval, with a Stop-hook regression gate guarding every change](assets/flow.gif)
+
+*Human SOP → single-tool skills → orchestrated flow (gated · branch · map) → DRAFT → human approval; a Stop-hook regression gate guards every change.<br>Human SOP → 單一工具 skill → 編排流程（閘門・分支・map）→ DRAFT → 人核准；Stop-hook 回歸閘門守住每次變更。*
+
+<details>
+<summary>靜態圖 / static diagram</summary>
+
 ```mermaid
 flowchart LR
     SOP["📄 Human SOP"]
@@ -39,7 +46,7 @@ flowchart LR
     style REG fill:#FFEBEE,stroke:#C62828,color:#B71C1C
 ```
 
-*Human SOP → single-tool skills → orchestrated flow (gated · branch · map) → DRAFT → human approval; a Stop-hook regression gate guards every change.<br>Human SOP → 單一工具 skill → 編排流程（閘門・分支・map）→ DRAFT → 人核准；Stop-hook 回歸閘門守住每次變更。*
+</details>
 
 ---
 
