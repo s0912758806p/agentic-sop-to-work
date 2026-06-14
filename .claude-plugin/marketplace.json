@@ -1,12 +1,17 @@
 {
   "name": "agentic-sop-to-work",
   "owner": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
-  "description": "Marketplace for agentic-sop tooling (methodology skills + kit + project-scoped gate).",
+  "description": "Marketplace for agentic-sop tooling + cross-domain review companions (methodology skills + kit + project-scoped gate + the Second Opinion honesty reviewer).",
   "plugins": [
     {
       "name": "agentic-sop-kit",
       "source": "./plugins/agentic-sop-kit",
       "description": "Human-SOP → agentic-workflow methodology: agentic-sop + agentic-workflow-audit skills, the /sop-flow command, a project-scoped Stop-hook regression gate, and the bundled portable kit."
+    },
+    {
+      "name": "second-opinion-honesty",
+      "source": "./plugins/second-opinion-honesty",
+      "description": "Independent adversarial honesty reviewer: scrutinizes a DRAFT output's claims-vs-evidence (no fabrication / overreach / invented IDs) before a human approves. Snaps onto agentic-sop-kit run dirs (FULL, uses the trace) or reviews any plain document (DEGRADED). Deterministic checks + a capped advisory LLM pass; the report is a DRAFT — the human owns the verdict."
     }
   ]
 }

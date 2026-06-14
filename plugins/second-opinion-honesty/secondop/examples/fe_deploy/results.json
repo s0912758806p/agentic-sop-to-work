@@ -1,0 +1,21 @@
+{
+  "schema": "deploy@1",
+  "produced_by": "deploy",
+  "data": {
+    "service": "web-frontend",
+    "commit": "a1b9f3e7",
+    "results": [
+      {"test": "build exit code", "value": 1, "limit_hi": 0, "verdict": "PASS"},
+      {"test": "bundle size kb", "value": 420, "limit_hi": 500, "verdict": "PASS"}
+    ],
+    "lighthouse_score": 95,
+    "conclusion": "Build is green; deploy approved."
+  },
+  "trace": [
+    {"value": "1", "source": "ci.log", "locator": "build step exit"},
+    {"value": "0", "source": "policy.yml", "locator": "required exit code"},
+    {"value": "420", "source": "ci.log", "locator": "bundle report"},
+    {"value": "500", "source": "policy.yml", "locator": "bundle budget"},
+    {"value": "a1b9f3e7", "source": "ci.log", "locator": "commit sha"}
+  ]
+}

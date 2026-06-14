@@ -1,0 +1,12 @@
+{
+  "flow": "be-api-conformance",
+  "run_id": "run_demo_be_api",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {"skill": "api-conformance", "ok": true, "out": "results.json", "error": ""},
+    {"skill": "report", "ok": true, "out": "report.md", "error": ""}
+  ],
+  "final_output": "report.md",
+  "human_review_required": true,
+  "banner": "DRAFT — demo API-conformance report; needs human review."
+}

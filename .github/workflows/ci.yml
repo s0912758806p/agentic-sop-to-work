@@ -22,3 +22,5 @@ jobs:
         run: python3 plugins/agentic-sop-kit/kit/selftest.py
       - name: Kit regression (verify --all)
         run: python3 plugins/agentic-sop-kit/kit/tests/verify.py --all
+      - name: Second Opinion regression
+        run: python3 plugins/second-opinion-honesty/tests/verify.py
