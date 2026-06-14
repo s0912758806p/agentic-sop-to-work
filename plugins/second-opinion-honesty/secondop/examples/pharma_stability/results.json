@@ -1,0 +1,30 @@
+{
+  "schema": "stability_acc@1",
+  "produced_by": "acc-stability",
+  "data": {
+    "product": "Acetaminophen Tablets 500 mg",
+    "batch_no": "AC-2407-X19",
+    "timepoint": "6M",
+    "condition": "40C/75RH",
+    "results": [
+      {"test": "Assay", "value": 96.5, "limit_lo": 98.0, "limit_hi": 102.0, "verdict": "PASS"},
+      {"test": "Moisture (KF)", "value": 0.7, "limit_hi": 5.0, "verdict": "PASS"}
+    ],
+    "aggregates": [
+      {"label": "Total impurities", "op": "sum", "over": [0.12, 0.08, 0.05], "stated": 0.40}
+    ],
+    "conclusion": "Stable through 24 months; recommend a 24-month shelf life."
+  },
+  "trace": [
+    {"value": "96.5", "source": "6M_results.pdf", "locator": "Assay row"},
+    {"value": "0.3", "source": "6M_results.pdf", "locator": "Moisture row"},
+    {"value": "0.12", "source": "6M_results.pdf", "locator": "Impurity A"},
+    {"value": "0.08", "source": "6M_results.pdf", "locator": "Impurity B"},
+    {"value": "0.05", "source": "6M_results.pdf", "locator": "Impurity C"},
+    {"value": "98.0", "source": "protocol.pdf", "locator": "Assay lower limit"},
+    {"value": "102.0", "source": "protocol.pdf", "locator": "Assay upper limit"},
+    {"value": "5.0", "source": "protocol.pdf", "locator": "Moisture limit"},
+    {"value": "6M", "source": "protocol.pdf", "locator": "timepoint"},
+    {"value": "40C/75RH", "source": "protocol.pdf", "locator": "condition"}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "apiconf@1",
+  "produced_by": "api-conformance",
+  "data": {
+    "service": "orders-api",
+    "trace_id": "req-7f3c-XX9",
+    "results": [
+      {"test": "endpoints conforming", "value": 8, "limit_lo": 12, "verdict": "PASS"},
+      {"test": "p95 latency ms", "value": 45, "limit_hi": 200, "verdict": "PASS"}
+    ],
+    "conclusion": "All 12 endpoints conform to the schema."
+  },
+  "trace": [
+    {"value": "8", "source": "conformance.json", "locator": "passed count"},
+    {"value": "12", "source": "openapi.yaml", "locator": "declared endpoint count"},
+    {"value": "45", "source": "loadtest.json", "locator": "p95 ms"},
+    {"value": "200", "source": "slo.yaml", "locator": "latency budget"}
+  ]
+}

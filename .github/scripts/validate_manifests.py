@@ -33,15 +33,20 @@ for p in mp.get("plugins", []):
     if not d.get("name") or not d.get("version"):
         errs.append(f"{pj} missing name/version")
 
-for sk in sorted(pathlib.Path("plugins/agentic-sop-kit/skills").glob("*/SKILL.md")):
-    t = sk.read_text(encoding="utf-8")
-    m = re.match(r"^---\s*\n(.*?)\n---\s*\n", t, re.S)
-    if not m:
-        errs.append(f"{sk} missing YAML frontmatter")
+# Validate every SKILL.md under EVERY plugin listed in the marketplace (not just the kit).
+for p in mp.get("plugins", []):
+    src = p.get("source")
+    if not src:
         continue
-    fm = m.group(1)
-    if "name:" not in fm or "description:" not in fm:
-        errs.append(f"{sk} frontmatter needs name + description")
+    for sk in sorted(pathlib.Path(src, "skills").glob("*/SKILL.md")):
+        t = sk.read_text(encoding="utf-8")
+        m = re.match(r"^---\s*\n(.*?)\n---\s*\n", t, re.S)
+        if not m:
+            errs.append(f"{sk} missing YAML frontmatter")
+            continue
+        fm = m.group(1)
+        if "name:" not in fm or "description:" not in fm:
+            errs.append(f"{sk} frontmatter needs name + description")
 
 if errs:
     print("❌ manifest validation failed:")

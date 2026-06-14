@@ -1,0 +1,13 @@
+{
+  "_comment": "v1 ships ONLY a SessionStart health check that NEVER blocks — it verifies the bundled stdlib-only engine imports so a broken install fails loud once. ${CLAUDE_PLUGIN_ROOT} resolves to this plugin's install location. The optional Stop-hook acknowledgement gate (做法 3 — block session-stop until a Second Opinion report is acknowledged) is a future, opt-in, project-scoped add-on and is intentionally NOT wired here.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py\"" }
+        ]
+      }
+    ]
+  }
+}

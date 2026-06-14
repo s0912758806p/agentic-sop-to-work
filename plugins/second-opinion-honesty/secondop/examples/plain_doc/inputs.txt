@@ -1,0 +1,5 @@
+assay 96.5
+moisture 0.3
+impurity 0.12
+impurity 0.08
+impurity 0.05
