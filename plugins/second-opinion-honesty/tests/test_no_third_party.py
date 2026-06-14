@@ -15,7 +15,7 @@ PKG = os.path.join(PLUGIN, "secondop")
 
 # Python 3.10+ exposes the full set; fall back to the engine's known stdlib imports.
 _STDLIB = set(getattr(sys, "stdlib_module_names", ()))
-_FALLBACK = {"json", "math", "os", "re", "sys", "argparse", "dataclasses", "typing"}
+_FALLBACK = {"json", "math", "os", "re", "sys", "argparse", "dataclasses", "typing", "datetime"}
 ALLOWED = (_STDLIB or _FALLBACK) | {"secondop"}
 
 

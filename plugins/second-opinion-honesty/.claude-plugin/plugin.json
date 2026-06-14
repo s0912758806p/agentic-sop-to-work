@@ -1,7 +1,7 @@
 {
   "name": "second-opinion-honesty",
-  "description": "Independent adversarial honesty reviewer for a DRAFT output: checks claims-vs-evidence (no fabrication, no overreach, no invented IDs) before a human approves. FULL mode reads an agentic-sop-kit run dir's trace; DEGRADED mode reviews any plain document with user-supplied inputs. Deterministic honesty checks in code + a capped ADVISORY adversarial LLM pass. The report is itself a DRAFT — a human owns the verdict; it never auto-approves or auto-rejects. Not a source-code reviewer.",
-  "version": "0.1.0",
+  "description": "Independent adversarial honesty reviewer for a DRAFT output: checks claims-vs-evidence (no fabrication, no overreach, no invented IDs) before a human approves. FULL mode reads an agentic-sop-kit run dir's trace; DEGRADED mode reviews any plain document with user-supplied inputs. Deterministic honesty checks in code + a capped ADVISORY adversarial LLM pass. The report is itself a DRAFT — a human owns the verdict; it never auto-approves or auto-rejects. An optional project-scoped Stop-hook can enforce that a human acknowledged a review before the session ends. Not a source-code reviewer.",
+  "version": "0.2.0",
   "author": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
   "homepage": "https://github.com/s0912758806p/agentic-sop-to-work",
   "repository": "https://github.com/s0912758806p/agentic-sop-to-work",
@@ -9,6 +9,6 @@
   "keywords": [
     "second-opinion", "honesty", "claims-vs-evidence", "adversarial-review",
     "fact-check", "no-fabrication", "draft-review", "domain-neutral",
-    "agentic-sop", "claude-code", "skills", "hooks"
+    "agentic-sop", "claude-code", "skills", "hooks", "stop-hook", "acknowledgement"
   ]
 }
