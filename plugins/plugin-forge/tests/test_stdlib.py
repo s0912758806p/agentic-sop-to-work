@@ -44,5 +44,15 @@ class TestStdlib(unittest.TestCase):
             _pkg(d, "demo", "import time, shutil, statistics, uuid, importlib\n")
             self.assertEqual(stdlib.check(d, strict=True), [])
 
+    def test_flat_sibling_imports_allowed(self):
+        # plugins may import sibling modules by bare name (sys.path-based), like the kit
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "lib"))
+            with open(os.path.join(d, "lib", "engine.py"), "w") as f:
+                f.write("x = 1\n")
+            with open(os.path.join(d, "lib", "flow.py"), "w") as f:
+                f.write("import engine\nfrom engine import x\n")
+            self.assertEqual(stdlib.check(d, strict=True), [])
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,6 @@
 Scans every .py under the plugin EXCEPT tests/, examples/, __pycache__/. Mirrors the
 test_no_third_party invariant, generalized to an arbitrary plugin."""
 import ast
-import glob
 import os
 import sys
 from ..model import Finding
@@ -42,20 +41,26 @@ def _engine_pyfiles(plugin_dir):
     return out
 
 
-def _local_packages(plugin_dir):
-    local = set()
-    for nm in os.listdir(plugin_dir):
-        sub = os.path.join(plugin_dir, nm)
-        if os.path.isdir(sub) and glob.glob(os.path.join(sub, "*.py")):
-            local.add(nm)
-    return local
+def _local_names(plugin_dir):
+    """Names importable from within the plugin: every subpackage/dir name AND every sibling
+    module basename. Plugins may use flat sys.path-based imports (e.g. the kit does
+    `import gates` / `from flow import ...` across kit/lib/*.py), so bare sibling-module
+    names are legitimate local imports, not third-party."""
+    names = set()
+    for root, dirs, files in os.walk(plugin_dir):
+        dirs[:] = [x for x in dirs if x not in _SKIP_DIRS]
+        names.update(dirs)
+        for fn in files:
+            if fn.endswith(".py") and fn != "__init__.py":
+                names.add(fn[:-3])
+    return names
 
 
 def check(plugin_dir, strict):
     if not strict:
         return []
     name = os.path.basename(os.path.normpath(plugin_dir))
-    allowed = (_STDLIB or _FALLBACK) | _local_packages(plugin_dir)
+    allowed = (_STDLIB or _FALLBACK) | _local_names(plugin_dir)
     findings = []
     for path in _engine_pyfiles(plugin_dir):
         rel = os.path.relpath(path, plugin_dir)
