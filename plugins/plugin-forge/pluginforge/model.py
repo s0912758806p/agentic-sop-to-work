@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Data model for plugin-forge. Pure dataclasses; no I/O."""
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -34,4 +35,7 @@ class PluginSpec:
 
     def __post_init__(self):
         if not self.pkg:
-            self.pkg = self.name.replace("-", "").replace("_", "")
+            pkg = re.sub(r"[^A-Za-z0-9]", "", self.name)
+            if pkg and pkg[0].isdigit():
+                pkg = "_" + pkg
+            self.pkg = pkg or self.name

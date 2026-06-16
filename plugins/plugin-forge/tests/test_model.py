@@ -21,5 +21,9 @@ class TestModel(unittest.TestCase):
     def test_pluginspec_pkg_strips_hyphens(self):
         self.assertEqual(PluginSpec(name="my-plugin").pkg, "myplugin")
 
+    def test_pluginspec_pkg_sanitizes_dots_and_leading_digit(self):
+        self.assertEqual(PluginSpec(name="my.plugin").pkg, "myplugin")
+        self.assertEqual(PluginSpec(name="2cool").pkg, "_2cool")
+
 if __name__ == "__main__":
     unittest.main()
