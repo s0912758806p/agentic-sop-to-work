@@ -1,0 +1,13 @@
+{
+  "_comment": "v0.1 ships ONLY a non-blocking SessionStart health check. The enforcing Stop-hook (opt-in ALCOA+ gate) is deferred to v0.2 — mirrors second-opinion-honesty v0.1.0 -> v0.2.0. ${CLAUDE_PLUGIN_ROOT} resolves to this plugin's install location.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py\"" }
+        ]
+      }
+    ]
+  }
+}
