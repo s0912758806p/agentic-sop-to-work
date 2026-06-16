@@ -9,7 +9,11 @@ def recompute(op, items, stated):
     sum/mean/min/max use math.isclose."""
     if op == "count":
         derived = len(items)
-        return (derived == stated, derived, "count")
+        try:
+            ok = derived == int(stated)
+        except (TypeError, ValueError):
+            ok = False
+        return (ok, derived, "count")
     nums = []
     for x in items:
         try:

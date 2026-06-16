@@ -38,5 +38,7 @@ def infer_from_run(run_data):
     aggs = data.get("aggregates")
     if isinstance(aggs, list):
         c.aggregates = [{"op": a.get("op"), "over": a.get("over"), "stated": a.get("stated")}
-                        for a in aggs if isinstance(a, dict) and a.get("op")]
+                        for a in aggs
+                        if isinstance(a, dict) and a.get("op") and a.get("over")
+                        and a.get("stated") is not None]
     return c

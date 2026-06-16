@@ -3,6 +3,7 @@
 import csv
 import json
 import os
+from dataclasses import fields as dc_fields
 from .model import Record, Entry
 
 
@@ -12,7 +13,9 @@ def read_degraded(record_path, contract):
             raw = json.load(f)
         if isinstance(raw, dict):
             fields = raw.get("fields", {})
-            entries = [Entry(**e) for e in raw.get("entries", [])]
+            _ef = {f.name for f in dc_fields(Entry)}
+            entries = [Entry(**{k: v for k, v in e.items() if k in _ef})
+                       for e in raw.get("entries", []) if isinstance(e, dict)]
         else:
             fields, entries = {}, []
         return Record(fields=fields, entries=entries, mode="DEGRADED", source=record_path)
@@ -36,6 +39,8 @@ def read_full(run_dir):
                  if str(s.get("out", "")).endswith(".json")]
     run_data, fields = {}, {}
     data_path = json_arts[-1] if json_arts else None
+    if data_path and not os.path.isabs(data_path):
+        data_path = os.path.join(run_dir, data_path)
     if data_path and os.path.exists(data_path):
         with open(data_path, encoding="utf-8") as f:
             run_data = json.load(f)

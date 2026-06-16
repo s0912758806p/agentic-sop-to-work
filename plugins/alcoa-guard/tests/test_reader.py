@@ -26,5 +26,27 @@ class TestReader(unittest.TestCase):
             r = reader.read_degraded(p, None)
             self.assertEqual(r.fields["a"], 1)
 
+    def test_json_list_root_is_empty_record(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "rec.json")
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump([1, 2, 3], f)   # list at root, not a dict
+            r = reader.read_degraded(p, None)
+            self.assertEqual(r.fields, {})
+            self.assertEqual(r.entries, [])
+
+    def test_read_full_loads_last_json_artifact(self):
+        with tempfile.TemporaryDirectory() as d:
+            art = os.path.join(d, "b.stats.json")
+            with open(art, "w", encoding="utf-8") as f:
+                json.dump({"data": {"vals": [1, 2, 3]}}, f)
+            man = os.path.join(d, "run_manifest.json")
+            with open(man, "w", encoding="utf-8") as f:
+                json.dump({"steps": [{"skill": "compute", "out": art}], "final_output": art}, f)
+            rec, run_data = reader.read_full(d)
+            self.assertEqual(rec.mode, "FULL")
+            self.assertEqual(rec.fields["vals"], [1, 2, 3])
+            self.assertEqual(run_data["data"]["vals"], [1, 2, 3])
+
 if __name__ == "__main__":
     unittest.main()
