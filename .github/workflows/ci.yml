@@ -24,3 +24,5 @@ jobs:
         run: python3 plugins/agentic-sop-kit/kit/tests/verify.py --all
       - name: Second Opinion regression
         run: python3 plugins/second-opinion-honesty/tests/verify.py
+      - name: ALCOA Guard regression
+        run: python3 plugins/alcoa-guard/tests/verify.py

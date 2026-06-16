@@ -12,6 +12,11 @@
       "name": "second-opinion-honesty",
       "source": "./plugins/second-opinion-honesty",
       "description": "Independent adversarial honesty reviewer: scrutinizes a DRAFT output's claims-vs-evidence (no fabrication / overreach / invented IDs) before a human approves. Snaps onto agentic-sop-kit run dirs (FULL, uses the trace) or reviews any plain document (DEGRADED). Deterministic checks + a capped advisory LLM pass; the report is a DRAFT — the human owns the verdict."
+    },
+    {
+      "name": "alcoa-guard",
+      "source": "./plugins/alcoa-guard",
+      "description": "Deterministic ALCOA+ data-integrity linter: checks Attributable / Contemporaneous / Complete / Accurate / Consistent in code and surfaces the human-judgment slice as a 【待補】 checklist it never auto-concludes. DEGRADED lints any CSV/JSON record against a declared contract; FULL snaps onto an agentic-sop-kit run dir. The report is a DRAFT — the human owns the verdict. Pure stdlib."
     }
   ]
 }

@@ -3,6 +3,12 @@
 All notable changes to **agentic-sop-kit** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+### Added
+- **alcoa-guard** (v0.1.0) — new companion plugin: deterministic ALCOA+ data-integrity linter
+  (Attributable / Contemporaneous / Complete / Accurate / Consistent), DEGRADED + FULL modes,
+  human-judgment checklist, pure stdlib. Enforcing Stop-hook deferred to v0.2.
+
 ## [1.5.4] — 2026-06-12
 ### Added
 - **Smart intake** for `agentic-sop` — classifies the input on trigger: a written spec / existing skill / filled SOP → use as-is; a natural-language need → Claude drafts a Human SOP (gaps `【待補】`, no fabrication), pauses for human confirm, then continues to decomposition. (Generative layer only; gates + DRAFT+human spine unchanged.)
