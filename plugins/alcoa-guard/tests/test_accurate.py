@@ -21,5 +21,15 @@ class TestAccurate(unittest.TestCase):
         out = accurate.check(r, c, "SOFT")
         self.assertTrue(any("recomputed" in f.detail for f in out))
 
+    def test_string_limit_does_not_crash(self):
+        r = Record(fields={"result": 99.2})
+        c = IntegrityContract(limits={"result": {"lo": "95", "hi": "105"}})
+        self.assertEqual(accurate.check(r, c, "HARD"), [])
+
+    def test_malformed_aggregate_skipped(self):
+        r = Record(fields={"vals": [1, 2, 3]})
+        c = IntegrityContract(aggregates=[{"op": "sum", "over": "vals"}])  # no 'stated'
+        self.assertEqual(accurate.check(r, c, "SOFT"), [])
+
 if __name__ == "__main__":
     unittest.main()
