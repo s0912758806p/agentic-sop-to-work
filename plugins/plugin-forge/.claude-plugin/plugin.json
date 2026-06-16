@@ -1,0 +1,10 @@
+{
+  "name": "plugin-forge",
+  "description": "Claude Code plugin linter + scaffolder. `lint` validates a plugin (or a whole marketplace) against a house grammar — a strict superset of the usual manifest/frontmatter checks plus stdlib-only, hook-protocol, and test-harness invariants; `scaffold` generates a grammar-conformant plugin skeleton that passes the linter by construction. Pure stdlib; self-hosting; runs standalone on any plugin or snaps onto this marketplace.",
+  "version": "0.1.0",
+  "author": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
+  "homepage": "https://github.com/s0912758806p/agentic-sop-to-work",
+  "repository": "https://github.com/s0912758806p/agentic-sop-to-work",
+  "license": "MIT",
+  "keywords": ["plugin", "linter", "scaffold", "marketplace", "claude-code", "stdlib", "manifest-validation", "developer-tools", "agentic-sop"]
+}
