@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """alcoa-guard CLI. FULL: --run-dir <kit run>. DEGRADED: --record <file> --contract <file>.
-Always exits 0; the HARD count lives in the report for a human (and the v0.2 hook) to gate on."""
+Exits 0 on success (findings never change the exit code — the HARD count lives in the report
+for a human, and the v0.2 hook, to gate on); exits 2 if required arguments are missing."""
 import argparse
 import os
 import sys

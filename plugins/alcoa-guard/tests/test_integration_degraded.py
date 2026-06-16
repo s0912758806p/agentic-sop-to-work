@@ -11,8 +11,12 @@ class TestDegraded(unittest.TestCase):
     def test_backdating_flagged_soft(self):
         import json
         with tempfile.TemporaryDirectory() as d:
-            rp = os.path.join(d, "e.csv"); open(rp, "w", encoding="utf-8").write(CSV)
-            cp = os.path.join(d, ".alcoa.json"); json.dump(CONTRACT, open(cp, "w", encoding="utf-8"))
+            rp = os.path.join(d, "e.csv")
+            with open(rp, "w", encoding="utf-8") as fh:
+                fh.write(CSV)
+            cp = os.path.join(d, ".alcoa.json")
+            with open(cp, "w", encoding="utf-8") as fh:
+                json.dump(CONTRACT, fh)
             rep, jpath, mpath = review.run_degraded(rp, cp, out_base=os.path.join(d, "out"),
                                                     as_of=__import__("datetime").date(2026, 6, 1))
             self.assertEqual(rep["summary"]["soft"], 1)

@@ -26,7 +26,8 @@ class TestReport(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             j, m = report.write(report.build(self._verdict()), d)
             self.assertTrue(os.path.exists(j) and os.path.exists(m))
-            json.load(open(j, encoding="utf-8"))
+            with open(j, encoding="utf-8") as fh:
+                json.load(fh)
 
 if __name__ == "__main__":
     unittest.main()
