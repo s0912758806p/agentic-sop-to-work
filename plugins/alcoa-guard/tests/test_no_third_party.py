@@ -20,8 +20,10 @@ class TestNoThirdParty(unittest.TestCase):
     def test_engine_is_stdlib_only(self):
         offenders = []
         paths = glob.glob(os.path.join(PKG, "*.py")) + glob.glob(os.path.join(PKG, "rules", "*.py"))
+        self.assertGreater(len(paths), 0, f"no alcoaguard source files found under {PKG!r}")
         for path in paths:
-            tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+            with open(path, encoding="utf-8") as fh:
+                tree = ast.parse(fh.read(), filename=path)
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
