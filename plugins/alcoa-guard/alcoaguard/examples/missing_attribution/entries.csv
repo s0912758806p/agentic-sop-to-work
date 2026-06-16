@@ -1,0 +1,4 @@
+field,value,author,timestamp
+operator,Alice,Alice,2026-05-01T09:00:00
+performed,2026-05-01,Alice,2026-05-01T09:00:00
+result,99.2,,2026-05-01T09:30:00

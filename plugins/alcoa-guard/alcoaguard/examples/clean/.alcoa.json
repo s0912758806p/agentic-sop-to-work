@@ -1,0 +1,8 @@
+{
+  "required_fields": ["operator", "performed", "result"],
+  "date_fields": ["performed", "signed"],
+  "date_order": [["performed", "signed"]],
+  "no_future": true,
+  "attribution": ["result"],
+  "limits": {"result": {"lo": 95.0, "hi": 105.0}}
+}
