@@ -20,7 +20,8 @@ class TestTestsRule(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tests"))
             for fn in ("verify.py", "test_no_third_party.py"):
-                open(os.path.join(d, "tests", fn), "w").close()
+                with open(os.path.join(d, "tests", fn), "w") as _f:
+                    pass
             self.assertEqual(tests_rule.check(d, strict=True), [])
 
 if __name__ == "__main__":

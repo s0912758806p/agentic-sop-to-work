@@ -51,9 +51,9 @@ def check_marketplace(repo_root):
     if not data.get("name") or not data.get("plugins"):
         findings.append(Finding("manifest:marketplace:fields", "manifest", "HARD", "<marketplace>", loc,
                                 "marketplace.json missing name/plugins"))
-    for p in data.get("plugins", []):
+    for i, p in enumerate(data.get("plugins", [])):
         if not p.get("name") or not p.get("source"):
-            findings.append(Finding("manifest:entry", "manifest", "HARD", "<marketplace>", loc,
+            findings.append(Finding(f"manifest:entry:{i}", "manifest", "HARD", "<marketplace>", loc,
                                     f"plugin entry needs name+source: {p}"))
             continue
         pj = os.path.join(repo_root, p["source"], ".claude-plugin", "plugin.json")

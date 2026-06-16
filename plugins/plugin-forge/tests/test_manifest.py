@@ -38,5 +38,14 @@ class TestManifest(unittest.TestCase):
             out = manifest.check_marketplace(d)  # plugins/a/.claude-plugin/plugin.json absent
             self.assertTrue(any("missing" in f.detail and "plugin.json" in f.detail for f in out))
 
+    def test_multiple_bad_entries_get_distinct_ids(self):
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, ".claude-plugin"))
+            with open(os.path.join(d, ".claude-plugin", "marketplace.json"), "w", encoding="utf-8") as f:
+                json.dump({"name": "mp", "plugins": [{"source": "./a"}, {"source": "./b"}]}, f)
+            out = manifest.check_marketplace(d)
+            ids = {x.id for x in out if x.id.startswith("manifest:entry:")}
+            self.assertEqual(len(ids), 2)
+
 if __name__ == "__main__":
     unittest.main()
