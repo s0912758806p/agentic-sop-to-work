@@ -16,9 +16,12 @@ def check(record, contract, severity):
                 detail="required field is missing / blank / 【待補】"))
     for f, members in contract.expected_set.items():
         present = record.fields.get(f)
-        present_set = set(present) if isinstance(present, list) else set()
+        present_keys = set()
+        if isinstance(present, list):
+            for item in present:
+                present_keys.add(item.get("id") if isinstance(item, dict) else item)
         for m in members:
-            if m not in present_set:
+            if m not in present_keys:
                 findings.append(Finding(
                     id=f"complete:set:{f}:{m}", principle="complete", severity=severity,
                     origin="deterministic", location=f,

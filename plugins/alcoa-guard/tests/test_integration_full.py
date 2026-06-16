@@ -22,5 +22,21 @@ class TestFull(unittest.TestCase):
             self.assertEqual(rep["mode"], "FULL")
             self.assertEqual(rep["summary"]["hard"], 1)   # sum stated 99 != 6
 
+    def test_full_results_path_does_not_crash(self):
+        import datetime
+        with tempfile.TemporaryDirectory() as d:
+            art = os.path.join(d, "b.stats.json")
+            with open(art, "w", encoding="utf-8") as fh:
+                json.dump({"data": {"results": [{"id": "S1"}, {"id": "S2"}]}}, fh)
+            man = os.path.join(d, "run_manifest.json")
+            with open(man, "w", encoding="utf-8") as fh:
+                json.dump({"steps": [{"skill": "compute", "out": art}],
+                           "final_output": art}, fh)
+            rep, jpath, mpath = review.run_full(
+                d, out_base=os.path.join(d, "out"), as_of=datetime.date(2026, 6, 1))
+            self.assertEqual(rep["mode"], "FULL")
+            # inferred expected_set == present ids -> zero completeness findings, no crash
+            self.assertEqual([f for f in rep["findings"] if f["principle"] == "complete"], [])
+
 if __name__ == "__main__":
     unittest.main()
