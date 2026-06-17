@@ -1,0 +1,13 @@
+{
+  "_comment": "plugin-forge is a static dev tool — its enforcement point is CI (lint --all --strict), not a session Stop-hook. SessionStart health-check only.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py\"" }
+        ]
+      }
+    ]
+  }
+}
