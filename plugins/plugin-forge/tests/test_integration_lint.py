@@ -31,5 +31,15 @@ class TestLintCLI(unittest.TestCase):
         r = subprocess.run([sys.executable, LINT], capture_output=True, text=True)
         self.assertEqual(r.returncode, 2)  # argparse usage error, not a crash (1)
 
+    def test_good_example_clean_bad_example_fails(self):
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        good = os.path.join(base, "pluginforge", "examples", "good_plugin")
+        bad = os.path.join(base, "pluginforge", "examples", "bad_plugin")
+        rg = subprocess.run([sys.executable, LINT, good, "--strict"], capture_output=True, text=True)
+        self.assertEqual(rg.returncode, 0, rg.stdout)
+        rb = subprocess.run([sys.executable, LINT, bad, "--strict"], capture_output=True, text=True)
+        self.assertEqual(rb.returncode, 1)
+        self.assertIn("requests", rb.stdout)  # stdlib rule caught the third-party import
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,1 @@
+# bad plugin, no frontmatter
