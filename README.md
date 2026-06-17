@@ -69,6 +69,7 @@ flowchart LR
 | **Hooks** (project-scoped) | `SessionStart` dep-check · `Stop` regression gate — **no-op until a project adopts the kit** |
 | **Portable kit** `kit/` | copy-into-any-project methodology + runnable example |
 | **Plugin** `alcoa-guard` | ALCOA+ data-integrity linter — deterministic checks for Attributable / Contemporaneous / Complete / Accurate / Consistent; surfaces the human-judgment slice as a `【待補】` checklist; pure stdlib; report is a DRAFT |
+| **Plugin** `plugin-forge` | Claude Code plugin linter + scaffolder — `lint` validates a plugin or whole marketplace against a house grammar (strict superset of manifest/frontmatter checks + stdlib-only, hook-protocol, and test-harness invariants); `scaffold` generates a grammar-conformant plugin skeleton; self-hosting; pure stdlib |
 
 **Engine (`run.py`)** — deterministic, code-decided, additive:
 - **Per-step gates** (block on fail, zero LLM): `cmd_gate` · `schema_gate` · `trace_gate` (no fabrication) · `recompute_gate`.
@@ -121,6 +122,7 @@ agentic-sop-to-work/
 | **Hooks**（專案範圍） | `SessionStart` 依賴檢查 · `Stop` 回歸閘門 — **專案未導入 kit 前一律 no-op** |
 | **可攜 kit** `kit/` | 複製到任何專案就能用的方法論 ＋ 可運行範例 |
 | **Plugin** `alcoa-guard` | ALCOA+ 資料完整性 linter — 確定性檢查 Attributable／Contemporaneous／Complete／Accurate／Consistent；人判部分呈現為 `【待補】` checklist；純 stdlib；產出為 DRAFT |
+| **Plugin** `plugin-forge` | Claude Code plugin linter + scaffolder — `lint` 依 house grammar 驗證單一 plugin 或整個 marketplace（manifest／frontmatter 檢查的嚴格超集＋stdlib-only、hook-protocol、test-harness 不變量）；`scaffold` 產生符合 grammar 的 plugin 骨架；自我宿主；純 stdlib |
 
 **引擎（`run.py`）** — 確定性、由程式決定、附加式：
 - **每步硬閘門**（fail 即停、零 LLM）：`cmd_gate` · `schema_gate` · `trace_gate`（防臆造）· `recompute_gate`。

@@ -16,8 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Validate manifests + skill frontmatter
-        run: python3 .github/scripts/validate_manifests.py
+      - name: Lint marketplace (plugin-forge, replaces validate_manifests)
+        run: python3 plugins/plugin-forge/pluginforge/lint.py --all --strict
       - name: Kit self-test
         run: python3 plugins/agentic-sop-kit/kit/selftest.py
       - name: Kit regression (verify --all)
@@ -26,3 +26,5 @@ jobs:
         run: python3 plugins/second-opinion-honesty/tests/verify.py
       - name: ALCOA Guard regression
         run: python3 plugins/alcoa-guard/tests/verify.py
+      - name: Plugin Forge regression
+        run: python3 plugins/plugin-forge/tests/verify.py

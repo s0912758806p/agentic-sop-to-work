@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 
 ## [Unreleased]
 ### Added
+- **plugin-forge** (v0.1.0) — new companion plugin: Claude Code plugin linter + scaffolder.
+  Its `lint --all --strict` replaces `validate_manifests.py` in CI (strict superset). Pure stdlib.
 - **alcoa-guard** (v0.1.0) — new companion plugin: deterministic ALCOA+ data-integrity linter
   (Attributable / Contemporaneous / Complete / Accurate / Consistent), DEGRADED + FULL modes,
   human-judgment checklist, pure stdlib. Enforcing Stop-hook deferred to v0.2.
