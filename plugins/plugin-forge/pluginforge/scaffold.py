@@ -23,6 +23,8 @@ def _write(path, text):
 def generate(spec, dest_root):
     """Create plugins/<name>/ under dest_root. Returns the plugin dir."""
     pdir = os.path.join(dest_root, "plugins", spec.name)
+    if os.path.exists(pdir):
+        raise FileExistsError(f"plugin directory already exists: {pdir}")
     files = {
         ".claude-plugin/plugin.json": T.PLUGIN_JSON,
         "README.md": T.README_MD,

@@ -160,7 +160,7 @@ ALLOWED = (_STDLIB or _FALLBACK) | {"<<PKG>>"}
 class TestNoThirdParty(unittest.TestCase):
     def test_stdlib_only(self):
         offenders = []
-        paths = glob.glob(os.path.join(PKG, "*.py")) + glob.glob(os.path.join(PKG, "**", "*.py"))
+        paths = glob.glob(os.path.join(PKG, "**", "*.py"), recursive=True)
         self.assertGreater(len(paths), 0, f"no sources under {PKG!r}")
         for path in paths:
             with open(path, encoding="utf-8") as f:
@@ -180,7 +180,11 @@ if __name__ == "__main__":
     unittest.main()
 '''
 
-SMOKE_TEST_PY = '''import os, sys, unittest
+SMOKE_TEST_PY = '''# SPDX-License-Identifier: MIT
+import os
+import sys
+import unittest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import <<PKG>>.review
 
