@@ -5,15 +5,20 @@ import os
 
 
 def from_marketplace(repo_root):
-    """Return [(name, abs_plugin_dir), ...] from <repo_root>/.claude-plugin/marketplace.json."""
+    """Return [(name, abs_plugin_dir), ...] from <repo_root>/.claude-plugin/marketplace.json.
+    Returns [] if the file is missing/invalid (check_marketplace reports that as a HARD finding);
+    only yields entries that have BOTH name and source (nameless entries are flagged separately)."""
     mp = os.path.join(repo_root, ".claude-plugin", "marketplace.json")
-    with open(mp, encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(mp, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return []
     out = []
     for p in data.get("plugins", []):
-        src = p.get("source")
-        if src:
-            out.append((p.get("name") or src, os.path.normpath(os.path.join(repo_root, src))))
+        src, name = p.get("source"), p.get("name")
+        if src and name:
+            out.append((name, os.path.normpath(os.path.join(repo_root, src))))
     return out
 
 

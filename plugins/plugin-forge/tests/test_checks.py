@@ -29,5 +29,20 @@ class TestChecks(unittest.TestCase):
             self.assertFalse(rep.clean)
             self.assertTrue(any("ghost" in f.detail or f.plugin == "ghost" for f in rep.findings))
 
+    def test_all_missing_marketplace_returns_report_not_crash(self):
+        with tempfile.TemporaryDirectory() as d:
+            rep = checks.run_lint(repo_root=d, all_plugins=True, strict=False)
+            self.assertFalse(rep.clean)                 # HARD: missing marketplace.json
+            self.assertIn("<marketplace>", rep.targets) # marketplace recorded as a target
+
+    def test_all_empty_plugins_list_is_clean(self):
+        import json
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, ".claude-plugin"))
+            with open(os.path.join(d, ".claude-plugin", "marketplace.json"), "w", encoding="utf-8") as f:
+                json.dump({"name": "mp", "plugins": []}, f)
+            rep = checks.run_lint(repo_root=d, all_plugins=True, strict=False)
+            self.assertTrue(rep.clean)
+
 if __name__ == "__main__":
     unittest.main()

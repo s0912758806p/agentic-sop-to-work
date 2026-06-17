@@ -19,6 +19,7 @@ def lint_plugin(plugin_dir, strict):
 def run_lint(repo_root=None, plugin_dir=None, all_plugins=False, strict=False):
     findings, targets = [], []
     if all_plugins:
+        targets.append("<marketplace>")
         findings.extend(manifest.check_marketplace(repo_root))
         for nm, pdir in discover.from_marketplace(repo_root):
             targets.append(nm)

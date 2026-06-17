@@ -41,5 +41,12 @@ class TestTestsRule(unittest.TestCase):
                     pass
             self.assertEqual(tests_rule.check(d, strict=True), [])
 
+    def test_root_level_harness_does_not_count(self):
+        with tempfile.TemporaryDirectory() as d:
+            for fn in ("verify.py", "test_no_third_party.py"):
+                with open(os.path.join(d, fn), "w") as f:
+                    pass
+            self.assertEqual(len(tests_rule.check(d, strict=True)), 2)  # root-level doesn't satisfy
+
 if __name__ == "__main__":
     unittest.main()

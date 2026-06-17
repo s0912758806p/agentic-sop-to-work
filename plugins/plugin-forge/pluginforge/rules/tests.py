@@ -12,7 +12,7 @@ _REQUIRED = ("verify.py", "test_no_third_party.py")
 def _has(plugin_dir, fname):
     for m in glob.glob(os.path.join(plugin_dir, "**", fname), recursive=True):
         parts = os.path.relpath(m, plugin_dir).split(os.sep)
-        if "examples" not in parts and "__pycache__" not in parts:
+        if len(parts) > 1 and "examples" not in parts and "__pycache__" not in parts:
             return True
     return False
 

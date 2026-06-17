@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Render a LintReport to a DRAFT report (JSON + Markdown)."""
+import dataclasses
 import json
 import os
 
@@ -11,7 +12,7 @@ def build(rep):
         "targets": rep.targets,
         "summary": {"hard": rep.hard, "soft": rep.soft},
         "clean": rep.clean,
-        "findings": [vars(f) for f in rep.findings],
+        "findings": [dataclasses.asdict(f) for f in rep.findings],
     }
 
 

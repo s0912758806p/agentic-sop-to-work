@@ -48,7 +48,7 @@ def check_marketplace(repo_root):
         return [Finding("manifest:marketplace:json", "manifest", "HARD", "<marketplace>", loc,
                         f"invalid JSON: {e}")]
     findings = []
-    if not data.get("name") or not data.get("plugins"):
+    if not data.get("name") or not isinstance(data.get("plugins"), list):
         findings.append(Finding("manifest:marketplace:fields", "manifest", "HARD", "<marketplace>", loc,
                                 "marketplace.json missing name/plugins"))
     for i, p in enumerate(data.get("plugins", [])):
@@ -58,7 +58,7 @@ def check_marketplace(repo_root):
             continue
         pj = os.path.join(repo_root, p["source"], ".claude-plugin", "plugin.json")
         if not os.path.exists(pj):
-            findings.append(Finding(f"manifest:pluginjson:{p['name']}", "manifest", "HARD",
+            findings.append(Finding(f"manifest:pluginjson:{i}:{p['name']}", "manifest", "HARD",
                                     p["name"], p["source"],
                                     f"missing {p['source']}/.claude-plugin/plugin.json"))
     return findings

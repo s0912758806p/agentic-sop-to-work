@@ -29,7 +29,7 @@ class TestLintCLI(unittest.TestCase):
 
     def test_no_args_errors(self):
         r = subprocess.run([sys.executable, LINT], capture_output=True, text=True)
-        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(r.returncode, 2)  # argparse usage error, not a crash (1)
 
 if __name__ == "__main__":
     unittest.main()
