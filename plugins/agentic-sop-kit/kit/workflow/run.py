@@ -117,15 +117,15 @@ def main(argv=None):
             try:
                 with open(sig_path, "a", encoding="utf-8") as sf:
                     sf.write(sig + "\n")
-            except OSError:
-                pass
+            except OSError as e:
+                print(f"  [WARN] could not record stall signature: {e} ｜ 無法記錄 stall signature", file=sys.stderr)
             history = _sig_history()
             verdict = progress.classify_progress(history, a.stall_window)
             if verdict:
                 try:
                     open(stalled_path, "w", encoding="utf-8").close()
-                except OSError:
-                    pass
+                except OSError as e:
+                    print(f"  [WARN] could not write stall marker: {e} ｜ 無法寫入 stall marker", file=sys.stderr)
                 mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "stalled": True,
                         "stall_reason": verdict, "failed_step": label, "repeated_signature": sig,
                         "stall_rounds": len(history), "stall_window": a.stall_window, "failure": failure,
