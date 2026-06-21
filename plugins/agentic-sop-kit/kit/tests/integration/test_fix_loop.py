@@ -39,7 +39,8 @@ def _failing_flow(d):
 
 def _run(flow, runs, run_id, *extra):
     return subprocess.run(
-        [sys.executable, RUN, "--flow", flow, "--out-base", runs, "--run-id", run_id, *extra],
+        [sys.executable, RUN, "--flow", flow, "--out-base", runs, "--run-id", run_id,
+         "--stall-window", "0", *extra],
         capture_output=True, text=True)
 
 
