@@ -110,6 +110,13 @@ class Stall(unittest.TestCase):
             self.assertTrue(m.get("stalled"))
             self.assertEqual(m.get("stall_reason"), "already_stalled")
 
+    def test_plan_shows_stall_window(self):
+        with tempfile.TemporaryDirectory() as d:
+            flow = _idle_flow(d)
+            r = _run(flow, os.path.join(d, "runs"), "p1", "--plan", "--stall-window", "2")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("stall", r.stdout.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

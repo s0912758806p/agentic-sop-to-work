@@ -45,7 +45,7 @@ def main(argv=None):
         flow = json.load(f)
 
     if a.plan:
-        raise SystemExit(print_plan(flow))
+        raise SystemExit(print_plan(flow, a.stall_window))
 
     inp = a.input or kit.kit_path(flow["input_default"])
     run = kit.run_dir(a.out_base, a.run_id)
