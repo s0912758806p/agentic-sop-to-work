@@ -48,7 +48,7 @@ class Classify(unittest.TestCase):
     def test_all_distinct_is_progress(self):
         self.assertIsNone(progress.classify_progress(["A", "B", "C"], 2))
 
-    def test_len3_cycle_not_caught(self):
+    def test_period3_cycle_not_caught(self):
         self.assertIsNone(progress.classify_progress(["A", "B", "C", "A"], 2))
 
     def test_window_zero_disables(self):
