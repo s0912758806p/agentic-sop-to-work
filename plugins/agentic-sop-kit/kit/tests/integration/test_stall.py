@@ -98,6 +98,18 @@ class Stall(unittest.TestCase):
             self.assertEqual(r2.returncode, 0, r2.stdout + r2.stderr)
             self.assertEqual(json.load(open(man, encoding="utf-8"))["state"], "OK_FOR_REVIEW")
 
+    def test_stalled_refuses_rerun(self):
+        with tempfile.TemporaryDirectory() as d:
+            flow, runs, rid = _idle_flow(d), os.path.join(d, "runs"), "s4"
+            man = os.path.join(runs, rid, "run_manifest.json")
+            for _ in range(2):  # exec 1 + exec 2 -> stalled (idle, window 2)
+                _run(flow, runs, rid, "--stall-window", "2", "--max-fix-retries", "5")
+            r3 = _run(flow, runs, rid, "--stall-window", "2", "--max-fix-retries", "5")
+            self.assertEqual(r3.returncode, 2)
+            m = json.load(open(man, encoding="utf-8"))
+            self.assertTrue(m.get("stalled"))
+            self.assertEqual(m.get("stall_reason"), "already_stalled")
+
 
 if __name__ == "__main__":
     unittest.main()
