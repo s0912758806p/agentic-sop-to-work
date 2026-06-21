@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 
 ## [Unreleased]
 ### Added
+- **stall detection** (agentic-sop-kit → v1.6.0) — Loop Engineering cut #1: deterministic, zero-LLM progress-based early-stop in the fix-loop. No verifiable progress (idle, or A→B→A thrash) → hard stop + refuse re-runs, mirroring the budget ceiling. New `kit/lib/loop/` package + `SOPKIT_STALL_WINDOW` (`--stall-window`, default 2; 0 disables; cycle cap fixed at 2). Pure stdlib.
 - **plugin-forge** (v0.1.0) — new companion plugin: Claude Code plugin linter + scaffolder.
   Its `lint --all --strict` replaces `validate_manifests.py` in CI (strict superset). Pure stdlib.
 - **alcoa-guard** (v0.1.0) — new companion plugin: deterministic ALCOA+ data-integrity linter

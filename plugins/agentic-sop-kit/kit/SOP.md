@@ -94,7 +94,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 - **`hooks/stop_regression.py`**（Stop hook）：
   - 全 pass / 無變更 → 放行停止。
   - 任一 fail → 以 `{"decision":"block","reason":…}` 把失敗詳情餵回 agent 去修；保留紀錄供人決定修正或回滾。
-  - **防迴圈**：用 Stop hook 輸入的 `stop_hook_active` 旗標 + 持久重試計數設上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停止再 block、改要求人工介入，杜絕「失敗→修→再觸發→再失敗」無限循環。
+  - **防迴圈**：用 Stop hook 輸入的 `stop_hook_active` 旗標 + 持久重試計數設上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停止再 block、改要求人工介入，杜絕「失敗→修→再觸發→再失敗」無限循環。fix-loop 為**雙終止**：budget（看次數，`SOPKIT_MAX_FIX_RETRIES`）＋ stall（看進度，`SOPKIT_STALL_WINDOW`，預設 2）——連續無可驗證進度（idle / A→B→A thrash）即確定性早停、拒絕重跑。
 
 > 手動全量驗證：`python3 tests/verify.py --all`（忽略變更偵測，建立基線/全跑）。
 
