@@ -26,3 +26,4 @@ description: Run the agentic-sop-kit workflow (extract→compute→report) and r
   3. `fix_exhausted:true` 或不可自動修 → **STOP，據實回報每次嘗試與原因**，不得佯稱成功。
   4. **永不為過關竄改輸出**（閘門查真相）；最終一律 **DRAFT、需人核准**，永不自動歸檔。
 - 事實只來自輸入與工具輸出；缺值標【待補】，絕不臆造。
+- 回歸閘門現附帶**健康監測**：覆蓋縮水會讓 `verify` 回 3（硬擋、接 Stop-hook）；變慢／flaky 只 advisory 印出、不擋。
