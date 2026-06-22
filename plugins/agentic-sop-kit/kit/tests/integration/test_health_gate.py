@@ -80,5 +80,20 @@ class HealthGate(unittest.TestCase):
         self.assertIn("HEALTH(advisory)", r.stdout)
 
 
+    def test_log_rotation_keeps_last_M(self):
+        log = os.path.join(self.kit, "tests", "regression_log.jsonl")
+        with open(log, "a", encoding="utf-8") as f:
+            for _ in range(100):
+                f.write(json.dumps({"trigger": "all", "metrics": {"total_seconds": 1.0},
+                                    "unit": [], "integration": []}) + "\n")
+        env = dict(os.environ, SOPKIT_STATE_KEEP_LOG="60")  # > log_floor 50
+        r = subprocess.run([sys.executable, self.verify, "--all"], cwd=self.kit, env=env,
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        with open(log, encoding="utf-8") as f:
+            n = sum(1 for _ in f)
+        self.assertLessEqual(n, 60, "log should be rotated to keep <= 60")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

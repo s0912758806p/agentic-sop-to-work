@@ -32,7 +32,7 @@ STATE = os.path.join(KIT, "tests", ".verify_state.json")
 LOG = os.path.join(KIT, "tests", "regression_log.jsonl")
 BASELINE = os.path.join(KIT, "tests", ".health_baseline.json")
 sys.path.insert(0, os.path.join(KIT, "lib"))
-from loop import health  # noqa: E402
+from loop import health, state  # noqa: E402
 
 # 變更偵測時忽略的（產生物 / 快取 / 紀錄）——它們變動不代表「功能」變動。
 _SKIP_DIRS = {"runs", "__pycache__", ".git", ".pytest_cache"}
@@ -47,6 +47,23 @@ def _load(path, default):
             return json.load(f)
     except Exception:
         return default
+
+
+def _rotate_log(keep):
+    try:
+        with open(LOG, encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return
+    if len(lines) <= keep:
+        return
+    tmp = LOG + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.writelines(lines[-keep:])
+        os.replace(tmp, LOG)
+    except OSError as e:
+        print(f"WARNING: 無法輪替回歸紀錄 {LOG}: {e}", file=sys.stderr)
 
 
 def _read_baseline():
@@ -257,6 +274,9 @@ def main(argv=None):
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except OSError as e:
         print(f"WARNING: 無法寫入回歸紀錄 {LOG}: {e}", file=sys.stderr)
+
+    # cut #3: bounded state — keep the regression log to the last log_keep lines.
+    _rotate_log(state.log_keep_count(int(os.environ.get("SOPKIT_STATE_KEEP_LOG", "200"))))
 
     # (5) 判定 + 快照更新
     print(f"— verdict={verdict}  通過 {n_pass}/{len(all_res)}  指標 {json.dumps(metrics, ensure_ascii=False)}")

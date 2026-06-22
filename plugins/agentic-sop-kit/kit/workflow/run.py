@@ -11,6 +11,7 @@
 import argparse
 import json
 import os
+import shutil
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
@@ -18,10 +19,33 @@ import kit  # noqa: E402
 import gates  # noqa: E402
 from flow import resolve_branch  # noqa: E402
 from engine import run_step, print_plan  # noqa: E402
-from loop import progress  # noqa: E402
+from loop import progress, state  # noqa: E402
 
 FLOW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flow.json")
 BANNER = "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+
+
+def _keep_runs():
+    return int(os.environ.get("SOPKIT_STATE_KEEP_RUNS", "20"))
+
+
+def _count_run_dirs(base):
+    if not os.path.isdir(base):
+        return 0
+    return sum(1 for n in os.listdir(base) if os.path.isdir(os.path.join(base, n)))
+
+
+def _prune_runs(base, keep_runs):
+    if not os.path.isdir(base):
+        print("  (no runs dir — nothing to prune ｜ 無 runs 可清)")
+        return 0
+    entries = [(n, os.path.getmtime(os.path.join(base, n)))
+               for n in os.listdir(base) if os.path.isdir(os.path.join(base, n))]
+    evict = state.runs_to_evict(entries, keep_runs=keep_runs)
+    for rid in evict:
+        shutil.rmtree(os.path.join(base, rid), ignore_errors=True)
+    print(f"  🧹 pruned {len(evict)} run-dir(s); kept newest {min(len(entries), keep_runs)} ｜ 已清理舊 run")
+    return 0
 
 
 def main(argv=None):
@@ -39,10 +63,20 @@ def main(argv=None):
                     help="stall early-stop: how many consecutive identical failure signatures count as "
                          "'no progress' (default: $SOPKIT_STALL_WINDOW or 2; 0 disables; cycle cap fixed at 2). "
                          "Deterministic, zero-LLM — complements the budget ceiling.")
+    ap.add_argument("--prune", action="store_true",
+                    help="evict run dirs beyond SOPKIT_STATE_KEEP_RUNS (newest kept); deletes — human-authorized")
     a = ap.parse_args(argv)
+
+    base = a.out_base or kit.kit_path("runs")
+    if a.prune:
+        raise SystemExit(_prune_runs(base, _keep_runs()))
 
     with open(a.flow, encoding="utf-8") as f:
         flow = json.load(f)
+
+    _n = _count_run_dirs(base)
+    if _n > _keep_runs():
+        print(f"  ℹ️ {_n} run-dirs (keep {_keep_runs()}); {_n - _keep_runs()} prunable — run with --prune ｜ 可清舊 run")
 
     if a.plan:
         raise SystemExit(print_plan(flow, a.stall_window))
