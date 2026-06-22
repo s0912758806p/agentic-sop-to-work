@@ -27,3 +27,4 @@ description: Run the agentic-sop-kit workflow (extract→compute→report) and r
   4. **永不為過關竄改輸出**（閘門查真相）；最終一律 **DRAFT、需人核准**，永不自動歸檔。
 - 事實只來自輸入與工具輸出；缺值標【待補】，絕不臆造。
 - 回歸閘門現附帶**健康監測**：覆蓋縮水會讓 `verify` 回 3（硬擋、接 Stop-hook）；變慢／flaky 只 advisory 印出、不擋。刻意降覆蓋用 `verify.py --rebaseline`。
+- 迴圈狀態**有界**：`regression_log` 由 `verify` 自動輪替（保底不傷健康趨勢）；舊 run 目錄用 `python3 .../run.py --prune`（人授權）清理。
