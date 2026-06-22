@@ -23,6 +23,9 @@ class LogKeep(unittest.TestCase):
     def test_default_is_200(self):
         self.assertEqual(state.log_keep_count(), 200)
 
+    def test_keep_equals_floor(self):
+        self.assertEqual(state.log_keep_count(50, 50), 50)
+
 
 class RunsEvict(unittest.TestCase):
     def test_under_keep_is_empty(self):
@@ -38,6 +41,10 @@ class RunsEvict(unittest.TestCase):
         entries = [("b", 1.0), ("a", 1.0), ("c", 1.0)]  # identical mtime
         # newest by (mtime, run_id) desc = "c"; keep 1 → evict a, b
         self.assertEqual(sorted(state.runs_to_evict(entries, keep_runs=1)), ["a", "b"])
+
+    def test_exact_keep_is_empty(self):
+        entries = [("r%02d" % i, float(i)) for i in range(20)]
+        self.assertEqual(state.runs_to_evict(entries, keep_runs=20), [])
 
 
 class PruneCli(unittest.TestCase):

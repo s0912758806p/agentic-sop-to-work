@@ -18,7 +18,8 @@ def log_keep_count(keep_log=200, log_floor=50):
 
 def runs_to_evict(run_entries, keep_runs=20):
     """run_entries: list of (run_id, mtime). Keep the newest keep_runs (by mtime, then run_id);
-    return the run_ids to evict. <= keep_runs entries → []. Deterministic via the run_id tiebreak."""
+    return the run_ids to evict. <= keep_runs entries → []. Deterministic via the run_id tiebreak.
+    Negative keep_runs is clamped to 0."""
     if keep_runs < 0:
         keep_runs = 0
     ordered = sorted(run_entries, key=lambda e: (e[1], e[0]), reverse=True)
