@@ -30,6 +30,9 @@ KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REG = os.path.join(KIT, "tests", "registry.json")
 STATE = os.path.join(KIT, "tests", ".verify_state.json")
 LOG = os.path.join(KIT, "tests", "regression_log.jsonl")
+BASELINE = os.path.join(KIT, "tests", ".health_baseline.json")
+sys.path.insert(0, os.path.join(KIT, "lib"))
+from loop import health  # noqa: E402
 
 # 變更偵測時忽略的（產生物 / 快取 / 紀錄）——它們變動不代表「功能」變動。
 _SKIP_DIRS = {"runs", "__pycache__", ".git", ".pytest_cache"}
@@ -44,6 +47,36 @@ def _load(path, default):
             return json.load(f)
     except Exception:
         return default
+
+
+def _read_baseline():
+    d = _load(BASELINE, None)
+    return d.get("tests") if isinstance(d, dict) else None
+
+
+def _write_baseline(n):
+    try:
+        with open(BASELINE, "w", encoding="utf-8") as f:
+            json.dump({"tests": n}, f)
+    except OSError as e:
+        print(f"WARNING: 無法寫入 health 基線 {BASELINE}: {e}", file=sys.stderr)
+
+
+def _log_entries():
+    out = []
+    try:
+        with open(LOG, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    out.append(json.loads(line))
+                except ValueError:
+                    pass
+    except OSError:
+        pass
+    return out
 
 
 def _sha(full):
@@ -107,6 +140,8 @@ def _run_test(rel):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="agentic-sop-kit 自動回歸驗證")
     ap.add_argument("--all", action="store_true", help="忽略變更偵測，全量跑（建立基線/人工驗證）")
+    ap.add_argument("--rebaseline", action="store_true",
+                    help="把 health 覆蓋基線設為目前註冊測試數（人工確認刻意降覆蓋後使用）")
     args = ap.parse_args(argv)
 
     reg = _load(REG, None)
@@ -115,6 +150,12 @@ def main(argv=None):
         return 3
     skills = reg.get("skills", {})
     integration = reg.get("integration", {})
+
+    if args.rebaseline:
+        n = health.count_registered_tests(reg)
+        _write_baseline(n)
+        print(f"✔ health 覆蓋基線重設為 {n} 個註冊測試。")
+        return 0
 
     # (1) 交叉比對：flow 用到的每個 skill 都必須登記測試（防「納入新 skill 卻忘了登記測試」）。
     flow_skills, n_steps = _flow_skills()
@@ -220,6 +261,22 @@ def main(argv=None):
     # (5) 判定 + 快照更新
     print(f"— verdict={verdict}  通過 {n_pass}/{len(all_res)}  指標 {json.dumps(metrics, ensure_ascii=False)}")
     if passed:
+        # (6) runtime health — H1(coverage) gates via exit 3; A2/A3 advisory only, never gate.
+        baseline = _read_baseline()
+        report = health.assess_health(
+            reg, _log_entries(), baseline,
+            factor=float(os.environ.get("SOPKIT_HEALTH_SLOWDOWN_FACTOR", "2.0")),
+            window=int(os.environ.get("SOPKIT_HEALTH_FLAKY_WINDOW", "10")))
+        if report["hard"]:
+            for h in report["hard"]:
+                print(f"❌ HEALTH(hard): {h['message']}", file=sys.stderr)
+            print("（如為刻意降覆蓋，請先 `python3 tests/verify.py --rebaseline` 確認再重試）", file=sys.stderr)
+            return 3
+        current = health.count_registered_tests(reg)
+        if baseline is None or current > baseline:
+            _write_baseline(current)
+        for a in report["advisory"]:
+            print(f"⚠️ HEALTH(advisory): {a['message']}")
         try:
             with open(STATE, "w", encoding="utf-8") as f:
                 json.dump({"ts": entry["ts"], "verdict": "pass", "files": cur_files}, f, ensure_ascii=False)

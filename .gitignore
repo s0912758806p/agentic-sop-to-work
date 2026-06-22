@@ -9,6 +9,7 @@ __pycache__/
 .verify_state.json
 .retry_count
 regression_log.jsonl
+.health_baseline.json
 
 # Local / private owner notes (never committed or pushed)
 *.local.md
