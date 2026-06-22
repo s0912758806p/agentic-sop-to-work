@@ -34,7 +34,8 @@ class HealthGate(unittest.TestCase):
         _copy_kit(self.kit)
         self.verify = os.path.join(self.kit, "tests", "verify.py")
         self.reg = os.path.join(self.kit, "tests", "registry.json")
-        self._verify("--all")  # establish clean passing baseline (creates .health_baseline.json)
+        r0 = self._verify("--all")  # establish clean passing baseline
+        self.assertEqual(r0.returncode, 0, "setUp baseline run failed:\n" + r0.stdout + r0.stderr)
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
