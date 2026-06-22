@@ -50,6 +50,10 @@ class Slowdown(unittest.TestCase):
     def test_change_runs_ignored(self):
         self.assertIsNone(health.check_slowdown([_entry(trigger="change", total=9.0)] * 12))
 
+    def test_zero_baseline_returns_none(self):
+        entries = [_entry(total=0.0)] * 5 + [_entry(total=100.0)] * 3
+        self.assertIsNone(health.check_slowdown(entries))
+
 
 class Flaky(unittest.TestCase):
     def test_stable_returns_none(self):
@@ -62,6 +66,11 @@ class Flaky(unittest.TestCase):
         r = health.check_flaky(entries)
         self.assertIsNotNone(r)
         self.assertEqual(r["tests"], ["x.py"])
+
+    def test_outside_window_ignored(self):
+        old_fail = _entry(integration=[{"test": "x.py", "passed": False}])
+        recent = [_entry(integration=[{"test": "x.py", "passed": True}]) for _ in range(10)]
+        self.assertIsNone(health.check_flaky([old_fail] + recent, window=10))
 
 
 class Assess(unittest.TestCase):
