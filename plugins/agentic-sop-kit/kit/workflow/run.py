@@ -42,9 +42,15 @@ def _prune_runs(base, keep_runs):
     entries = [(n, os.path.getmtime(os.path.join(base, n)))
                for n in os.listdir(base) if os.path.isdir(os.path.join(base, n))]
     evict = state.runs_to_evict(entries, keep_runs=keep_runs)
+    removed = 0
     for rid in evict:
-        shutil.rmtree(os.path.join(base, rid), ignore_errors=True)
-    print(f"  🧹 pruned {len(evict)} run-dir(s); kept newest {min(len(entries), keep_runs)} ｜ 已清理舊 run")
+        p = os.path.join(base, rid)
+        shutil.rmtree(p, ignore_errors=True)
+        if os.path.exists(p):
+            print(f"  [WARN] could not prune {rid}: still present ｜ 無法清除", file=sys.stderr)
+        else:
+            removed += 1
+    print(f"  🧹 pruned {removed}/{len(evict)} run-dir(s); kept newest {min(len(entries), keep_runs)} ｜ 已清理舊 run")
     return 0
 
 
