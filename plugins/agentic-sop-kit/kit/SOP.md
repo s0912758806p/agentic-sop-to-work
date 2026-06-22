@@ -1,5 +1,7 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
+> **Loop Engineering 的方法論層**：把 Human SOP 工程化成一條**受控迴圈**——有界終止、可觀測健康、有界狀態（迴圈控制在 `lib/loop/`，感測在下方 gates）。
+
 ## 批次 map（map_over，循序 fan-out）
 工具步驟可加 `map_over: "<key>"`（指向**輸入 artifact data 的頂層清單鍵**）：引擎對清單**每一項**各跑一次該工具（依序、隔離），把每次輸出的 `data` 收進 `map@1` artifact 的 `data.items`（並附 `data.count`）。
 `{"skill":"check","tool":"skills/check/tool.py","map_over":"items","in":"$RUN/x.json","out":"$RUN/y.json"}`

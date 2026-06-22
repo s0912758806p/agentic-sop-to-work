@@ -2,8 +2,8 @@
 
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fs0912758806p%2Fagentic-sop-to-work%2Fmain%2Fplugins%2Fagentic-sop-kit%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue&prefix=v)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-2-8A2BE2)](plugins/agentic-sop-kit/skills)
 
-> Turn human SOPs into **deterministic, gated, human-approved** agentic workflows — no fabrication, no "mega-agent" rot.
-> 把人工 SOP 變成「**確定性引擎 ＋ 誠實硬閘門 ＋ 人核准**」的 agentic workflow——不臆造、不退化成 mega agent。
+> **Loop Engineering** — make an agent's loop produce **verifiable progress**, stay **honest**, and stay **bounded**, by deterministic mechanism rather than vibes. `agentic-sop-kit` is the reference toolkit: it turns a human SOP into a **controlled loop**, not a one-shot script — no fabrication, no "mega-agent" rot.
+> **Loop Engineering** — 用確定性機制(不是 vibes)讓 agent 的迴圈**每次迭代產生可驗證進度、不自我欺騙、不失控**。`agentic-sop-kit` 是它的參考工具包:把人工 SOP 變成一條**受控迴圈**——不臆造、不退化成 mega agent。
 
 ```
 /plugin marketplace add s0912758806p/agentic-sop-to-work
@@ -48,11 +48,20 @@ flowchart LR
 
 </details>
 
+### 🔁 The loop, engineered · 受控迴圈的三不變量
+
+`agentic-sop-kit` makes the loop a **controlled** one — three deterministic invariants, human-owned at the controlled/destructive edges:
+- **Bounded termination · 有界終止** — budget (count) **+ stall (progress)**: stop when iterations stop producing verifiable progress, not only when retries run out.
+- **Observable health · 可觀測健康** — a coverage drop **hard-gates**; slowdown / flaky surface as advisory.
+- **Bounded state · 有界狀態** — the regression log auto-rotates; run dirs prune on demand (human-authorized).
+
+*"Human SOP → workflow" is **one application** of this loop; the same loop-control applies to any agent loop.*
+
 ---
 
 ## English
 
-**What.** `agentic-sop-kit` turns a process you do by hand (a "Human SOP") into an **agentic workflow** an LLM can run safely and repeatably. A methodology + portable toolkit — not a chatbot. Built for regulated / high-stakes / must-be-correct work.
+**What.** `agentic-sop-kit` is a **Loop Engineering** toolkit: it turns a process you do by hand (a "Human SOP") into a **controlled agentic loop** an LLM can run safely and repeatably — with bounded termination, observable health, and bounded state. A methodology + portable toolkit — not a chatbot. Built for regulated / high-stakes / must-be-correct work.
 
 **Why it's safe** — it blocks the predictable LLM failures:
 - **Fabrication** → facts come only from inputs; gaps marked `【待補】`, never invented.
@@ -77,6 +86,7 @@ flowchart LR
 - **`branch`** (forward-only) · **`map_over`** (per-item) — control flow in code, never the model.
 - **Examples** — dependency-free FE / BE / DB / AI flows in [`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/).
 - **Capped auto fix-loop** — on a gate failure, `/sop-flow` auto-fixes & re-runs (`run.py --max-fix-retries`; code-enforced per run-id, capped by `SOPKIT_MAX_FIX_RETRIES`, default 3 — the same knob as the Stop-hook regression loop); exhausted → stop for a human; never patches output to pass.
+- **Loop control** (Loop Engineering, in [`kit/lib/loop/`](plugins/agentic-sop-kit/kit/lib/loop/)) — keeps the loop bounded, observed, and bounded-in-state: **stall** stops on no verifiable progress (`SOPKIT_STALL_WINDOW`); **health** hard-gates a coverage drop and flags slowdown/flaky (advisory); **state** auto-rotates the run log and prunes run dirs on demand (`run.py --prune`). All deterministic.
 
 **Iron rules** — facts only from inputs (`【待補】` for gaps) · deterministic work in code, gates hermetic & LLM-free · DRAFT + human approval · gates check truth, not keywords. **Real enforcement is the Stop-hook, not prose.**
 
@@ -105,7 +115,7 @@ agentic-sop-to-work/
 
 ## 繁體中文
 
-**是什麼。** `agentic-sop-kit` 把你手動做的流程（Human SOP）工程化成 LLM 能**安全、可重複**執行的 **agentic workflow**。是一套方法論 ＋ 可攜工具包，不是聊天機器人。為受監管／高風險／不能錯的工作而生。
+**是什麼。** `agentic-sop-kit` 是一套 **Loop Engineering** 工具包：把你手動做的流程（Human SOP）工程化成 LLM 能**安全、可重複**執行的**受控 agentic 迴圈**——有界終止 ＋ 可觀測健康 ＋ 有界狀態。是一套方法論 ＋ 可攜工具包，不是聊天機器人。為受監管／高風險／不能錯的工作而生。
 
 **為何可信** — 逐一封堵 LLM 的可預期失敗：
 - **臆造** → 事實只來自輸入；缺的標 `【待補】`，絕不杜撰。
@@ -130,6 +140,7 @@ agentic-sop-to-work/
 - **`branch`**（forward-only）· **`map_over`**（逐項）— 控制流由程式決定，不交給模型。
 - **範例** — 免依賴的 FE／BE／DB／AI 流程：[`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/)。
 - **封頂自動修復 fix-loop**——閘門失敗時 `/sop-flow` 自動修復並重跑（`run.py --max-fix-retries`，依 run-id 程式強制上限；與 Stop-hook 回歸共用 `SOPKIT_MAX_FIX_RETRIES`、預設 3）；用盡才停下交人；永不為過關竄改輸出。
+- **迴圈控制**（Loop Engineering，位於 [`kit/lib/loop/`](plugins/agentic-sop-kit/kit/lib/loop/)）——把迴圈維持**有界、可觀測、狀態有界**：**stall** 在無可驗證進度時早停（`SOPKIT_STALL_WINDOW`）；**health** 對覆蓋縮水硬擋、對變慢/flaky 給 advisory；**state** 自動輪替 run log、按需 `run.py --prune` 清理 run 目錄。全確定性。
 
 **鐵則** — 事實只來自輸入（缺標 `【待補】`）· 確定性用程式、閘門 hermetic 零 LLM · DRAFT ＋ 人核准 · 閘門查真相不查關鍵字。**真正的強制力在 Stop-hook，不在散文。**
 
