@@ -1,7 +1,7 @@
 {
   "name": "agentic-sop-kit",
-  "description": "Convert human SOPs into deterministic agentic workflows. Bundles the agentic-sop + agentic-workflow-audit skills, the /sop-flow command, a project-scoped Stop-hook regression gate, and the portable agentic-sop-kit.",
-  "version": "1.8.0",
+  "description": "Convert human SOPs into deterministic agentic workflows. Bundles the six-rung-ladder + agentic-sop + agentic-workflow-audit skills, the /sop-flow command, a project-scoped Stop-hook regression gate, and the portable agentic-sop-kit.",
+  "version": "1.9.0",
   "author": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
   "homepage": "https://github.com/s0912758806p/agentic-sop-to-work",
   "repository": "https://github.com/s0912758806p/agentic-sop-to-work",

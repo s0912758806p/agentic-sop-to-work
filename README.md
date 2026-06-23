@@ -1,6 +1,6 @@
 # agentic-sop-to-work
 
-[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fs0912758806p%2Fagentic-sop-to-work%2Fmain%2Fplugins%2Fagentic-sop-kit%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue&prefix=v)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-2-8A2BE2)](plugins/agentic-sop-kit/skills)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fs0912758806p%2Fagentic-sop-to-work%2Fmain%2Fplugins%2Fagentic-sop-kit%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue&prefix=v)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-3-8A2BE2)](plugins/agentic-sop-kit/skills)
 
 > **Loop Engineering** — make an agent's loop produce **verifiable progress**, stay **honest**, and stay **bounded**, by deterministic mechanism rather than vibes. `agentic-sop-kit` is the reference toolkit: it turns a human SOP into a **controlled loop**, not a one-shot script — no fabrication, no "mega-agent" rot.
 > **Loop Engineering** — 用確定性機制(不是 vibes)讓 agent 的迴圈**每次迭代產生可驗證進度、不自我欺騙、不失控**。`agentic-sop-kit` 是它的參考工具包:把人工 SOP 變成一條**受控迴圈**——不臆造、不退化成 mega agent。
@@ -73,7 +73,7 @@ flowchart LR
 
 | | |
 |---|---|
-| **2 Skills** (auto-trigger by intent) | `agentic-sop` — methodology + entry point + smart intake (plain need → drafts an SOP; spec → use as-is) · `agentic-workflow-audit` — read-only mega-agent auditor |
+| **3 Skills** (auto-trigger by intent) | `six-rung-ladder` — minimalist "should I build this at all?" filter (**decide**) · `agentic-sop` — methodology + entry point + smart intake (**build**) · `agentic-workflow-audit` — read-only mega-agent auditor (**audit**) |
 | **Command** `/agentic-sop-kit:sop-flow` | runs the kit's orchestration, reports a DRAFT |
 | **Hooks** (project-scoped) | `SessionStart` dep-check · `Stop` regression gate — **no-op until a project adopts the kit** |
 | **Portable kit** `kit/` | copy-into-any-project methodology + runnable example |
@@ -127,7 +127,7 @@ agentic-sop-to-work/
 
 | | |
 |---|---|
-| **2 支 Skills**（依意圖自動觸發） | `agentic-sop` — 方法論與入口＋智慧意圖分流（只有需求→起草 SOP；有 spec→照用） · `agentic-workflow-audit` — 唯讀的 mega-agent 稽核者 |
+| **3 支 Skills**（依意圖自動觸發） | `six-rung-ladder` —「到底該不該做」的極簡過濾網（**decide**） · `agentic-sop` — 方法論與入口＋智慧意圖分流（**build**） · `agentic-workflow-audit` — 唯讀的 mega-agent 稽核者（**audit**） |
 | **指令** `/agentic-sop-kit:sop-flow` | 跑 kit 的編排、回報 DRAFT |
 | **Hooks**（專案範圍） | `SessionStart` 依賴檢查 · `Stop` 回歸閘門 — **專案未導入 kit 前一律 no-op** |
 | **可攜 kit** `kit/` | 複製到任何專案就能用的方法論 ＋ 可運行範例 |
