@@ -3,7 +3,7 @@
 All notable changes to **agentic-sop-kit** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); the project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.9.0] — 2026-06-23
 ### Added
 - **Six-Rung Ladder skill** (`six-rung-ladder`, agentic-sop-kit → v1.9.0) — a triggerable minimalist decision filter for "should I write this code / add this dependency / introduce this abstraction?": YAGNI → Stdlib → Native platform → Installed dep → One line → Minimum-that-works, stopping at the first rung that resolves. Rungs 2 & 4 (stdlib / no-new-dep) route to the existing `test_no_third_party` + `plugin-forge lint` gates; the red line (defensive code — injection / resilience / security — never skipped) maps to the existing iron rule. Completes the methodology trio: **decide → build (`agentic-sop`) → audit (`agentic-workflow-audit`)**. Pure docs — no new code/deps.
 - **Bounded run-state** (Loop Engineering cut #3) — a deterministic policy (`kit/lib/loop/state.py`) keeps the kit's run-state bounded: `verify.py` **auto-rotates** `regression_log.jsonl` to the last `SOPKIT_STATE_KEEP_LOG` (200) lines, never below a fixed floor (50) that protects the cut #2 health windows; `run.py --prune` **(human-authorized)** evicts run dirs beyond `SOPKIT_STATE_KEEP_RUNS` (20), keeping the newest (in-flight runs are never evicted). `run.py` prints a non-destructive advisory when over the limit. Pure stdlib.
@@ -68,6 +68,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 ### Added
 - Initial public release: `agentic-sop` + `agentic-workflow-audit` methodology skills, the portable agentic-sop-kit, and the marketplace publish.
 
+[1.9.0]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.9.0
 [1.5.4]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.5.4
 [1.5.3]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.5.3
 [1.5.2]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.5.2
