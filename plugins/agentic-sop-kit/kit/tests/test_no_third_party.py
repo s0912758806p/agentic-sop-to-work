@@ -7,7 +7,7 @@ import sys
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STDLIB = set(getattr(sys, "stdlib_module_names", set())) | {"kit", "gates", "flow", "engine"}
+STDLIB = set(getattr(sys, "stdlib_module_names", set())) | {"kit", "gates", "flow", "engine", "loop"}
 
 
 def _imports(path):
