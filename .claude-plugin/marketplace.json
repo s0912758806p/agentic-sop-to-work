@@ -1,7 +1,7 @@
 {
   "name": "agentic-sop-to-work",
   "owner": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
-  "description": "Marketplace for agentic-sop tooling + cross-domain review companions (methodology skills + kit + project-scoped gate + the Second Opinion honesty reviewer).",
+  "description": "Loop Engineering for Claude Code agent loops — deterministic bounded termination (stall + budget), observable health, and bounded state. Ships agentic-sop-kit (human SOP → controlled loop) plus cross-domain review companions: Second Opinion (honesty reviewer), alcoa-guard (ALCOA+ data-integrity), plugin-forge (plugin linter/scaffolder).",
   "plugins": [
     {
       "name": "agentic-sop-kit",

@@ -1,6 +1,6 @@
 # agentic-sop-kit — 分享 / 安裝說明
 
-把「人工 SOP」轉成「一串各綁單一工具的 skill」，再由**編排層**自動串成完整流程的可重用套件。
+**Loop Engineering 的參考工具包**——把「人工 SOP」轉成一條**受控迴圈**：一串各綁單一工具的 skill ＋ **編排層** ＋ 迴圈控制（`lib/loop/`：有界終止／可觀測健康／有界狀態）的可重用套件。
 **整包可複製到任何專案，不改程式就能跑**（範例純 Python 標準庫）。方法論見 [`SOP.md`](SOP.md)。
 
 ---
@@ -46,6 +46,7 @@ python3 agentic-sop-kit/workflow/run.py --input /path/to/your_input.txt
 - **防迴圈**：`stop_hook_active` + 重試上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停手、提示人工介入。同一上限亦套用於 `run.py` 的 in-run fix-loop（兩層共用一個旋鈕）。
   - fix-loop 為**雙終止**：budget（看次數，`SOPKIT_MAX_FIX_RETRIES`）＋ stall（看進度，`SOPKIT_STALL_WINDOW`，預設 2）——連續無可驗證進度（idle / A→B→A thrash）即確定性早停、拒絕重跑。
 - **健康監測**：回歸迴圈附帶確定性健康讀數——覆蓋縮水（註冊測試數掉到基線下）走 `verify` exit 3 硬擋（接 Stop-hook）；變慢／flaky 為 advisory、不擋。刻意降覆蓋用 `verify.py --rebaseline`。
+- **有界狀態**：迴圈 run-state 不無限長——`verify` 自動把 `regression_log.jsonl` 截到最近 `SOPKIT_STATE_KEEP_LOG`（200，且不低於保底 50，保住健康窗）；舊 run 目錄用 `run.py --prune`（人授權刪除，保留最新 `SOPKIT_STATE_KEEP_RUNS`=20）。
 - 「更好」指標（步數/時間/成功率）只記入 log，由**人**回看趨勢判斷，hook 不自動下結論。
 
 手動全量驗證（建立基線 / 不靠 hook）：`python3 agentic-sop-kit/tests/verify.py --all`

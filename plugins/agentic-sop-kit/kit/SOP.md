@@ -1,5 +1,7 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
+> **Loop Engineering 的方法論層**：把 Human SOP 工程化成一條**受控迴圈**——有界終止、可觀測健康、有界狀態（迴圈控制在 `lib/loop/`，感測在下方 gates）。
+
 ## 批次 map（map_over，循序 fan-out）
 工具步驟可加 `map_over: "<key>"`（指向**輸入 artifact data 的頂層清單鍵**）：引擎對清單**每一項**各跑一次該工具（依序、隔離），把每次輸出的 `data` 收進 `map@1` artifact 的 `data.items`（並附 `data.count`）。
 `{"skill":"check","tool":"skills/check/tool.py","map_over":"items","in":"$RUN/x.json","out":"$RUN/y.json"}`
@@ -97,6 +99,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
   - **防迴圈**：用 Stop hook 輸入的 `stop_hook_active` 旗標 + 持久重試計數設上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停止再 block、改要求人工介入，杜絕「失敗→修→再觸發→再失敗」無限循環。
     - fix-loop 為**雙終止**：budget（看次數，`SOPKIT_MAX_FIX_RETRIES`）＋ stall（看進度，`SOPKIT_STALL_WINDOW`，預設 2）——連續無可驗證進度（idle / A→B→A thrash）即確定性早停、拒絕重跑。
 - **健康監測**：回歸迴圈附帶確定性健康讀數——覆蓋縮水（註冊測試數掉到基線下）走 `verify` exit 3 硬擋（接 Stop-hook）；變慢／flaky 為 advisory、不擋。刻意降覆蓋用 `verify.py --rebaseline`。
+- **有界狀態**：迴圈 run-state 不無限長——`verify` 自動把 `regression_log.jsonl` 截到最近 `SOPKIT_STATE_KEEP_LOG`（200，且不低於保底 50，保住健康窗）；舊 run 目錄用 `run.py --prune`（人授權刪除，保留最新 `SOPKIT_STATE_KEEP_RUNS`=20）。
 
 > 手動全量驗證：`python3 tests/verify.py --all`（忽略變更偵測，建立基線/全跑）。
 
