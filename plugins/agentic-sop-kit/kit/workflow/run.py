@@ -18,6 +18,7 @@ import kit  # noqa: E402
 import gates  # noqa: E402
 from flow import resolve_branch  # noqa: E402
 from engine import run_step, print_plan  # noqa: E402
+from loop import progress  # noqa: E402
 
 FLOW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flow.json")
 BANNER = "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
@@ -34,13 +35,17 @@ def main(argv=None):
     ap.add_argument("--max-fix-retries", type=int, default=int(os.environ.get("SOPKIT_MAX_FIX_RETRIES", "3")),
                     help="code-enforced ceiling on auto-fix re-runs per --run-id (default: $SOPKIT_MAX_FIX_RETRIES or 3, shared with the Stop-hook regression loop); "
                          "the fixing itself is done by the /sop-flow Claude layer, not here")
+    ap.add_argument("--stall-window", type=int, default=int(os.environ.get("SOPKIT_STALL_WINDOW", "2")),
+                    help="stall early-stop: how many consecutive identical failure signatures count as "
+                         "'no progress' (default: $SOPKIT_STALL_WINDOW or 2; 0 disables; cycle cap fixed at 2). "
+                         "Deterministic, zero-LLM — complements the budget ceiling.")
     a = ap.parse_args(argv)
 
     with open(a.flow, encoding="utf-8") as f:
         flow = json.load(f)
 
     if a.plan:
-        raise SystemExit(print_plan(flow))
+        raise SystemExit(print_plan(flow, a.stall_window))
 
     inp = a.input or kit.kit_path(flow["input_default"])
     run = kit.run_dir(a.out_base, a.run_id)
@@ -48,6 +53,27 @@ def main(argv=None):
 
     def resolve(v):
         return v.replace("$INPUT", inp).replace("$RUN", run)
+
+    # --- stall-detection state (per run-id; mirrors .fix_attempts) -----------
+    sig_path = os.path.join(run, ".fix_signatures")
+    stalled_path = os.path.join(run, ".stalled")
+
+    def _sig_history():
+        try:
+            with open(sig_path, encoding="utf-8") as f:
+                return [ln.strip() for ln in f if ln.strip()]
+        except OSError:
+            return []
+
+    # Hard pre-run refusal: a previously-detected stall STOPS re-runs (decision A).
+    if os.path.exists(stalled_path):
+        mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "stalled": True,
+                "stall_reason": "already_stalled",
+                "error": "run already marked stalled — no verifiable progress; STOP, human needed ｜ 已判定原地打轉，交人處理",
+                "human_review_required": True, "banner": BANNER}
+        kit.write_artifact(mani, os.path.join(run, "run_manifest.json"))
+        print("  ⛔ stalled — STOP, human needed ｜ 原地打轉，交人")
+        raise SystemExit(2)
 
     # --- code-enforced fix-loop ceiling (per run-id) -------------------------
     # The /sop-flow Claude layer auto-fixes by re-invoking with the SAME --run-id.
@@ -83,6 +109,33 @@ def main(argv=None):
     last_out = None
 
     def _fail(label, err, failure=None):
+        # Stall detection: turn the failure into a progress signature, append to the per-run
+        # history, and if there is no verifiable progress (idle / A→B→A thrash) STOP as a stall
+        # (decision A: also drop a .stalled marker so the next same-run-id call is refused).
+        if failure is not None:
+            sig = progress.progress_signature(failure, run_dir=run)
+            try:
+                with open(sig_path, "a", encoding="utf-8") as sf:
+                    sf.write(sig + "\n")
+            except OSError as e:
+                print(f"  [WARN] could not record stall signature: {e} ｜ 無法記錄 stall signature", file=sys.stderr)
+            history = _sig_history()
+            verdict = progress.classify_progress(history, a.stall_window)
+            if verdict:
+                try:
+                    open(stalled_path, "w", encoding="utf-8").close()
+                except OSError as e:
+                    print(f"  [WARN] could not write stall marker: {e} ｜ 無法寫入 stall marker", file=sys.stderr)
+                mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "stalled": True,
+                        "stall_reason": verdict, "failed_step": label, "repeated_signature": sig,
+                        "stall_rounds": len(history), "stall_window": a.stall_window, "failure": failure,
+                        "fix_attempt": prev + 1, "max_fix_retries": a.max_fix_retries, "steps": steps,
+                        "error": (f"stall detected ({verdict}): no verifiable progress over "
+                                  f"{len(history)} attempts — STOP, human needed ｜ 原地打轉，交人"),
+                        "human_review_required": True, "banner": BANNER}
+                kit.write_artifact(mani, os.path.join(run, "run_manifest.json"))
+                print(f"  ⛔ stall ({verdict}) — STOP, human needed ｜ 原地打轉，交人")
+                raise SystemExit(2)
         mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "failed_step": label,
                 "error": (err or "")[-1000:], "steps": steps,
                 "failure": failure, "fix_attempt": prev + 1, "max_fix_retries": a.max_fix_retries,

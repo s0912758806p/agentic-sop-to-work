@@ -58,7 +58,7 @@ def run_step(st, resolve, inp, allow_mutations):
     return ok, (r.stderr or r.stdout or "").strip()
 
 
-def print_plan(flow):
+def print_plan(flow, stall_window=None):
     """List every operation without executing; statically validate branch gotos.
     Returns an exit code: 0 = clean, 2 = structural problem(s) found."""
     steps = flow["steps"]
@@ -71,6 +71,10 @@ def print_plan(flow):
             else:
                 name2idx[key] = idx
     print(f"PLAN flow={flow['name']} (dry run — nothing executed)")
+    if stall_window is not None:
+        cond = (f"stall after {stall_window} idle round(s) or an A→B→A thrash"
+                if stall_window > 0 else "stall disabled (budget-only)")
+        print(f"  early-stop: {cond}; budget ceiling is separate")
     problems = []
     for i, st in enumerate(steps):
         n = i + 1
