@@ -45,18 +45,28 @@ def eval_predicate(when, data):
         return False
 
 
-def resolve_branch(cases, data):
+def resolve_branch_case(cases, data):
     """First case whose `when` matches wins; otherwise the `default` case (placement-independent).
 
     A `when` match always takes precedence over `default`, regardless of where `default` is listed.
-    Returns (goto, reason); (None, reason) if neither a `when` nor a `default` matches.
+    Returns (case, reason); (None, reason) if neither a `when` nor a `default` matches.
+
+    The whole case is returned, not just its `goto`, because the engine needs the edge's own
+    declaration — `back` and `max_revisits` — to decide whether a backward jump is legal and
+    how many revisits remain.
     """
     default_case = None
     for case in cases:
         if "when" in case and eval_predicate(case["when"], data):
-            return case.get("goto"), "matched"
+            return case, "matched"
         if case.get("default") and default_case is None:
             default_case = case
     if default_case is not None:
-        return default_case.get("goto"), "default"
+        return default_case, "default"
     return None, "no case matched and no default"
+
+
+def resolve_branch(cases, data):
+    """(goto, reason) form of resolve_branch_case — the original API, unchanged."""
+    case, reason = resolve_branch_case(cases, data)
+    return (case.get("goto") if case is not None else None), reason

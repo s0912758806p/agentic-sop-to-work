@@ -1,5 +1,5 @@
 ---
-description: Run the agentic-sop-kit workflow (extract→compute→report) and report the DRAFT result. Works out-of-the-box (bundled demo) even before a project adopts the kit.
+description: Run the agentic-sop-kit workflow (extract→compute→report, or a declared topology) and report the DRAFT result. Works out-of-the-box (bundled demo) even before a project adopts the kit.
 ---
 
 執行 agentic-sop-kit 的編排流程並回報 DRAFT。**先判斷目前專案是否已導入 kit**：
@@ -19,12 +19,18 @@ description: Run the agentic-sop-kit workflow (extract→compute→report) and r
    `python3 "${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py" --project "$CLAUDE_PROJECT_DIR"`（加 `--with-claude-skills` 會順便產出對話可觸發的 runner skills）。
 
 ### 兩種情況都適用
+- **先靜態驗證拓撲**：跑之前先加 `--plan`。exit 2 表示拓撲不合法（不可達節點／read-before-write／
+  寫入衝突／無界環／孤邊）——**據實回報那幾行問題、請人修 `flow.json`，不要硬跑**。
+  要給人看圖用 `--graph`；跑完的狀態在 manifest 的 `topology` 與 `path_taken` 裡。
 - 產出一律是 **DRAFT** → 提醒需人覆核、永不自動歸檔進受控系統。
 - 任一步 `"state":"FAILED"` → **封頂自動修復（fix-loop，最多 3 次）**，再不行才交人：
   1. 讀 manifest 的 `failure{step,gate_type,message,artifact}` 分類：**輸入問題／生成層輸出**（schema/trace 等）→ 修輸入或重生該段，**用相同 `--run-id` 重跑**（引擎對同 run-id 計數、超過 `--max-fix-retries 3` 會自行拒跑＝程式封頂）；**工具碼/recompute/cmd bug** → 診斷並提修正建議、不盲跑、不偷改輸出，交人；**判斷/受控步驟** → 不自動修，交人。
   2. `stalled:true`（原地打轉：`stall_reason` = idle/thrash）→ **STOP，回報卡住的 gate、重複的 `repeated_signature`、撞了 `stall_rounds` 圈**，不得佯稱成功、不得換 `--run-id` 規避。
   3. `fix_exhausted:true` 或不可自動修 → **STOP，據實回報每次嘗試與原因**，不得佯稱成功。
-  4. **永不為過關竄改輸出**（閘門查真相）；最終一律 **DRAFT、需人核准**，永不自動歸檔。
+  4. `revisit_exhausted:true`（退回邊撞上界）或 `topology_invalid:true`（拓撲不合法，未執行即拒跑）
+     → **STOP 交人**：回報 `back_edge`（哪條邊、上界多少）或那幾行拓撲問題。
+     **不得**為了讓它過關而調高 `max_revisits`、改寬 branch 條件、或改動 `reads`/`writes` 宣告——那是竄改閘門。
+  5. **永不為過關竄改輸出**（閘門查真相）；最終一律 **DRAFT、需人核准**，永不自動歸檔。
 - 事實只來自輸入與工具輸出；缺值標【待補】，絕不臆造。
 - 回歸閘門現附帶**健康監測**：覆蓋縮水會讓 `verify` 回 3（硬擋、接 Stop-hook）；變慢／flaky 只 advisory 印出、不擋。刻意降覆蓋用 `verify.py --rebaseline`。
 - 迴圈狀態**有界**：`regression_log` 由 `verify` 自動輪替（保底不傷健康趨勢）；舊 run 目錄用 `run.py --prune`（人授權）清理。

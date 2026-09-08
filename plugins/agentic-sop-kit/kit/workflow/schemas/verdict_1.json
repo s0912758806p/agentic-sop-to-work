@@ -1,0 +1,6 @@
+{
+  "schema": "verdict@1",
+  "description": "verdict 的產出：退回邊的判定來源（reject / pass）。",
+  "required": ["verdict", "defects", "round"],
+  "types": {"verdict": "str", "defects": "number", "round": "number"}
+}

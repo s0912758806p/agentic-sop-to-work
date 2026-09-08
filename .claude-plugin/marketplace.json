@@ -1,12 +1,15 @@
 {
   "name": "agentic-sop-to-work",
-  "owner": { "name": "s0912758806p", "url": "https://github.com/s0912758806p" },
-  "description": "Loop Engineering for Claude Code agent loops — deterministic bounded termination (stall + budget), observable health, and bounded state. Ships agentic-sop-kit (human SOP → controlled loop) plus cross-domain review companions: Second Opinion (honesty reviewer), alcoa-guard (ALCOA+ data-integrity), plugin-forge (plugin linter/scaffolder).",
+  "owner": {
+    "name": "s0912758806p",
+    "url": "https://github.com/s0912758806p"
+  },
+  "description": "Loop Engineering for Claude Code agent loops — deterministic bounded termination (stall + budget), observable health, and bounded state — and Graph Engineering for when one loop isn't enough: typed handoff edges, unique field ownership, bounded back-edges, and static topology validation. Ships agentic-sop-kit (human SOP → controlled loop or bounded graph) plus cross-domain review companions: Second Opinion (honesty reviewer), alcoa-guard (ALCOA+ data-integrity), plugin-forge (plugin linter/scaffolder).",
   "plugins": [
     {
       "name": "agentic-sop-kit",
       "source": "./plugins/agentic-sop-kit",
-      "description": "Human-SOP → agentic-workflow methodology: agentic-sop + agentic-workflow-audit skills, the /sop-flow command, a project-scoped Stop-hook regression gate, and the bundled portable kit."
+      "description": "Human SOP → a controlled agentic loop, or a bounded graph of them: typed handoff edges, one declaring writer per state field, bounded back-edges, and a static topology gate that refuses an illegal graph before it runs. Methodology skills + /sop-flow + a project-scoped regression Stop-hook + the portable kit."
     },
     {
       "name": "second-opinion-honesty",

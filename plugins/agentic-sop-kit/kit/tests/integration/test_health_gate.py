@@ -27,6 +27,17 @@ def _copy_kit(dst):
     shutil.copytree(KIT, dst, ignore=ignore)
 
 
+# The health gate judges a COUNT against a baseline; which tests are registered is
+# irrelevant to it. So the disposable copy runs a minimal registry instead of the full
+# one: same guarantee, a fraction of the work (this meta-test runs verify 7+ times).
+# Two constraints, or the test would go green for the wrong reason:
+#   • the 3 skills flow.json uses must stay registered, else verify exits 3 for
+#     "used by flow but no registered test" — a registry error, not coverage shrink;
+#   • integration.tests needs >= 2 entries, because _shrink_registry() pops one and an
+#     empty list makes verify exit 3 for "integration layer mandatory" instead.
+_MIN_INTEGRATION = ["tests/unit/test_gates.py", "tests/unit/test_flow.py"]
+
+
 class HealthGate(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -34,8 +45,23 @@ class HealthGate(unittest.TestCase):
         _copy_kit(self.kit)
         self.verify = os.path.join(self.kit, "tests", "verify.py")
         self.reg = os.path.join(self.kit, "tests", "registry.json")
+        self._minimize_registry()
         r0 = self._verify("--all")  # establish clean passing baseline
         self.assertEqual(r0.returncode, 0, "setUp baseline run failed:\n" + r0.stdout + r0.stderr)
+
+    def _minimize_registry(self):
+        """Shrink the copy's registry to the cheapest set that still satisfies verify.py."""
+        with open(self.reg, encoding="utf-8") as f:
+            reg = json.load(f)
+        flow_skills = set()
+        with open(os.path.join(self.kit, "workflow", "flow.json"), encoding="utf-8") as f:
+            for st in json.load(f).get("steps", []):
+                if st.get("skill"):
+                    flow_skills.add(st["skill"])
+        reg["skills"] = {k: v for k, v in reg["skills"].items() if k in flow_skills}
+        reg["integration"]["tests"] = list(_MIN_INTEGRATION)
+        with open(self.reg, "w", encoding="utf-8") as f:
+            json.dump(reg, f, ensure_ascii=False)
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
