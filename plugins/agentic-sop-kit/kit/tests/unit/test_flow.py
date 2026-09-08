@@ -58,5 +58,35 @@ class ResolveBranch(unittest.TestCase):
         self.assertEqual(goto, "investigate")  # placement-independent: when wins over earlier default
 
 
+class ResolveBranchCase(unittest.TestCase):
+    """執行期需要**整個 case**（才讀得到 back / max_revisits），不只是 goto。"""
+
+    CASES = [{"when": {"path": "v", "op": "==", "value": "reject"},
+              "goto": "build", "back": True, "max_revisits": 2},
+             {"default": True, "goto": "accept"}]
+
+    def test_returns_the_matching_case_with_its_bound(self):
+        case, _ = flow.resolve_branch_case(self.CASES, {"v": "reject"})
+        self.assertEqual(case["goto"], "build")
+        self.assertTrue(case["back"])
+        self.assertEqual(case["max_revisits"], 2)
+
+    def test_returns_the_default_case(self):
+        case, _ = flow.resolve_branch_case(self.CASES, {"v": "pass"})
+        self.assertEqual(case["goto"], "accept")
+        self.assertFalse(case.get("back"))
+
+    def test_no_match_returns_none(self):
+        case, reason = flow.resolve_branch_case([{"when": {"path": "v", "op": "==", "value": 1},
+                                                  "goto": "x"}], {"v": 2})
+        self.assertIsNone(case)
+        self.assertIn("no", reason.lower())
+
+    def test_resolve_branch_still_returns_goto(self):
+        """舊 API 不得變形（既有呼叫端與測試依賴 (goto, reason)）。"""
+        goto, _ = flow.resolve_branch(self.CASES, {"v": "reject"})
+        self.assertEqual(goto, "build")
+
+
 if __name__ == "__main__":
     unittest.main()

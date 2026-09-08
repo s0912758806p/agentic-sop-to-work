@@ -1,0 +1,20 @@
+{
+  "name": "review-loop",
+  "description": "圖示範流程：draft → verdict → gate ──reject（有界退回邊，max_revisits=2）──▶ draft，pass 才走 accept。四節點、含真的退回邊、每條邊有型別（schema_ref）、每個狀態欄位有唯一 writer。",
+  "input_default": "example/inputs/sample_readings.txt",
+  "steps": [
+    {"skill": "draft", "tool": "skills/draft/tool.py", "in": "$RUN/verdict.json", "out": "$RUN/draft.json",
+     "writes": ["draft"],
+     "gate": {"type": "schema_gate", "args": {"schema_ref": "draft@1"}}},
+    {"skill": "verdict", "tool": "skills/verdict/tool.py", "in": "$RUN/draft.json", "out": "$RUN/verdict.json",
+     "reads": ["draft"], "writes": ["verdict"],
+     "gate": {"type": "schema_gate", "args": {"schema_ref": "verdict@1"}}},
+    {"id": "gate", "branch": "$RUN/verdict.json", "cases": [
+      {"when": {"path": "verdict", "op": "==", "value": "reject"},
+       "goto": "draft", "back": true, "max_revisits": 2},
+      {"default": true, "goto": "accept"}]},
+    {"skill": "accept", "tool": "skills/accept/tool.py", "in": "$RUN/verdict.json", "out": "$RUN/accepted.json",
+     "reads": ["verdict"],
+     "gate": {"type": "schema_gate", "args": {"schema_ref": "accepted@1"}}}
+  ]
+}

@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 
+import graph  # noqa: E402
 import kit  # noqa: E402  (lib/ is on sys.path — the runner inserts it before importing this module)
 
 
@@ -59,23 +60,19 @@ def run_step(st, resolve, inp, allow_mutations):
 
 
 def print_plan(flow, stall_window=None):
-    """List every operation without executing; statically validate branch gotos.
-    Returns an exit code: 0 = clean, 2 = structural problem(s) found."""
+    """List every operation without executing; statically validate the whole topology.
+    Returns an exit code: 0 = clean, 2 = structural problem(s) found.
+
+    The verdict comes from graph.analyze() — the single authority on topology legality, so
+    --plan and the runtime cannot disagree about what is legal. This function only renders.
+    """
+    problems, info = graph.analyze(flow)
     steps = flow["steps"]
-    name2idx, dups = {}, []
-    for idx, st in enumerate(steps):
-        key = st.get("id") or st.get("skill")
-        if key:
-            if key in name2idx:
-                dups.append(key)
-            else:
-                name2idx[key] = idx
     print(f"PLAN flow={flow['name']} (dry run — nothing executed)")
     if stall_window is not None:
         cond = (f"stall after {stall_window} idle round(s) or an A→B→A thrash"
                 if stall_window > 0 else "stall disabled (budget-only)")
         print(f"  early-stop: {cond}; budget ceiling is separate")
-    problems = []
     for i, st in enumerate(steps):
         n = i + 1
         if "branch" in st:
@@ -84,21 +81,8 @@ def print_plan(flow, stall_window=None):
                 goto = c.get("goto")
                 cond = "default" if c.get("default") else f"when {c.get('when')}"
                 disp = goto if goto is not None else "(missing 'goto')"
-                if goto is None:
-                    tag = "  ✗ missing goto"
-                    problems.append(f"step {n}: a case is missing its 'goto' key")
-                elif goto not in name2idx:
-                    tag = "  ✗ unknown goto"
-                    problems.append(f"step {n} goto {goto!r}: no such step")
-                elif name2idx[goto] <= i:
-                    tag = "  ✗ not forward-only"
-                    problems.append(f"step {n} goto {goto!r}: not forward-only")
-                elif goto in dups:
-                    tag = "  ✗ ambiguous (duplicate name)"
-                    problems.append(f"step {n} goto {goto!r}: ambiguous — duplicate step name")
-                else:
-                    tag = ""
-                print(f"       {cond} → {disp}{tag}")
+                bk = f"  [back-edge · max_revisits={c.get('max_revisits')}]" if c.get("back") else ""
+                print(f"       {cond} → {disp}{bk}")
         elif "cmd" in st:
             mut = "  [MUTATES — needs --allow-mutations]" if st.get("mutates") else ""
             print(f"  {n}. cmd: {st['cmd']}{mut}")
@@ -106,11 +90,18 @@ def print_plan(flow, stall_window=None):
             mp = f"  [map_over={st['map_over']!r} · per-item]" if "map_over" in st else ""
             print(f"  {n}. tool: {st['tool']}{mp}")
         else:
-            tag = "  ✗ malformed (no tool/cmd/branch)"
-            problems.append(f"step {n}: has no tool/cmd/branch key")
-            print(f"  {n}.{tag}")
+            print(f"  {n}.  ✗ malformed (no tool/cmd/branch)")
+        node = info["nodes"][i]
+        if node["schema_ref"]:
+            print(f"       emits: {node['schema_ref']}")
+        if node["reads"] or node["writes"]:
+            print(f"       state: reads={node['reads'] or '-'} writes={node['writes'] or '-'}")
         if st.get("gate"):
             print(f"       gate: {st['gate']['type']}")
+    if info["owners"]:
+        print("  state field owners (unique writer per field):")
+        for f, owner in sorted(info["owners"].items()):
+            print(f"    {f} ← {owner}")
     if problems:
         print("  ⚠️ structural problems:")
         for p in problems:

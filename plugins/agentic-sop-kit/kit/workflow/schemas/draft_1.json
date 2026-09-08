@@ -1,0 +1,6 @@
+{
+  "schema": "draft@1",
+  "description": "draft 的產出：尚未修掉的缺陷數、輪次、本輪處理項。",
+  "required": ["defects", "round"],
+  "types": {"defects": "number", "round": "number", "addressed": "list"}
+}

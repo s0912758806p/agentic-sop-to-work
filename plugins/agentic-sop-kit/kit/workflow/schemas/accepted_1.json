@@ -1,0 +1,6 @@
+{
+  "schema": "accepted@1",
+  "description": "accept 的產出：終端節點的放行紀錄；仍是 DRAFT，需人覆核。",
+  "required": ["accepted", "rounds"],
+  "types": {"accepted": "bool", "rounds": "number", "draft_status": "str"}
+}

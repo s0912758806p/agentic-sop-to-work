@@ -1,6 +1,13 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
 > **Loop Engineering 的方法論層**：把 Human SOP 工程化成一條**受控迴圈**——有界終止、可觀測健康、有界狀態（迴圈控制在 `lib/loop/`，感測在下方 gates）。
+>
+> **Graph Engineering（一個迴圈不夠用時）**：Loop Engineering 讓**一個**迴圈可信；把多個可信的迴圈接成一張**有界的圖**時，同一套不變量下降到**節點與邊**的粒度——
+> **節點**＝一個工具的一步、**邊**＝有型別可驗證的交接契約、**狀態**＝節點宣告的 read-set / write-set、**退回邊**＝有界的反向條件邊。
+> 三階段從此是 `記錄 → 拆解 → **拓撲宣告**`。
+>
+> **節點不是 agent。** 節點就是「一個工具的一步」；把工具換成模型的節點，習慣上會被叫做 agent，但 `一 skill 一工具` 一個字不改。
+> 不釘這句，「一張 agent 的圖」會被拿去蓋 mega agent——正是本方法論存在的理由所要防的退化。
 
 ## 批次 map（map_over，循序 fan-out）
 工具步驟可加 `map_over: "<key>"`（指向**輸入 artifact data 的頂層清單鍵**）：引擎對清單**每一項**各跑一次該工具（依序、隔離），把每次輸出的 `data` 收進 `map@1` artifact 的 `data.items`（並附 `data.count`）。
@@ -8,16 +15,60 @@
 - **fail-loud**：任一項失敗即整步失敗（不靜默丟）。可在 map 步驟掛 `gate`（如 `recompute_gate` 驗 `count`）。
 - 鍵為頂層、循序執行（並行屬 YAGNI、未做）。
 
-## 條件分支（branch，forward-only）
+## 條件分支與有界退回邊（branch）
 flow.json 可放分支步驟，依**上一步 artifact 的 data** 由程式（非模型）決定走向：
 `{"branch":"$RUN/c.json","cases":[{"when":{"path":"severity","op":"==","value":"OOS"},"goto":"investigate"},{"default":true,"goto":"release"}]}`
-- `goto` 對應某步的 `skill`/`id`，且**只能往前跳**（forward-only）→ 無迴圈、確定性。
+- `goto` 對應某步的 `skill`/`id`。**往前跳**永遠合法。
+- **往後跳**（＝形成環）唯有宣告成**有界退回邊**才合法：
+  `{"when":{...},"goto":"draft","back":true,"max_revisits":2}`
+  缺 `back:true`、或 `max_revisits` 不是正整數、或宣告了 `back` 卻指向前方 → `--plan` 期即 **exit 2**。
+- 舊規則（forward-only，`無迴圈`）從「**禁止**」改為「**有界才准**」：確定性沒有讓步，
+  因為每個環都必須經過一條帶上界的退回邊，且 `lib/loop/` 的進度感測器會**逐邊**量測——
+  同一條退回邊上連續相同的路由狀態即 `idle`，在撞上界之前就確定性早停（雙終止：先到者停）。
+- 重訪不覆寫歷史：節點被退回重跑時，前一次的產物歸檔成 `<name>.visit<N>.<ext>`，
+  並記在 `run_manifest.json` 的 `path_taken[].archived_previous`。
 - 運算子白名單：`== != < <= > >= in exists`；型別不符回 false、不丟例外。
 - 複雜判斷可由一支確定性 router skill 輸出 `data.route`，再用 `{"path":"route","op":"==",...}` 分流。
 
+## 拓撲的靜態驗證（lib/graph.py）
+`python3 workflow/run.py --plan` 除了列出操作，還把整張圖靜態驗證一遍，
+任一項不合法即 **exit 2**——拓撲不合法**不必跑就知道**。
+**執行期套用完全相同的判定**：`graph.analyze` 是唯一權威，沒有「某些問題只對某些流程算數」的例外。
+
+| 檢查 | 抓什麼 |
+|------|--------|
+| 不可達節點 | 宣告了卻沒有任何路徑到得了 |
+| read-before-write | 節點讀的欄位，不是在**所有**到達它的路徑上都被寫過 |
+| 寫入衝突 | 兩個節點宣告寫同一欄位（所有權必須唯一） |
+| 無界環 | 環上沒有任何一條宣告了 `max_revisits` 的退回邊 |
+| 孤邊／重名／畸形步驟 | `goto` 指向不存在的步驟、被 goto 指到的重複命名、既無 tool/cmd/branch 的步驟 |
+
+後兩類的細分碼共 11 種（`graph.analyze` 的 finding `code`）。
+`read-before-write` 與 `唯一 writer` 是稽核條文「共享狀態**無誰給誰什麼的契約** = FAIL」的可執行版本：
+**唯一宣告 writer ＋ 所有路徑保證寫過**，就是那份契約。狀態的值仍只存在 artifact 裡。
+
+畫出來看：`python3 workflow/run.py --flow workflow/examples/graph.json --graph`（Mermaid ＋ 文字），
+出貨的圖示範流程長這樣（此區塊由 `--graph` 生成，`tests/test_graph_docs.py` 逐位元綁住）：
+
+<!-- BEGIN GENERATED: topology -->
+```mermaid
+flowchart LR
+    n0["draft<br/>draft@1"]
+    n1["verdict<br/>verdict@1"]
+    n2{{gate}}
+    n3["accept<br/>accepted@1"]
+    n0 --> n1
+    n1 --> n2
+    n2 -.->|"verdict == 'reject' (≤2)"| n0
+    n2 -->|"default"| n3
+```
+<!-- END GENERATED: topology -->
+
 ## 執行期硬閘門（lib/gates.py）與步驟型態
-flow.json 每步可選掛 deterministic 閘門（產出後驗、fail 即停）：
-`cmd_gate`（指令 exit 0）/ `schema_gate`（必填欄位）/ `trace_gate`（值須 verbatim 溯源、防臆造）/ `recompute_gate`（數字重算相符）。
+flow.json 每步可選掛 deterministic 閘門（產出後驗、fail 即停）。共 **5 deterministic gates**：
+`cmd_gate`（指令 exit 0）/ `schema_gate`（必填欄位；給了 `schema_ref` 就**連型別一起驗**）/
+`trace_gate`（值須 verbatim 溯源、防臆造）/ `recompute_gate`（數字重算相符）/
+`residual_gate`（宣告為必填的欄位仍是【待補】即擋；其他位置的【待補】是誠實空白，只計數不擋）。
 指令型步驟：`{"cmd":"...","out":"...","gate":{"type":"cmd_gate"}}`；會改動環境的標 `"mutates":true`，需 `--allow-mutations` 才跑。
 `python3 workflow/run.py --plan` 先列出所有操作（不執行），mutating 操作會標示。
 
@@ -29,7 +80,7 @@ flow.json 每步可選掛 deterministic 閘門（產出後驗、fail 即停）�
 ```
 Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
             ──(階段2: 拆解規則)──▶ N 個單一工具 skill（各自依賴/參數化/I-O 介面）
-            ──(階段3: 編排)──▶ flow.json + run.py + hook + slash command（A→B→C 自動串接）
+            ──(階段3: 拓撲宣告)──▶ flow.json（節點/邊/型別/欄位所有權/退回邊）+ run.py + hook + slash command
 ```
 
 ---
@@ -63,6 +114,10 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 5. **可獨立抽出重用**：`skills/<name>/` + `lib/kit.py` 複製到別專案即可單獨運作（無專案耦合）。
 6. **納入即登記測試**：每新增一個 skill，**同步**寫一支單元測試並登記到 **`tests/registry.json`**（受測功能登錄表）。
    `tests/verify.py` 會交叉比對 `flow.json`——任何流程用到卻未登記測試的 skill 會 **fail-loud（exit 3）**，杜絕「加了 skill 卻忘了測」。
+7. **宣告 read-set / write-set**：節點在 flow.json 上宣告它讀哪些狀態欄位（`reads`）、寫哪些（`writes`）。
+   一個欄位**只能有一個宣告 writer**；讀一個沒人在所有路徑上寫過的欄位是靜態錯誤。
+   欄位的**值**不另外存——仍在該節點的 artifact 裡，`written_by` 就是現成的 `produced_by`。
+   宣告是選擇性的：沒宣告就是今天的行為（見 README 的相容性一節）。
 
 ### 每個 skill 的產物
 - `skills/<name>/SKILL.md`：宣告**單一工具**、**完整依賴**、**參數化介面**、**I/O schema**、**獨立重用**說明。
@@ -110,8 +165,26 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 ```json
 {"schema": "<name@version>", "produced_by": "<skill>", "data": { ... }, "trace": [ {"value","source","locator"} ]}
 ```
-- `schema` 標版本，便於相容性檢查；`data` 為該步結果；`trace` 為來源追溯（逐層透傳）。
+- `schema` 標版本；`data` 為該步結果；`trace` 為來源追溯（逐層透傳）。
 - 範例鏈：`readings@1`（extract）→ `stats@1`（compute）→ Markdown DRAFT（report）。
+
+### schema 註冊表（讓 tag 有牙齒）
+`workflow/schemas/<tag>.json` 逐一宣告每個 tag 的必填欄位與型別（極簡自寫格式，非 JSON Schema——
+stdlib-only 由 `tests/test_no_third_party.py` 與 `plugin-forge lint --all --strict` 機械守著）。
+一份宣告就三行：
+```json
+{"schema": "draft@1", "required": ["defects", "round"],
+ "types": {"defects": "number", "round": "number", "addressed": "list"}}
+```
+邊上宣告 `"gate": {"type": "schema_gate", "args": {"schema_ref": "draft@1"}}` 後：
+上游送來的 tag 不符、或 `data` 形狀不符 → **硬失敗**。
+
+> **出貨只附「有被強制的」宣告。** `workflow/schemas/` 裡只有 `draft@1`／`verdict@1`／`accepted@1`
+> 三份——因為只有它們被 `workflow/examples/graph.json` 真正拿 `schema_ref` 強制。
+> 線性 demo 必須維持逐位元不變，所以它永遠不會用型別邊；替它（或替 `map@1`／`cmd@1`）預先附一份
+> 宣告，等於出貨一份沒人檢查的文件。要用就自己加三行——**每一份出貨的宣告都應該被一次真實執行強制**。
+沒宣告 `schema_ref` 時 `schema_gate` 行為與改版前逐字相同，`schema` tag 仍只是標籤。
+型別詞彙刻意只有 `list / dict / str / number / bool`；嵌套與 enum 等第一個真實流程需要時再加（只寫最小可用）。
 
 ---
 
@@ -135,9 +208,14 @@ agentic-sop-kit/
   check_deps.py               # 聚合依賴檢查（驗收 c）
   requirements.txt            # 依賴清單（範例純 stdlib）
   lib/kit.py                  # 可攜核心（路徑解析/依賴/artifact/編排進入點）
+  lib/graph.py                # 靜態拓撲分析（節點/邊/欄位所有權/有界環）
+  lib/schema.py               # schema 註冊表與型別驗證（讓交接邊有型別）
+  lib/gates.py, lib/flow.py   # 確定性閘門 / 控制流判定
+  lib/loop/                   # 迴圈控制（進度 stall、健康、有界狀態）
+  workflow/schemas/           # 被強制的 artifact tag 的欄位與型別宣告
   templates/                  # human_sop_template.md + skill_template/
   skills/<name>/              # 單一工具 skill（SKILL.md + tool.py）
-  workflow/flow.json,run.py   # 編排層
+  workflow/flow.json,run.py   # 編排層（--plan 靜態驗證 / --graph 畫拓撲）
   commands/sop-flow.md        # slash command
   hooks/settings.snippet.json # hook 設定（SessionStart 依賴檢查 + Stop 自動回歸）
   hooks/stop_regression.py    # Stop hook：自動回歸驗證 + 防迴圈
@@ -150,5 +228,8 @@ agentic-sop-kit/
 ```
 
 ## 跨領域範例（workflow/examples/）
-四個免依賴範例流程證明「同一引擎、四領域都跑得起來」：`fe.json`(cmd_gate)、`be.json`(schema_gate)、`db.json`(recompute_gate)、`ai.json`(trace_gate)。
-跑：`python3 workflow/run.py --flow workflow/examples/be.json`（先 `--plan` 看操作）。詳見 `workflow/examples/README.md`。
+五個免依賴範例流程證明「同一引擎、多領域與多形狀都跑得起來」：`fe.json`(cmd_gate)、`be.json`(schema_gate)、
+`db.json`(recompute_gate)、`ai.json`(trace_gate)，外加 `graph.json`——四節點、含**有界退回邊**、每條邊有型別、
+每個狀態欄位有唯一 writer（收斂需三輪，用掉宣告的 2 次重訪）。
+跑：`python3 workflow/run.py --flow workflow/examples/be.json`（先 `--plan` 看操作、`--graph` 看拓撲）。
+詳見 `workflow/examples/README.md`。
