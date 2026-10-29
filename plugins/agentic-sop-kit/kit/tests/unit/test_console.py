@@ -17,7 +17,8 @@ MSG = "  ✅ 流程完成 → report.md ｜ 🧹 pruned"
 
 class SafePrint(unittest.TestCase):
     def _stream(self, enc):
-        return io.TextIOWrapper(io.BytesIO(), encoding=enc, errors="strict")
+        # newline="\n": no CRLF translation on Windows, so the bytes are what safe_print wrote
+        return io.TextIOWrapper(io.BytesIO(), encoding=enc, errors="strict", newline="\n")
 
     def test_plain_print_would_crash(self):
         s = self._stream("cp1252")
