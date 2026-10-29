@@ -34,7 +34,8 @@ A human decides.
 ## To run it
 Invoke the **`/second-opinion`** command, which orchestrates the deterministic pass → your
 capped advisory pass → the code-enforced fold-in → the human STOP. Modes:
-- `/second-opinion <run_dir>` — FULL (an agentic-sop-kit run dir)
+- `/second-opinion <run_dir>` — FULL (an agentic-sop-kit run dir that finished `OK_FOR_REVIEW`;
+  a `FAILED` run is refused with exit 2 — report that, never review it as finished)
 - `/second-opinion <doc> --inputs <file...>` — DEGRADED (any document)
 - `/second-opinion` — the bundled cross-domain demo
 

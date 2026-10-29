@@ -23,5 +23,13 @@ class TestArithmetic(unittest.TestCase):
         ok, _, reason = recompute("median", [1, 2], 1.5)
         self.assertFalse(ok); self.assertIn("unknown op", reason)
 
+    def test_empty_list_fails(self):
+        ok, derived, reason = recompute("mean", [], 0)
+        self.assertFalse(ok); self.assertIsNone(derived); self.assertIn("no items", reason)
+
+    def test_reason_names_recomputed_vs_stated(self):
+        _, _, reason = recompute("sum", [1, 2, 3], 7)
+        self.assertIn("recomputed sum=6.0 vs stated 7", reason)
+
 if __name__ == "__main__":
     unittest.main()

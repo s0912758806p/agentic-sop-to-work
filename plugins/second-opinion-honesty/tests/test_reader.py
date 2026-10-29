@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
 from secondop import reader, checks  # noqa: E402
 
 
-def _make_run(tmp, rel_paths=False):
+def _make_run(tmp, rel_paths=False, state="OK_FOR_REVIEW"):
     art = {
         "schema": "qc@1", "produced_by": "qc",
         "data": {
@@ -47,8 +47,9 @@ def _make_run(tmp, rel_paths=False):
                 "Total impurities 1.10%\nStable through 24 months.\n")
     out_ref = "qc.json" if rel_paths else apath
     final_ref = "report.md" if rel_paths else rpath
-    mani = {"flow": "qc", "run_id": "run_test", "state": "OK_FOR_REVIEW",
-            "steps": [{"skill": "qc", "ok": True, "out": out_ref, "error": ""}],
+    mani = {"flow": "qc", "run_id": "run_test", "state": state,
+            "steps": [{"skill": "qc", "ok": True, "out": out_ref, "error": ""},
+                      {"skill": "branch→report", "ok": True, "out": out_ref, "error": ""}],
             "final_output": final_ref, "human_review_required": True, "banner": "DRAFT"}
     with open(os.path.join(tmp, "run_manifest.json"), "w", encoding="utf-8") as f:
         json.dump(mani, f)
@@ -90,6 +91,20 @@ class TestReadFull(unittest.TestCase):
             d = reader.read_full(tmp)
             self.assertGreaterEqual(len(d.sources), 5)
             self.assertEqual(len(d.verdicts), 2)
+
+    def test_refuses_a_failed_run(self):
+        # A FAILED run must never be reviewed as if it had finished.
+        with tempfile.TemporaryDirectory() as tmp:
+            _make_run(tmp, state="FAILED")
+            with self.assertRaises(reader.RunNotReviewable):
+                reader.read_full(tmp)
+
+    def test_cli_exits_2_on_a_failed_run(self):
+        from secondop import review
+        with tempfile.TemporaryDirectory() as tmp:
+            _make_run(tmp, state="FAILED")
+            self.assertEqual(review.main(["--run-dir", tmp, "--out-base", os.path.join(tmp, "o")]), 2)
+            self.assertFalse(os.path.exists(os.path.join(tmp, "o")))
 
 
 if __name__ == "__main__":

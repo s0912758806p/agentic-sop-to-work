@@ -7,7 +7,7 @@ argument-hint: "<run_dir> | --record <file> --contract <.alcoa.json>"
 
 Invoke the alcoa-guard linter on `$ARGUMENTS`.
 
-1. If the path is a kit run dir → `python3 -m alcoaguard.review --run-dir <dir>` (FULL).
+1. If the path is a kit run dir → `python3 -m alcoaguard.review --run-dir <dir>` (FULL). A run not in `OK_FOR_REVIEW` exits 2 — report the refusal; do not lint it as finished.
 2. If it is a record file → `python3 -m alcoaguard.review --record <file> --contract <.alcoa.json>` (DEGRADED; ask for the contract if absent).
 3. With no args → run the bundled `clean` example to demonstrate.
 

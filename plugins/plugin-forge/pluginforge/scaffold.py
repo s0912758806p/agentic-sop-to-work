@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Generate a grammar-conformant plugin skeleton that passes `lint --strict` by construction."""
+"""Generate a grammar-conformant plugin skeleton that passes `lint --strict` by construction.
+
+The new package gets a verbatim copy of plugin-forge's own vendored core (`<pkg>/_core/`,
+stamped, so `vendored-core-drift` catches a later hand edit) and the shared harness rendered
+from _core/harness.py."""
 import argparse
+import glob
 import os
+import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pluginforge import templates as T  # noqa: E402
+from pluginforge._core import harness  # noqa: E402
 from pluginforge.model import PluginSpec  # noqa: E402
+
+
+_CORE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_core")
 
 
 def _render(text, spec):
@@ -32,15 +42,18 @@ def generate(spec, dest_root):
         f"{spec.pkg}/model.py": T.MODEL_PY,
         f"{spec.pkg}/review.py": T.REVIEW_PY,
         "hooks/hooks.json": T.HOOKS_JSON,
-        "hooks/session_check.py": T.SESSION_CHECK_PY,
         f"skills/{spec.name}/SKILL.md": T.SKILL_MD,
         f"commands/{spec.name}.md": T.COMMAND_MD,
-        "tests/verify.py": T.VERIFY_PY,
-        "tests/test_no_third_party.py": T.NO_THIRD_PARTY_PY,
         "tests/test_smoke.py": T.SMOKE_TEST_PY,
     }
     for rel, text in files.items():
         _write(os.path.join(pdir, rel), _render(text, spec))
+    for rel, text in harness.FILES.items():
+        _write(os.path.join(pdir, rel), harness.render(text, spec.pkg, spec.name, f"{spec.pkg}.review"))
+    core = os.path.join(pdir, spec.pkg, "_core")
+    os.makedirs(core)
+    for src in sorted(glob.glob(os.path.join(_CORE, "*.py"))):
+        shutil.copyfile(src, os.path.join(core, os.path.basename(src)))
     os.makedirs(os.path.join(pdir, f"{spec.pkg}", "examples"), exist_ok=True)
     return pdir
 

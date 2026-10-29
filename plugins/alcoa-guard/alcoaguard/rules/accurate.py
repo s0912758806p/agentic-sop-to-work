@@ -34,5 +34,5 @@ def check(record, contract, severity):
             findings.append(Finding(
                 id=f"accurate:agg:{op}:{over}", principle="accurate", severity=severity,
                 origin="deterministic", location=over,
-                detail=f"{op} over {over}: stated {stated}, recomputed {derived} ({reason})"))
+                detail=f"{op} over {over}: {reason}"))
     return findings

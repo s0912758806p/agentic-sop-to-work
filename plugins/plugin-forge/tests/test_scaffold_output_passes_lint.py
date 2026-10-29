@@ -17,7 +17,8 @@ class TestScaffoldPassesLint(unittest.TestCase):
             pdir = scaffold.generate(PluginSpec(name="demo2"), dest_root=d)
             for rel in ("tests/verify.py", "tests/test_no_third_party.py",
                         "skills/demo2/SKILL.md", "commands/demo2.md",
-                        "hooks/hooks.json", "hooks/session_check.py", "demo2/__init__.py"):
+                        "hooks/hooks.json", "hooks/session_check.py", "demo2/__init__.py",
+                        "demo2/_core/__init__.py", "demo2/_core/run_contract.py"):
                 self.assertTrue(os.path.exists(os.path.join(pdir, rel)), f"missing {rel}")
 
     def test_scaffolded_verify_runs_green(self):
@@ -26,6 +27,22 @@ class TestScaffoldPassesLint(unittest.TestCase):
             r = subprocess.run([sys.executable, os.path.join(pdir, "tests", "verify.py")],
                                capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_scaffold_vendors_the_core_intact(self):
+        from pluginforge._core import vendor
+        own = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "pluginforge", "_core")
+        with tempfile.TemporaryDirectory() as d:
+            pdir = scaffold.generate(PluginSpec(name="demo4"), dest_root=d)
+            core = os.path.join(pdir, "demo4", "_core")
+            want = sorted(f for f in os.listdir(own) if f.endswith(".py"))
+            self.assertEqual(sorted(os.listdir(core)), want)
+            for fn in want:
+                with open(os.path.join(core, fn), encoding="utf-8") as f:
+                    self.assertTrue(vendor.intact(f.read()), fn)
+            r = subprocess.run([sys.executable, os.path.join(pdir, "hooks", "session_check.py")],
+                               capture_output=True, text=True)
+            self.assertEqual((r.returncode, r.stderr), (0, ""))
 
     def test_generate_refuses_existing_dir(self):
         with tempfile.TemporaryDirectory() as d:

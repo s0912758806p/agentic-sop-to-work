@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MIT
-"""Render a LintReport to a DRAFT report (JSON + Markdown)."""
+"""Render a LintReport to a DRAFT report (JSON + Markdown). Unlike the advisory reviewers,
+lint IS a gate (exit 1 on HARD), so it uses the shared dual write without the
+ADVISORY_ONLY frame."""
 import dataclasses
-import json
-import os
+from ._core import report as core_report
 
 
 def build(rep):
@@ -35,11 +36,4 @@ def to_markdown(rep):
 
 
 def write(rep, out_dir):
-    os.makedirs(out_dir, exist_ok=True)
-    jpath = os.path.join(out_dir, "plugin_forge_lint.json")
-    mpath = os.path.join(out_dir, "plugin_forge_lint.md")
-    with open(jpath, "w", encoding="utf-8") as f:
-        json.dump(rep, f, ensure_ascii=False, indent=2)
-    with open(mpath, "w", encoding="utf-8") as f:
-        f.write(to_markdown(rep))
-    return jpath, mpath
+    return core_report.write_dual(rep, out_dir, "plugin_forge_lint", to_markdown, advisory=False)

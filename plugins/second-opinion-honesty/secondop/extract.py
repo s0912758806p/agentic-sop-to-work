@@ -12,9 +12,8 @@ import os
 import re
 
 from . import core
+from ._core.markers import TBD as _PLACEHOLDER, contains_tbd
 from .model import Claim
-
-_PLACEHOLDER = "【待補】"
 _LEAD_NUM = re.compile(r"[-+]?\d[\d,]*(?:\.\d+)?")
 _STRIP = " \t\r\n:;,.()[]%<>="  # surrounding punctuation peeled off a token
 
@@ -29,7 +28,7 @@ def _has_letter_and_digit(s):
 
 def _classify(token):
     """(kind, value) for a token, or (None, None). kind in number|identifier|placeholder."""
-    if _PLACEHOLDER in token:
+    if contains_tbd(token):
         return "placeholder", _PLACEHOLDER
     t = _clean(token)
     if not t:

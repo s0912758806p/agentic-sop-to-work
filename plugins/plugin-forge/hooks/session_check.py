@@ -1,18 +1,7 @@
 #!/usr/bin/env python3
+# GENERATED from shared/sopcore/harness.py by tools/sync_core.py — do not edit this copy; edit the source and re-run `python3 tools/sync_core.py`.
+# sopcore-sha256: 36ef103d28074851c6a2ae985c4da5db9159cff337c11102f5a941fcbcd2d8c1
 # SPDX-License-Identifier: MIT
-"""SessionStart health check: python>=3.8 + engine imports. Always exit 0."""
-import os
-import sys
-
-ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-problems = []
-if sys.version_info < (3, 8):
-    problems.append(f"python>=3.8 required (have {sys.version.split()[0]})")
-sys.path.insert(0, ROOT)
-try:
-    import pluginforge.lint  # noqa: F401
-except Exception as e:  # pragma: no cover
-    problems.append(f"engine import failed: {e}")
-if problems:
-    print("[plugin-forge] install check: " + "; ".join(problems), file=sys.stderr)
-sys.exit(0)
+"""SessionStart hook: install health check that NEVER blocks (logic in pluginforge/_core/session.py)."""
+import os, sys; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: E401,E702
+from pluginforge._core import session; sys.exit(session.main("plugin-forge", "pluginforge.lint"))  # noqa: E402,E702

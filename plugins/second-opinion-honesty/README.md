@@ -30,7 +30,8 @@ does **not** audit workflow architecture (that's `agentic-workflow-audit`).
 
 ## Two modes
 - **FULL** — point at an agentic-sop-kit `run_dir`. Uses the run's `trace`, so #1/#2/#3 are
-  **HARD** at confidence 1.0.
+  **HARD** at confidence 1.0. Only a run that finished in `OK_FOR_REVIEW` is reviewed: a
+  `FAILED` run is refused (exit 2) instead of being reviewed as if it had finished.
 - **DEGRADED** — point at any document + supply the source inputs. Provenance is reconstructed
   best-effort, so findings are **SOFT** at 0.5; #1/#4 lean on the advisory layer.
 
@@ -51,9 +52,15 @@ Verify: `/help` lists `/second-opinion`. Requires Python 3.8+ as `python3` (stdl
 
 ## Pairing without coupling
 The only link to agentic-sop-kit is a **read-only artifact contract**
-(`run_manifest.json` + artifacts shaped `{schema, produced_by, data, trace}`). Second Opinion
-re-implements that contract for reading; it never imports the kit and never writes into the
-kit's run dir. With no kit present it still runs (DEGRADED, or the bundled demo).
+(`run_manifest.json` + artifacts shaped `{schema, produced_by, data, trace}`). It is read through
+`secondop/_core/run_contract.py` — the suite's single definition of a run dir, vendored from
+the repo's `shared/sopcore/` (never edit `_core/`; edit the source and run
+`tools/sync_core.py`). Second Opinion never imports the kit and never writes into the kit's
+run dir. With no kit present it still runs (DEGRADED, or the bundled demo).
+
+Recompute (#1) uses the suite's shared arithmetic: an empty list cannot confirm a stated
+sum/mean/min/max (it fails), sums use `math.fsum`, and a mismatch reads
+`recomputed <op>=X vs stated Y`.
 
 ## The guarantees live in code, not prose
 - The report's `verdict` is the frozen literal `ADVISORY_ONLY` and `human_owns_verdict` is
@@ -102,7 +109,7 @@ python3 tests/verify.py        # full regression (unit + integration + stdlib-on
 `agentic-workflow-audit`）。本 skill 只查「這次產出的主張 vs. 證據」誠實度。
 
 ### 兩種模式
-- **FULL**：指向 agentic-sop-kit 的 `run_dir`，用 `trace` → #1/#2/#3 為 **HARD**（信心 1.0）。
+- **FULL**：指向 agentic-sop-kit 的 `run_dir`，用 `trace` → #1/#2/#3 為 **HARD**（信心 1.0）。只審 `OK_FOR_REVIEW` 的 run；`FAILED` 的 run 直接拒審（exit 2），不會當成已完成來審。
 - **DEGRADED**：指向任意文件 + 自備來源輸入，盡力重建來源 → 全部降為 **SOFT**（0.5）；#1/#4 交給 advisory 層。
 
 ### 安裝（不依賴 kit）
@@ -122,7 +129,10 @@ python3 tests/verify.py        # full regression (unit + integration + stdlib-on
 
 ### 鬆耦合
 與 kit 的唯一連結是**唯讀 artifact 契約**（`run_manifest.json` + `{schema,produced_by,data,trace}`）。
-Second Opinion 只**重實作**該契約來讀取，**不 import kit**、**不寫進** kit 的 run 目錄；沒裝 kit 也能跑。
+讀取一律經過 `secondop/_core/run_contract.py`——整個套件對 run 目錄的**唯一定義**，從 repo 的
+`shared/sopcore/` vendor 進來（不要改 `_core/`；改源碼後跑 `tools/sync_core.py`）。Second Opinion
+**不 import kit**、**不寫進** kit 的 run 目錄；沒裝 kit 也能跑。重算（#1）用套件共用的算術：空清單無法
+確認 sum/mean/min/max（判失敗）、加總用 `math.fsum`、不符時寫明「recomputed X vs stated Y」。
 
 ### 保證寫在程式裡，不在散文
 - 報告的 `verdict` 鎖死為 `ADVISORY_ONLY`、`human_owns_verdict` 恆為 `true` —— schema 上**無法**表達「Second Opinion 核准了」。

@@ -7,11 +7,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 ### Added
 - **Repo-level docs-freshness gate** (`tests/test_docs_freshness.py`, in CI). It binds the README skills badge and the "N Skills / N 支 Skills" claims to the real `SKILL.md` count, checks that every marketplace plugin's `version` has a CHANGELOG entry, checks that `marketplace.json` lists exactly the dirs under `plugins/`, and checks that every `SOPKIT_*` env var the code reads is documented in `kit/README.md`. **Fail-closed**: if a claimed phrase can't be found, the test goes RED.
 - **`bootstrap` regression test** (`selftest.py`): a source kit's runtime state must never land in the target project.
+- **Shared core for the companion plugins** (`shared/sopcore/`). It is the single source of the run-dir contract (`run_contract.py`), `Severity` / `Finding` plus dedupe and HARD/SOFT counts (`findings.py`), the DRAFT / `ADVISORY_ONLY` / `human_owns_verdict` frame and md+json dual write (`report.py`), the recompute kernel (`arithmetic.py`), the `【待補】` marker (`markers.py`), the `--run-dir` / `--out-base` skeleton (`cli.py`) and the SessionStart check (`session.py`). It is **vendored**, not imported, into each companion as `<pkg>/_core/`, so every plugin still installs standalone. `tools/sync_core.py` writes the copies, stamped GENERATED with a content hash, plus the shared `tests/verify.py`, `tests/test_no_third_party.py` and one-call `hooks/session_check.py` that used to be copy-pasted. CI runs `sync_core.py --check` and fails on any drift. The kit is not a consumer: it writes the contract.
+- **Run-dir contract test** (`tests/test_run_contract.py`, in CI). It runs the real kit as a subprocess on `workflow/flow.json` and `workflow/examples/graph.json`, reads the result with `shared/sopcore/run_contract.py`, and pins that a `FAILED` run is refused. Writer and reader can no longer drift silently. `tests/test_sopcore.py` unit-tests the core and `sync_core`.
+- **plugin-forge** (v0.2.0) — new HARD rule `vendored-core-drift`, always on: a GENERATED file whose content no longer matches its stamp, or a `_core/` that differs from `shared/sopcore/` when the plugin sits in a repo that has it. `scaffold` now ships the vendored `_core/` and renders the shared harness, and the scaffolded model imports the shared `Finding` base. Lint findings are deduped and counted by the shared core, and the report uses the shared dual write (lint is a gate, so it carries no advisory frame). The stdlib rule accepts a plugin's own `_core/` and still rejects a cross-plugin import (now tested).
 
 ### Changed
 - **One copy rule for the kit.** `lib/kit.py` now holds `RUNTIME_STATE` / `COPY_EXCLUDE` / `copy_kit()`, and `bootstrap.py`, `selftest.py`, `test_verify.py`, `test_stop_hook.py` and `test_health_gate.py` all use it. Before, there were four hand-kept exclude lists that had already drifted.
 - CI now runs the `verify.py` and Stop-hook meta-tests (`tests/test_verify.py`, `tests/test_stop_hook.py`). They stay unregistered on purpose, to avoid verify-in-verify recursion, but nothing ran them before. CI also no longer runs `selftest.py` twice (`verify --all` already runs it), and it adds a Python 3.8 / 3.x × ubuntu / macOS matrix.
 - `kit/README.md` documents three env vars that the code already reads: `SOPKIT_HEALTH_SLOWDOWN_FACTOR`, `SOPKIT_HEALTH_FLAKY_WINDOW` and `SOPKIT_SCHEMA_DIR`.
+- **second-opinion-honesty** (v0.3.0) — FULL mode reads the run dir through the shared `run_contract`. **Behavior changes:**
+  - A run that is not `OK_FOR_REVIEW` is refused with exit 2. Before, a `FAILED` run was reviewed as if it had finished.
+  - `branch→` manifest entries are skipped.
+  - Recompute uses the shared arithmetic: an empty list now **fails** `mean` (it used to return `0.0`, so a stated `0` silently matched), and sums use `math.fsum`.
+  - `【待補】` handling is unchanged (still skipped as an honest blank), but now reads the shared marker.
+- **alcoa-guard** (v0.2.0) — FULL mode reads the run dir through the shared `run_contract`. **Behavior changes:**
+  - A `FAILED` (or state-less) run is refused with exit 2.
+  - `branch→` entries are skipped, and a relocated run dir resolves artifacts by basename.
+  - The data comes from the artifact that feeds `final_output`. That is the same file as before for kit runs.
+  - **Default output moved** from `<run_dir>/.alcoa-guard/` to `./.alcoa-guard-runs/<run_id>/` (already gitignored), so a review no longer writes into the run it reviews. An explicit `--out-base` is unchanged.
+  - The Accurate finding now reads `recomputed <op>=X vs stated Y`, and `count` is exact: a stated `3.7` no longer truncates to `3`.
+  - The report gains `run_id`.
+  - `【待補】` in a required field is still a Complete violation — the deliberate opposite of second-opinion, documented in `_core/markers.py`.
 
 ### Fixed
 - **`bootstrap.py` carried runtime state into target projects**: `.verify_state.json`, `.retry_count` and `.health_baseline.json`. If the source kit had a passing snapshot, the target's first `verify.py` saw "no change" and skipped every test. `.health_baseline.json` was also missing from `kit/tests/.gitignore`, so a bootstrapped project could commit it.

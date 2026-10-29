@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: MIT
 """Render the Verdict to a DRAFT report (JSON + Markdown). The report cannot express approval:
-verdict is frozen to ADVISORY_ONLY and a deterministic GREEN explicitly does not mean compliant."""
-import json
-import os
+verdict is frozen to ADVISORY_ONLY and a deterministic GREEN explicitly does not mean compliant
+(the frame and the dual write are the suite's shared ones, in _core/report.py)."""
+from ._core import report as core_report
 
 
-def build(verdict):
+def build(verdict, run_id=None):
     return {
         "tool": "alcoa-guard",
         "schema": "alcoa_guard@1",
         "mode": verdict.mode,
+        "run_id": run_id,
         "summary": {"hard": verdict.hard, "soft": verdict.soft,
                     "human_judgment_items": verdict.human_items},
-        "verdict": "ADVISORY_ONLY",
-        "human_owns_verdict": True,
+        **core_report.frame(),
         "findings": [vars(f) for f in verdict.findings],
         "human_judgment_checklist": list(verdict.checklist),
     }
@@ -23,6 +23,7 @@ def to_markdown(rep):
     s = rep["summary"]
     lines = [
         f"# ALCOA+ Data-Integrity Report (DRAFT — mode {rep['mode']})", "",
+    ] + ([f"Run: `{rep['run_id']}`", ""] if rep.get("run_id") else []) + [
         f"**HARD: {s['hard']} · SOFT: {s['soft']} · human-judgment items: {s['human_judgment_items']}**",
         "",
         "_DRAFT. A deterministic GREEN does NOT mean fully compliant — see the human-judgment "
@@ -44,11 +45,4 @@ def to_markdown(rep):
 
 
 def write(rep, out_dir):
-    os.makedirs(out_dir, exist_ok=True)
-    jpath = os.path.join(out_dir, "alcoa_guard.json")
-    mpath = os.path.join(out_dir, "alcoa_guard.md")
-    with open(jpath, "w", encoding="utf-8") as f:
-        json.dump(rep, f, ensure_ascii=False, indent=2)
-    with open(mpath, "w", encoding="utf-8") as f:
-        f.write(to_markdown(rep))
-    return jpath, mpath
+    return core_report.write_dual(rep, out_dir, "alcoa_guard", to_markdown)

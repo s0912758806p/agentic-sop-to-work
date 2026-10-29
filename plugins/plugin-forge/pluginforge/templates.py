@@ -1,5 +1,11 @@
 # SPDX-License-Identifier: MIT
-"""Skeleton file templates for scaffold.py. Tokens: <<NAME>> (plugin name), <<PKG>> (package)."""
+"""Skeleton file templates for scaffold.py. Tokens: <<NAME>> (plugin name), <<PKG>> (package).
+
+The shared harness (tests/verify.py, tests/test_no_third_party.py, hooks/session_check.py)
+is NOT templated here: scaffold renders it from _core/harness.py, and copies the vendored
+core (_core/*.py, the suite's shared/sopcore) into the new package verbatim — so a
+scaffolded plugin ships the same run-dir contract, findings, report frame and arithmetic as
+the companions."""
 
 PLUGIN_JSON = '''{
   "name": "<<NAME>>",
@@ -16,8 +22,11 @@ PLUGIN_JSON = '''{
 INIT_PY = "# SPDX-License-Identifier: MIT\n"
 
 MODEL_PY = '''# SPDX-License-Identifier: MIT
-"""Data model for <<NAME>>."""
+"""Data model for <<NAME>>. Findings can build on the shared base in _core/findings.py
+(Severity, Finding, dedupe + count)."""
 from dataclasses import dataclass
+
+from ._core.findings import Finding, Severity  # noqa: F401
 
 
 @dataclass
@@ -60,26 +69,6 @@ HOOKS_JSON = '''{
 }
 '''
 
-SESSION_CHECK_PY = '''#!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
-"""SessionStart health check: python>=3.8 + engine imports. Always exit 0."""
-import os
-import sys
-
-ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-problems = []
-if sys.version_info < (3, 8):
-    problems.append("python>=3.8 required")
-sys.path.insert(0, ROOT)
-try:
-    import <<PKG>>.review  # noqa: F401
-except Exception as e:  # pragma: no cover
-    problems.append(f"engine import failed: {e}")
-if problems:
-    print("[<<NAME>>] install check: " + "; ".join(problems), file=sys.stderr)
-sys.exit(0)
-'''
-
 SKILL_MD = '''---
 name: <<NAME>>
 description: TODO — when to use <<NAME>>.
@@ -107,77 +96,6 @@ TODO: description. A companion in the agentic-sop-to-work suite; runs standalone
 ```bash
 python3 -m <<PKG>>.review --in <input>
 ```
-'''
-
-VERIFY_PY = '''#!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
-"""Regression runner: run every test_*.py as a subprocess. Exit 0 = all green."""
-import glob
-import os
-import subprocess
-import sys
-
-TESTS = os.path.dirname(os.path.abspath(__file__))
-
-
-def main():
-    files = sorted(glob.glob(os.path.join(TESTS, "test_*.py")))
-    failed, ran = [], 0
-    for f in files:
-        r = subprocess.run([sys.executable, f], capture_output=True, text=True)
-        n = ""
-        for ln in r.stderr.splitlines():
-            if ln.startswith("Ran "):
-                n = ln.split()[1]
-        print(f"{'PASS' if r.returncode == 0 else 'FAIL'}  {os.path.basename(f):<28} ({n} tests)")
-        ran += int(n or 0)
-        if r.returncode != 0:
-            failed.append(os.path.basename(f))
-            print(r.stdout); print(r.stderr)
-    print(f"\\n{len(files) - len(failed)}/{len(files)} files passed · {ran} tests total")
-    return 1 if failed else 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-'''
-
-NO_THIRD_PARTY_PY = '''# SPDX-License-Identifier: MIT
-"""Invariant: <<PKG>> is stdlib-only."""
-import ast
-import glob
-import os
-import sys
-import unittest
-
-PLUGIN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PKG = os.path.join(PLUGIN, "<<PKG>>")
-_STDLIB = set(getattr(sys, "stdlib_module_names", ()))
-_FALLBACK = {"json", "os", "re", "sys", "argparse", "dataclasses", "typing", "datetime"}
-ALLOWED = (_STDLIB or _FALLBACK) | {"<<PKG>>"}
-
-
-class TestNoThirdParty(unittest.TestCase):
-    def test_stdlib_only(self):
-        offenders = []
-        paths = glob.glob(os.path.join(PKG, "**", "*.py"), recursive=True)
-        self.assertGreater(len(paths), 0, f"no sources under {PKG!r}")
-        for path in paths:
-            with open(path, encoding="utf-8") as f:
-                tree = ast.parse(f.read(), filename=path)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Import):
-                    for a in node.names:
-                        if a.name.split(".")[0] not in ALLOWED:
-                            offenders.append(f"{os.path.basename(path)}: import {a.name}")
-                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                    if node.module.split(".")[0] not in ALLOWED:
-                        offenders.append(f"{os.path.basename(path)}: from {node.module}")
-        self.assertEqual(offenders, [], f"third-party imports: {offenders}")
-
-
-if __name__ == "__main__":
-    unittest.main()
 '''
 
 SMOKE_TEST_PY = '''# SPDX-License-Identifier: MIT

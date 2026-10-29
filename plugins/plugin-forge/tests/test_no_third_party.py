@@ -1,35 +1,66 @@
+# GENERATED from shared/sopcore/harness.py by tools/sync_core.py — do not edit this copy; edit the source and re-run `python3 tools/sync_core.py`.
+# sopcore-sha256: 6cee53aab5321630844f0c95128e501c01c4dfde1b349a1b5b94e131873e2b11
 # SPDX-License-Identifier: MIT
-"""Invariant: pluginforge engine is stdlib-only (examples/ are fixtures, excluded)."""
+"""Invariant: the pluginforge engine is STDLIB-ONLY (a blank project runs it with python3 alone).
+
+Parses every .py under pluginforge/ (subpackages and the vendored _core/ included; examples/
+are fixtures and excluded) and asserts each absolute import is stdlib or pluginforge itself.
+"""
 import ast
-import glob
+import importlib.util
 import os
 import sys
+import sysconfig
 import unittest
 
 PLUGIN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PKG = os.path.join(PLUGIN, "pluginforge")
-_STDLIB = set(getattr(sys, "stdlib_module_names", ()))
-_FALLBACK = {"json", "os", "re", "sys", "ast", "glob", "argparse", "dataclasses", "typing", "datetime"}
-ALLOWED = (_STDLIB or _FALLBACK) | {"pluginforge"}
+OWN = "pluginforge"
+_STDLIB = set(getattr(sys, "stdlib_module_names", ()))   # Python 3.10+
+_STDLIB_DIR = os.path.normcase(os.path.realpath(sysconfig.get_paths()["stdlib"]))
+
+
+def _is_stdlib(name):
+    if name == OWN or name in sys.builtin_module_names or name in _STDLIB:
+        return True
+    if _STDLIB:
+        return False
+    spec = importlib.util.find_spec(name)   # < 3.10: decide by where the module lives
+    if spec is None:
+        return False
+    origin = spec.origin or ""
+    if origin in ("built-in", "frozen"):
+        return True
+    origin = os.path.normcase(os.path.realpath(origin))
+    return origin.startswith(_STDLIB_DIR) and "site-packages" not in origin
+
+
+def _sources():
+    for root, dirs, files in os.walk(PKG):
+        dirs[:] = [d for d in dirs if d not in ("examples", "__pycache__")]
+        for fn in files:
+            if fn.endswith(".py"):
+                yield os.path.join(root, fn)
 
 
 class TestNoThirdParty(unittest.TestCase):
-    def test_stdlib_only(self):
+    def test_engine_is_stdlib_only(self):
+        paths = list(_sources())
+        self.assertGreater(len(paths), 0, f"no source files found under {PKG!r}")
         offenders = []
-        paths = glob.glob(os.path.join(PKG, "*.py")) + glob.glob(os.path.join(PKG, "rules", "*.py"))
-        self.assertGreater(len(paths), 0, f"no sources under {PKG!r}")
         for path in paths:
-            with open(path, encoding="utf-8") as f:
-                tree = ast.parse(f.read(), filename=path)
+            with open(path, encoding="utf-8") as fh:
+                tree = ast.parse(fh.read(), filename=path)
+            rel = os.path.relpath(path, PKG)
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
-                    for a in node.names:
-                        if a.name.split(".")[0] not in ALLOWED:
-                            offenders.append(f"{os.path.basename(path)}: import {a.name}")
+                    names = [a.name for a in node.names]
                 elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                    if node.module.split(".")[0] not in ALLOWED:
-                        offenders.append(f"{os.path.basename(path)}: from {node.module}")
-        self.assertEqual(offenders, [], f"third-party imports: {offenders}")
+                    names = [node.module]
+                else:
+                    continue
+                offenders += [f"{rel}: {n}" for n in names if not _is_stdlib(n.split(".")[0])]
+        self.assertEqual(offenders, [], f"third-party imports found: {offenders}")
 
 
 if __name__ == "__main__":
