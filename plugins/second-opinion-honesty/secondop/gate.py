@@ -36,8 +36,23 @@ def latest_run_id(project):
     return runs[-1] if runs else None
 
 
+def _review_dirs(project, run_id):
+    """Where a review of run_id may live: the project (the /second-opinion skill's
+    explicit --out-base), then ${CLAUDE_PLUGIN_DATA} (the CLI's default when set)."""
+    dirs = [os.path.join(project, ".second-opinion-runs", run_id)]
+    data = os.environ.get("CLAUDE_PLUGIN_DATA")
+    if data:
+        dirs.append(os.path.join(data, ".second-opinion-runs", run_id))
+    return dirs
+
+
 def review_dir(project, run_id):
-    return os.path.join(project, ".second-opinion-runs", run_id)
+    """The dir holding run_id's review (first that has one), else the project-local one."""
+    dirs = _review_dirs(project, run_id)
+    for d in dirs:
+        if os.path.exists(os.path.join(d, "second_opinion.json")):
+            return d
+    return dirs[0]
 
 
 def review_exists(project, run_id):

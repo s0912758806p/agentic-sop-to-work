@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 """hooks.json checks: valid JSON + referenced scripts exist (HARD); SessionStart wired +
-Stop always-exit-0 heuristic (SOFT, strict). hooks/ is optional — absent dir is clean."""
+Stop always-exit-0 heuristic (SOFT, strict). hooks/ is optional — absent dir is clean.
+Both hook forms are understood: shell form (one `command` string) and exec form (`command` is
+the executable, `args` a list of strings, no shell) — scripts are looked up in either."""
 import json
 import os
 import re
@@ -29,7 +31,14 @@ def check(plugin_dir, strict):
         for entry in entries:
             for h in entry.get("hooks", []):
                 cmd = h.get("command", "")
-                for rel in _PYREF.findall(cmd):
+                args = h.get("args")
+                if args is not None and not (isinstance(args, list)
+                                             and all(isinstance(a, str) for a in args)):
+                    findings.append(Finding(f"hooks:args:{ev}", "hooks", "HARD", name,
+                                            "hooks/hooks.json",
+                                            f"{ev} hook: exec-form `args` must be a list of strings"))
+                    args = None
+                for rel in _PYREF.findall(" ".join([cmd] + (args or []))):
                     spath = os.path.join(plugin_dir, rel)
                     if not os.path.exists(spath):
                         findings.append(Finding(f"hooks:missing:{rel}", "hooks", "HARD", name,

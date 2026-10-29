@@ -47,5 +47,29 @@ class TestManifest(unittest.TestCase):
             ids = {x.id for x in out if x.id.startswith("manifest:entry:")}
             self.assertEqual(len(ids), 2)
 
+    def _uc(self, d, uc):
+        _plugin(d)
+        p = os.path.join(d, ".claude-plugin", "plugin.json")
+        with open(p, encoding="utf-8") as f:
+            obj = json.load(f)
+        obj["userConfig"] = uc
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(obj, f)
+        return manifest.check_plugin_manifest(d, strict=False)
+
+    def test_user_config_valid(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(self._uc(d, {"keep_runs": {
+                "type": "number", "title": "Keep runs", "description": "d", "default": 20, "min": 1}}), [])
+
+    def test_user_config_invalid_is_hard(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = self._uc(d, {"1bad": {"type": "number", "title": "t", "description": "d"},
+                               "k": {"type": "color", "title": "t", "description": "d"},
+                               "m": {"type": "string", "title": "t"},
+                               "u": {"type": "string", "title": "t", "description": "d", "colour": 1}})
+            self.assertEqual(len([f for f in out if f.severity == "HARD"]), 4)
+            self.assertEqual(self._uc(d, [])[0].severity, "HARD")
+
 if __name__ == "__main__":
     unittest.main()

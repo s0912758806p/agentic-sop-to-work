@@ -41,7 +41,9 @@ does **not** audit workflow architecture (that's `agentic-workflow-audit`).
 /plugin install second-opinion-honesty@agentic-sop-to-work
 /reload-plugins
 ```
-Verify: `/help` lists `/second-opinion`. Requires Python 3.8+ as `python3` (stdlib only).
+It ships as a **skill** (`skills/second-opinion/SKILL.md`; no `commands/` since v0.4.0), invoked as
+`/second-opinion-honesty:second-opinion` — `/second-opinion` below for short — and it also
+auto-triggers on intent. Requires Python 3.8+ as `python3` (stdlib only).
 
 ## Use
 ```
@@ -49,6 +51,11 @@ Verify: `/help` lists `/second-opinion`. Requires Python 3.8+ as `python3` (stdl
 /second-opinion <doc> --inputs <file...>        # DEGRADED — any document
 /second-opinion                                 # bundled cross-domain demo
 ```
+
+**Where reports land.** The skill writes to `<project>/.second-opinion-runs/<run_id>/`. Run
+directly, `python3 -m secondop.review` defaults to `${CLAUDE_PLUGIN_DATA}/.second-opinion-runs/`
+when Claude Code sets it (the plugin's persistent data dir), else `./.second-opinion-runs/`;
+`--out-base` overrides both. The ack gate looks in both places.
 
 ## Pairing without coupling
 The only link to agentic-sop-kit is a **read-only artifact contract**
@@ -70,7 +77,7 @@ sum/mean/min/max (it fails), sums use `math.fsum`, and a mismatch reads
   `NO SOURCE`), and **suppressed** if it re-litigates a slot the deterministic layer settled.
 
 ## Enforce a human acknowledgement (optional — in code, not prose)
-By default the human-owned STOP is a prompt the command presents. To make it a hard gate, a
+By default the human-owned STOP is a prompt the skill presents. To make it a hard gate, a
 project opts in:
 ```
 mkdir -p .second-opinion && touch .second-opinion/require_ack
@@ -118,7 +125,9 @@ python3 tests/verify.py        # full regression (unit + integration + stdlib-on
 /plugin install second-opinion-honesty@agentic-sop-to-work
 /reload-plugins
 ```
-需 Python 3.8+（`python3`，純標準庫）。
+以 **skill** 形式提供（v0.4.0 起不再有 `commands/`），呼叫為 `/second-opinion-honesty:second-opinion`（下文簡寫 `/second-opinion`），也會依意圖自動觸發。需 Python 3.8+（`python3`，純標準庫）。
+
+報告位置：skill 寫到 `<專案>/.second-opinion-runs/<run_id>/`；直接跑 `python3 -m secondop.review` 時，有 `${CLAUDE_PLUGIN_DATA}` 就預設寫到 `${CLAUDE_PLUGIN_DATA}/.second-opinion-runs/`，否則 `./.second-opinion-runs/`；`--out-base` 可覆寫。ack 閘門兩處都會找。
 
 ### 使用
 ```
@@ -139,7 +148,7 @@ python3 tests/verify.py        # full regression (unit + integration + stdlib-on
 - advisory LLM 層**封頂**（`SECONDOP_MAX_LLM_PASSES`，預設 1）；每條發現一律**夾鉗**為 SOFT／信心 ≤ 0.5、**未引用** draft 逐字片段（或 `NO SOURCE`）即**丟棄**、**重提**已定案 slot 即**抑制**。
 
 ### 強制人工確認（選用——寫在程式裡，不在散文）
-預設那個「人核准」STOP 只是 command 印出來的提示。要把它變成硬閘門，由專案 opt-in：
+預設那個「人核准」STOP 只是 skill 印出來的提示。要把它變成硬閘門，由專案 opt-in：
 ```
 mkdir -p .second-opinion && touch .second-opinion/require_ack
 ```

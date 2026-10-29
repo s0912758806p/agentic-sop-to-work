@@ -120,8 +120,14 @@ if __name__ == "__main__":
 
 SESSION_CHECK_PY = '''#!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""SessionStart hook: install health check that NEVER blocks (logic in <<PKG>>/_core/session.py)."""
-import os, sys; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: E401,E702
+"""SessionStart hook: install health check that NEVER blocks (logic in <<PKG>>/_core/session.py).
+The version guard comes first and uses only old syntax, so an old python3 no-ops with a message
+instead of crashing on the engine's imports."""
+import os, sys  # noqa: E401
+if sys.version_info < (3, 8):
+    sys.stderr.write("[<<LABEL>>] needs python>=3.8 (have %s) — hook skipped\\n" % sys.version.split()[0])
+    sys.exit(0)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from <<PKG>>._core import session; sys.exit(session.main("<<LABEL>>", "<<PROBE>>"))  # noqa: E402,E702
 '''
 

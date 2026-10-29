@@ -1,11 +1,17 @@
 {
-  "_comment": "Ships ONLY a non-blocking SessionStart health check. The enforcing Stop-hook (opt-in ALCOA+ gate) is deferred to a later release. ${CLAUDE_PLUGIN_ROOT} resolves to this plugin's install location.",
+  "_comment": "Ships ONLY a non-blocking SessionStart health check. The enforcing Stop-hook (opt-in ALCOA+ gate) is deferred to a later release. Hooks use EXEC form (command + args, no shell) so a path with spaces needs no quoting; each script starts with a python>=3.8 guard that no-ops with a message. ${CLAUDE_PLUGIN_ROOT} resolves to this plugin's install location.",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "startup",
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py\"" }
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py"
+            ]
+          }
         ]
       }
     ]

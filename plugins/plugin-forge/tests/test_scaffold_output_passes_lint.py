@@ -1,4 +1,4 @@
-import os, sys, subprocess, tempfile, unittest
+import json, os, sys, subprocess, tempfile, unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pluginforge import scaffold, checks
 from pluginforge.model import PluginSpec
@@ -9,17 +9,22 @@ class TestScaffoldPassesLint(unittest.TestCase):
             pdir = scaffold.generate(PluginSpec(name="demo-plugin"), dest_root=d)
             self.assertTrue(os.path.exists(os.path.join(pdir, ".claude-plugin", "plugin.json")))
             rep = checks.run_lint(plugin_dir=pdir, strict=True)
-            self.assertTrue(rep.clean, "scaffold output must pass lint --strict; findings: "
-                            + "; ".join(f.detail for f in rep.findings))
+            self.assertEqual(rep.findings, [], "scaffold output must pass lint --strict with zero "
+                             "findings (SOFT included)")
 
     def test_scaffold_creates_required_harness(self):
         with tempfile.TemporaryDirectory() as d:
             pdir = scaffold.generate(PluginSpec(name="demo2"), dest_root=d)
             for rel in ("tests/verify.py", "tests/test_no_third_party.py",
-                        "skills/demo2/SKILL.md", "commands/demo2.md",
+                        "skills/demo2/SKILL.md",
                         "hooks/hooks.json", "hooks/session_check.py", "demo2/__init__.py",
                         "demo2/_core/__init__.py", "demo2/_core/run_contract.py"):
                 self.assertTrue(os.path.exists(os.path.join(pdir, rel)), f"missing {rel}")
+            self.assertFalse(os.path.exists(os.path.join(pdir, "commands")), "skills, not commands/")
+            with open(os.path.join(pdir, "hooks", "hooks.json"), encoding="utf-8") as f:
+                h = json.load(f)["hooks"]["SessionStart"][0]["hooks"][0]
+            self.assertEqual((h["command"], h["args"]),
+                             ("python3", ["${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py"]))
 
     def test_scaffolded_verify_runs_green(self):
         with tempfile.TemporaryDirectory() as d:

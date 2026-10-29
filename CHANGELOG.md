@@ -29,6 +29,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
   - The report gains `run_id`.
   - `【待補】` in a required field is still a Complete violation — the deliberate opposite of second-opinion, documented in `_core/markers.py`.
 
+- **Companion platform update (Phase 4).**
+  - **second-opinion-honesty** (v0.4.0), **alcoa-guard** (v0.3.0) and **plugin-forge** (v0.3.0) ship skills only. Each `commands/<name>.md` procedure was merged into the existing `skills/<name>/SKILL.md` of the same name, so the invocation is unchanged (`/<plugin>:<name>`) and the skill count is unchanged.
+  - Companion hooks use exec form (`command: "python3"`, `args: [...]`), so no shell quoting is needed. Each hook script now starts with a python>=3.8 guard that no-ops with a message.
+  - **Default output dirs moved.** With no `--out-base`, `secondop.review` and `alcoaguard.review` write under `${CLAUDE_PLUGIN_DATA}` when Claude Code sets it, else the same cwd-relative dir as before. The second-opinion ack gate finds a review in either place. The `/second-opinion` skill still writes project-local.
+  - **plugin-forge rules.** It understands exec-form hooks (scripts in `args` are checked; a non-list `args` is HARD), validates `agents/*.md` frontmatter and `plugin.json` `userConfig` (both HARD), and adds a strict SOFT rule `commands-dir`. Scaffold now emits skills only, with an exec-form hook. The rule also fires (SOFT) on agentic-sop-kit, which still ships `commands/` — kit-track owns that migration.
+  - `marketplace.json`: every plugin entry gains `category` and `tags`.
 ### Fixed
 - **`bootstrap.py` carried runtime state into target projects**: `.verify_state.json`, `.retry_count` and `.health_baseline.json`. If the source kit had a passing snapshot, the target's first `verify.py` saw "no change" and skipped every test. `.health_baseline.json` was also missing from `kit/tests/.gitignore`, so a bootstrapped project could commit it.
 - `tests/test_verify.py::test_watch_change_forces_all_units` hard-coded 3 skills, and the registry has 6. The test had been failing unnoticed because nothing ran it. It now derives the expected set from `registry.json`.
