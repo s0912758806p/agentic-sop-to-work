@@ -5,6 +5,7 @@
 stdlib unittest；以 subprocess 跑 workflow/run.py（真實編排層）。"""
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,10 +15,12 @@ KIT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))
 RUN = os.path.join(KIT, "workflow", "run.py")
 
 
-def _run_flow(text, run_id="t"):
+def _run_flow(test, text, run_id="t"):
     base = tempfile.mkdtemp()
+    test.addCleanup(shutil.rmtree, base, ignore_errors=True)
     inp = os.path.join(base, "input.txt")
-    open(inp, "w", encoding="utf-8").write(text)
+    with open(inp, "w", encoding="utf-8") as f:
+        f.write(text)
     r = subprocess.run([sys.executable, RUN, "--input", inp, "--out-base", base, "--run-id", run_id],
                        capture_output=True, text=True)
     run_dir = os.path.join(base, run_id)
@@ -26,7 +29,7 @@ def _run_flow(text, run_id="t"):
 
 class TestFlowIntegration(unittest.TestCase):
     def test_happy_path_and_handoff(self):
-        r, run_dir = _run_flow("a: 2\nb: 4\nc: 6\n")
+        r, run_dir = _run_flow(self, "a: 2\nb: 4\nc: 6\n")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
         # 1) manifest：完成、待人覆核、三步皆 OK
@@ -59,7 +62,7 @@ class TestFlowIntegration(unittest.TestCase):
 
     def test_failure_propagates_and_stops(self):
         # extract 對「含數字卻無法解析」的行 fail-loud（exit3）；編排層應整條判定 FAILED、指名失敗步驟。
-        r, run_dir = _run_flow("ok: 1\nbad: v1.2.3.4\n")
+        r, run_dir = _run_flow(self, "ok: 1\nbad: v1.2.3.4\n")
         self.assertEqual(r.returncode, 2, "任一步失敗 → run.py exit 2")
         mani = json.load(open(os.path.join(run_dir, "run_manifest.json"), encoding="utf-8"))
         self.assertEqual(mani["state"], "FAILED")

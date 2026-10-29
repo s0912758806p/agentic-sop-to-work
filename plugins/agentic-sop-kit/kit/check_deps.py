@@ -14,6 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 import kit  # noqa: E402
+from graph import _kind  # noqa: E402  步驟種類的唯一判定（branch / cmd 沒有 tool）
 
 
 def _deps_of(tool_path):
@@ -21,7 +22,8 @@ def _deps_of(tool_path):
     if not os.path.exists(tool_path):
         return [{"kind": "exe", "name": f"<找不到 tool: {tool_path}>"}]
     try:
-        tree = ast.parse(open(tool_path, encoding="utf-8").read())
+        with open(tool_path, encoding="utf-8") as f:
+            tree = ast.parse(f.read())
         for node in tree.body:
             if isinstance(node, ast.Assign) and any(
                     isinstance(t, ast.Name) and t.id == "DEPS" for t in node.targets):
@@ -32,13 +34,16 @@ def _deps_of(tool_path):
 
 
 def _flow_tools():
-    flow = json.load(open(kit.kit_path("workflow", "flow.json"), encoding="utf-8"))
+    with open(kit.kit_path("workflow", "flow.json"), encoding="utf-8") as f:
+        flow = json.load(f)
     out, seen = [], set()
     for st in flow["steps"]:
+        if _kind(st) not in ("tool", "map"):
+            continue                       # branch / cmd 步驟沒有 tool.py，也就沒有 DEPS
         tp = kit.kit_path(st["tool"])
         if tp not in seen:
             seen.add(tp)
-            out.append((st["skill"], tp))
+            out.append((st.get("skill") or st.get("id") or st["tool"], tp))
     return out
 
 

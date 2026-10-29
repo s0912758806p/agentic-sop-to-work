@@ -11,6 +11,7 @@
 - **Hooks（專案範圍，關鍵設計）**
   - `SessionStart` → 若目前專案有 `agentic-sop-kit/` 就跑 `check_deps.py`，否則略過。
   - `Stop` → 若目前專案有 `agentic-sop-kit/tests/verify.py` 就跑回歸閘門（變更偵測 → 兩層測試 → 失敗以 `decision:block` 餵回去修；重試上限防迴圈），否則略過。
+  - **不會雙跑**：專案的 `.claude/settings.json`（或 `settings.local.json`）若已註冊 kit 自己的 `stop_regression.py`／`check_deps.py`（v1.10.1 以前 bootstrap 寫入的），plugin hook 自動讓位。兩邊共用同一份實作 `kit/hooks/_regression_core.py`。
 - **`kit/`**：可攜的 `agentic-sop-kit` 副本（含 `bootstrap.py`、`SOP.md`、`lib/`、`workflow/`、`tests/`、`templates/`、範例 skills）。
 
 ## 引擎能力（kit 的 `run.py` 編排器，v1.10）
@@ -38,11 +39,10 @@
 ## 開啟某專案的「強制力」
 Hook 是**專案範圍**的：只有當該專案根目錄有 `agentic-sop-kit/` 時，`Stop` 閘門才會驗證**那個專案的** workflow（否則 no-op，不干擾無關專案）。要讓某專案受閘門保護：
 ```
-python3 "<plugin 安裝路徑>/kit/bootstrap.py" --project /path/to/project
-# 或用你機器上的 canonical kit：
-python3 ~/.claude/agentic-sop-kit/bootstrap.py --project /path/to/project
+python3 "${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py" --project /path/to/project
 ```
-之後在 Claude Code（含 Desktop Code 分頁）開該專案資料夾，`Stop` 時就會自動跑回歸閘門。
+`${CLAUDE_PLUGIN_ROOT}` 是本 plugin 的安裝位置（在 Claude Code 內由 hook／skill 自動展開；在終端機手動跑時換成實際路徑）。
+之後在 Claude Code（含 Desktop Code 分頁）開該專案資料夾，`Stop` 時就會自動跑回歸閘門——由 **plugin hook** 負責，bootstrap 自 v1.10.1 起不再把 hook 寫進專案 settings。沒裝 plugin、只單獨用 kit 的人加 `--with-hooks`。
 
 ## 鐵則
 - 事實只來自輸入，缺標【待補】，絕不臆造。

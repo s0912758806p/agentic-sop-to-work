@@ -108,7 +108,7 @@ flowchart LR
 |---|---|
 | **3 Skills** (auto-trigger by intent) | `six-rung-ladder` — minimalist "should I build this at all?" filter (**decide**) · `agentic-sop` — methodology + entry point + smart intake (**build**) · `agentic-workflow-audit` — read-only mega-agent auditor (**audit**) |
 | **Command** `/agentic-sop-kit:sop-flow` | runs the kit's orchestration, reports a DRAFT |
-| **Hooks** (project-scoped) | `SessionStart` dep-check · `Stop` regression gate — **no-op until a project adopts the kit** |
+| **Hooks** (project-scoped) | `SessionStart` dep-check · `Stop` regression gate — **no-op until a project adopts the kit**; steps aside when the project registers the kit's own hooks, so the gate never runs twice |
 | **Portable kit** `kit/` | copy-into-any-project methodology + runnable example |
 | **Plugin** `second-opinion-honesty` | adversarial honesty reviewer — checks a finished DRAFT's claims against its evidence (fabrication / overreach / invented IDs); deterministic findings are HARD, the LLM red-team layer is advisory and capped; reads a run dir read-only, never imports the kit |
 | **Plugin** `alcoa-guard` | ALCOA+ data-integrity linter — deterministic checks for Attributable / Contemporaneous / Complete / Accurate / Consistent; surfaces the human-judgment slice as a `【待補】` checklist; pure stdlib; report is a DRAFT |
@@ -171,7 +171,7 @@ agentic-sop-to-work/
 |---|---|
 | **3 支 Skills**（依意圖自動觸發） | `six-rung-ladder` —「到底該不該做」的極簡過濾網（**decide**） · `agentic-sop` — 方法論與入口＋智慧意圖分流（**build**） · `agentic-workflow-audit` — 唯讀的 mega-agent 稽核者（**audit**） |
 | **指令** `/agentic-sop-kit:sop-flow` | 跑 kit 的編排、回報 DRAFT |
-| **Hooks**（專案範圍） | `SessionStart` 依賴檢查 · `Stop` 回歸閘門 — **專案未導入 kit 前一律 no-op** |
+| **Hooks**（專案範圍） | `SessionStart` 依賴檢查 · `Stop` 回歸閘門 — **專案未導入 kit 前一律 no-op**；專案已自行註冊 kit 的 hook 時自動讓位，閘門不會跑兩遍 |
 | **可攜 kit** `kit/` | 複製到任何專案就能用的方法論 ＋ 可運行範例 |
 | **Plugin** `second-opinion-honesty` | 對抗式誠實審查者 — 拿完成的 DRAFT 的宣稱去對它自己的證據（臆造／超譯／發明編號）；確定性發現為 HARD、LLM 紅隊層只能 advisory 且封頂；唯讀讀取 run 目錄，不 import kit |
 | **Plugin** `alcoa-guard` | ALCOA+ 資料完整性 linter — 確定性檢查 Attributable／Contemporaneous／Complete／Accurate／Consistent；人判部分呈現為 `【待補】` checklist；純 stdlib；產出為 DRAFT |

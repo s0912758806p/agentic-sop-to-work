@@ -115,6 +115,24 @@ class Kit(unittest.TestCase):
         finally:
             shutil.rmtree(d, ignore_errors=True)
 
+    def test_check_deps_handles_cmd_and_branch_steps(self):
+        # branch / cmd steps have no `tool`: v1.10.0 raised KeyError instead of skipping them
+        d, k = fresh_copy()
+        try:
+            fp = os.path.join(k, "workflow", "flow.json")
+            with open(fp, encoding="utf-8") as f:
+                flow = json.load(f)
+            flow["steps"] += [
+                {"branch": "$RUN/c.stats.json", "cases": [{"default": True, "goto": "echo"}]},
+                {"id": "echo", "cmd": "echo hi", "out": "$RUN/e.json"}]
+            with open(fp, "w", encoding="utf-8") as f:
+                json.dump(flow, f)
+            r = run([os.path.join(k, "check_deps.py")])
+            self.assertNotIn("Traceback", r.stdout + r.stderr)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
     def test_bootstrap_never_carries_runtime_state(self):
         # 來源 kit 的回歸快照/計數/紀錄/健康基線若被帶進目標，目標第一次 verify 會判「無變更」而略過全部測試
         d, k = fresh_copy()

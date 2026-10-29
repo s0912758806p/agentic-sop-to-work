@@ -4,12 +4,15 @@
 # Source: https://github.com/s0912758806p/agentic-sop-to-work
 """bootstrap.py — 一鍵把 agentic-sop-kit 導入一個目標專案。
 
-把「canonical kit（本檔所在目錄）」複製進 <project>/agentic-sop-kit/，並安裝 Claude Code
-觸發點：slash command（/sop-flow）+ hooks（SessionStart 依賴檢查、Stop 自動回歸）。
+把「canonical kit（本檔所在目錄）」複製進 <project>/agentic-sop-kit/，並安裝 slash command（/sop-flow）。
 全程冪等、純標準庫、不靜默覆蓋（既有 kit 需 --force）；所有動作明確列印。
 
-用法:
-    python3 ~/.claude/agentic-sop-kit/bootstrap.py --project /path/to/project [--force] [--no-hooks]
+Hooks（SessionStart 依賴檢查、Stop 自動回歸）自 v1.10.1 起**預設不寫進專案**：裝了 plugin 時由
+plugin 的 hooks/hooks.json 負責（只在有 agentic-sop-kit/ 的專案生效），再寫一份會讓 verify 每次停止跑兩遍。
+沒裝 plugin、只單獨拿 kit 用的人，加 --with-hooks 把 hooks/settings.snippet.json 合併進專案 settings。
+
+用法（kit 在 plugin 內的 `${CLAUDE_PLUGIN_ROOT}/kit/`）:
+    python3 "${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py" --project /path/to/project [--force] [--with-hooks]
 """
 import argparse
 import json
@@ -105,7 +108,10 @@ def main():
     ap = argparse.ArgumentParser(description="一鍵把 agentic-sop-kit 導入目標專案")
     ap.add_argument("--project", required=True, help="目標專案根目錄")
     ap.add_argument("--force", action="store_true", help="覆蓋既有的 <project>/agentic-sop-kit/")
-    ap.add_argument("--no-hooks", action="store_true", help="只複製 kit + slash command，不裝 hooks")
+    ap.add_argument("--with-hooks", action="store_true",
+                    help="把 SessionStart/Stop hooks 寫進專案 settings——只在沒裝 plugin 時用（裝了 plugin 由它負責）")
+    ap.add_argument("--no-hooks", action="store_true",
+                    help="（已無作用，保留相容）v1.10.1 起預設就不寫 hooks")
     ap.add_argument("--with-claude-skills", action="store_true",
                     help="順便把已登記的 skill 產成對話可觸發的 runner skill 到 .claude/skills/")
     args = ap.parse_args()
@@ -118,10 +124,10 @@ def main():
     print(f"  canonical 來源：{KIT_SRC}")
     copy_kit(project, args.force)
     install_command(project)
-    if args.no_hooks:
-        print("ℹ️  --no-hooks：略過 hook 安裝")
-    else:
+    if args.with_hooks:
         merge_hooks(project)
+    else:
+        print("ℹ️  hooks 由 plugin 負責（未寫入專案 settings）；沒裝 plugin 才需要 --with-hooks")
     if args.with_claude_skills:
         export_claude_skills(project)
 
@@ -129,7 +135,7 @@ def main():
     print(f"  python3 {DEST_NAME}/check_deps.py        # 驗依賴（缺項明確報錯）")
     print(f"  python3 {DEST_NAME}/workflow/run.py       # 跑通範例流程（DRAFT）")
     print("  再用 templates/ 依拆解規則加你的 skill；詳見 kit 的 SOP.md / README.md。")
-    print("✅ 導入完成。產出一律 DRAFT、需人核准；hooks 已就緒做自動回歸把關。")
+    print("✅ 導入完成。產出一律 DRAFT、需人核准；自動回歸把關由 plugin hook（或 --with-hooks）負責。")
 
 
 if __name__ == "__main__":

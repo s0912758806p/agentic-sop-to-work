@@ -24,7 +24,7 @@ description: Run the agentic-sop-kit workflow (extract→compute→report, or a 
   要給人看圖用 `--graph`；跑完的狀態在 manifest 的 `topology` 與 `path_taken` 裡。
 - 產出一律是 **DRAFT** → 提醒需人覆核、永不自動歸檔進受控系統。
 - 任一步 `"state":"FAILED"` → **封頂自動修復（fix-loop，最多 3 次）**，再不行才交人：
-  1. 讀 manifest 的 `failure{step,gate_type,message,artifact}` 分類：**輸入問題／生成層輸出**（schema/trace 等）→ 修輸入或重生該段，**用相同 `--run-id` 重跑**（引擎對同 run-id 計數、超過 `--max-fix-retries 3` 會自行拒跑＝程式封頂）；**工具碼/recompute/cmd bug** → 診斷並提修正建議、不盲跑、不偷改輸出，交人；**判斷/受控步驟** → 不自動修，交人。
+  1. 讀 manifest 的 `failure{step,gate_type,message,artifact}` 分類：**輸入問題／生成層輸出**（schema/trace 等）→ 修輸入或重生該段，**用相同 `--run-id` 重跑**（引擎對同 run-id 的**失敗**次數計數、超過 `--max-fix-retries 3` 會自行拒跑＝程式封頂）；**工具碼/recompute/cmd bug** → 診斷並提修正建議、不盲跑、不偷改輸出，交人；**判斷/受控步驟** → 不自動修，交人。
   2. `stalled:true`（原地打轉：`stall_reason` = idle/thrash）→ **STOP，回報卡住的 gate、重複的 `repeated_signature`、撞了 `stall_rounds` 圈**，不得佯稱成功、不得換 `--run-id` 規避。
   3. `fix_exhausted:true` 或不可自動修 → **STOP，據實回報每次嘗試與原因**，不得佯稱成功。
   4. `revisit_exhausted:true`（退回邊撞上界）或 `topology_invalid:true`（拓撲不合法，未執行即拒跑）

@@ -19,6 +19,7 @@
 flow.json 可放分支步驟，依**上一步 artifact 的 data** 由程式（非模型）決定走向：
 `{"branch":"$RUN/c.json","cases":[{"when":{"path":"severity","op":"==","value":"OOS"},"goto":"investigate"},{"default":true,"goto":"release"}]}`
 - `goto` 對應某步的 `skill`/`id`。**往前跳**永遠合法。
+- `branch` 指向的 artifact **讀不到（不存在或不是合法 JSON）＝硬失敗**（`failure.artifact` 指出是哪個檔），不會把空資料丟給 `default` 默默走下去——上游少了產物要被看見，不是被繞過。
 - **往後跳**（＝形成環）唯有宣告成**有界退回邊**才合法：
   `{"when":{...},"goto":"draft","back":true,"max_revisits":2}`
   缺 `back:true`、或 `max_revisits` 不是正整數、或宣告了 `back` 卻指向前方 → `--plan` 期即 **exit 2**。
@@ -131,11 +132,12 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 
 把零散的單一工具 skill **依 SOP 實際順序**串成完整流程：
 - **`workflow/flow.json`**：宣告順序與 I/O 接線（`$INPUT`、`$RUN` 佔位；上一步 `out` = 下一步 `in`）。
-- **`workflow/run.py`**：逐步以子程序跑各 skill、串接 artifact、產 run-scoped `run_manifest.json`、**人核准 STOP**；任一步失敗（含缺依賴）→ 立即停止、回報該步 stderr。 失敗時 manifest 帶 `failure{step,gate_type,message,artifact}`；`/sop-flow` 據此做**封頂自動修復**（同 run-id ≤ `--max-fix-retries` 次，程式強制上限），終點仍 DRAFT＋人核准。
+- **`workflow/run.py`**：逐步以子程序跑各 skill、串接 artifact、產 run-scoped `run_manifest.json`、**人核准 STOP**；任一步失敗（含缺依賴）→ 立即停止、回報該步 stderr。 失敗時 manifest 帶 `failure{step,gate_type,message,artifact}`；`/sop-flow` 據此做**封頂自動修復**（同 run-id **失敗** ≤ 1＋`--max-fix-retries` 次，程式強制上限；成功的重跑不消耗額度），終點仍 DRAFT＋人核准。
 - **`commands/sop-flow.md`**：slash command，讓 agent 在目標專案 `/sop-flow` 觸發流程。
-- **`hooks/settings.snippet.json`**：hook 設定。
+- **Hooks**：裝了 plugin 時由 plugin 的 `hooks/hooks.json` 負責（只在有 `agentic-sop-kit/` 的專案生效）；沒裝 plugin 時用 `hooks/settings.snippet.json` 手動合併（或 `bootstrap.py --with-hooks`）。
   - **SessionStart**：跑 `check_deps.py`，缺依賴在 session 開場就明確報錯。
-  - **Stop**（自動回歸驗證）：`hooks/stop_regression.py` 在 agent 準備停止時跑 `tests/verify.py`——見下節。
+  - **Stop**（自動回歸驗證）：在 agent 準備停止時跑 `tests/verify.py`——見下節。
+  - 邏輯只有一份：`hooks/_regression_core.py`。專案 settings 已註冊 `stop_regression.py`／`check_deps.py` 時 plugin hook 讓位，同一次停止不會跑兩遍 verify、也不會共用 `.retry_count` 把上限砍半。
 
 ---
 
@@ -148,7 +150,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
   2. 有變動 → 跑**兩層**：單元層（**受影響** skill 各自的測試；動到 `lib/`、`workflow/`、`registry.json` 等共用層則全跑）＋整合層（整條 workflow 串接、交接資料正確、失敗會傳播）。
   3. 寫**回歸紀錄** `tests/regression_log.jsonl`（時間、變更項、pass/fail、指標）。
   4. **判定**：全 pass = 正常（放行）；任一 fail → exit 2。「更好」指標（步數/時間/成功率）只記入 log，由人回看趨勢，hook 不自動下結論。
-- **`hooks/stop_regression.py`**（Stop hook）：
+- **Stop hook**（plugin 的 `hooks/stop_gate.py`，或專案版 `hooks/stop_regression.py`；兩者都呼叫 `hooks/_regression_core.py`）：
   - 全 pass / 無變更 → 放行停止。
   - 任一 fail → 以 `{"decision":"block","reason":…}` 把失敗詳情餵回 agent 去修；保留紀錄供人決定修正或回滾。
   - **防迴圈**：用 Stop hook 輸入的 `stop_hook_active` 旗標 + 持久重試計數設上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停止再 block、改要求人工介入，杜絕「失敗→修→再觸發→再失敗」無限循環。
@@ -218,7 +220,8 @@ agentic-sop-kit/
   workflow/flow.json,run.py   # 編排層（--plan 靜態驗證 / --graph 畫拓撲）
   commands/sop-flow.md        # slash command
   hooks/settings.snippet.json # hook 設定（SessionStart 依賴檢查 + Stop 自動回歸）
-  hooks/stop_regression.py    # Stop hook：自動回歸驗證 + 防迴圈
+  hooks/stop_regression.py    # Stop hook（專案版 shim）：自動回歸驗證 + 防迴圈
+  hooks/_regression_core.py   # Stop/SessionStart hook 的唯一實作（plugin hook 與專案 hook 共用）
   tests/registry.json         # 受測功能登錄表（skill→單元測試；整合測試）
   tests/unit/, tests/integration/  # 單元層 / 整合層測試
   tests/verify.py             # 變更偵測→兩層測試→回歸紀錄→判定
