@@ -21,6 +21,8 @@ jobs:
         run: python plugins/plugin-forge/pluginforge/lint.py --all --strict
       - name: Docs freshness (claims bound to the tree, fail-closed)
         run: python tests/test_docs_freshness.py
+      - name: Shared core vendored byte-identically (sync_core --check)
+        run: python tools/sync_core.py --check
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -69,6 +71,12 @@ jobs:
           python plugins/agentic-sop-kit/kit/tests/test_stop_hook.py
           python plugins/agentic-sop-kit/kit/tests/test_plugin_hooks.py
           python plugins/agentic-sop-kit/kit/tests/integration/test_health_gate.py
+      # The shared core's own tests, and the run-dir contract: the real kit's output must
+      # stay readable by shared/sopcore/run_contract.py (writer and reader bound together).
+      - name: Shared core + run-dir contract
+        run: |
+          python tests/test_sopcore.py
+          python tests/test_run_contract.py
       - name: Second Opinion regression
         run: python plugins/second-opinion-honesty/tests/verify.py
       - name: ALCOA Guard regression

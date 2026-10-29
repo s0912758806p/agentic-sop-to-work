@@ -9,22 +9,57 @@
     {
       "name": "agentic-sop-kit",
       "source": "./plugins/agentic-sop-kit",
-      "description": "Human SOP → a controlled agentic loop, or a bounded graph of them: typed handoff edges, one declaring writer per state field, bounded back-edges, and a static topology gate that refuses an illegal graph before it runs. Methodology skills + /sop-flow + a project-scoped regression Stop-hook + the portable kit."
+      "description": "Human SOP → a controlled agentic loop, or a bounded graph of them: typed handoff edges, one declaring writer per state field, bounded back-edges, and a static topology gate that refuses an illegal graph before it runs. Methodology skills + /sop-flow + a project-scoped regression Stop-hook + the portable kit.",
+      "category": "development",
+      "tags": [
+        "agentic-workflow",
+        "sop",
+        "loop-engineering",
+        "graph-engineering",
+        "deterministic-gates",
+        "stdlib"
+      ]
     },
     {
       "name": "second-opinion-honesty",
       "source": "./plugins/second-opinion-honesty",
-      "description": "Independent adversarial honesty reviewer: scrutinizes a DRAFT output's claims-vs-evidence (no fabrication / overreach / invented IDs) before a human approves. Snaps onto agentic-sop-kit run dirs (FULL, uses the trace) or reviews any plain document (DEGRADED). Deterministic checks + a capped advisory LLM pass; the report is a DRAFT — the human owns the verdict."
+      "description": "Independent adversarial honesty reviewer: scrutinizes a DRAFT output's claims-vs-evidence (no fabrication / overreach / invented IDs) before a human approves. Snaps onto agentic-sop-kit run dirs (FULL, uses the trace) or reviews any plain document (DEGRADED). Deterministic checks + a capped advisory LLM pass; the report is a DRAFT — the human owns the verdict.",
+      "category": "quality",
+      "tags": [
+        "honesty-review",
+        "fact-check",
+        "claims-vs-evidence",
+        "draft-review",
+        "advisory",
+        "stdlib"
+      ]
     },
     {
       "name": "alcoa-guard",
       "source": "./plugins/alcoa-guard",
-      "description": "Deterministic ALCOA+ data-integrity linter: checks Attributable / Contemporaneous / Complete / Accurate / Consistent in code and surfaces the human-judgment slice as a 【待補】 checklist it never auto-concludes. DEGRADED lints any CSV/JSON record against a declared contract; FULL snaps onto an agentic-sop-kit run dir. The report is a DRAFT — the human owns the verdict. Pure stdlib."
+      "description": "Deterministic ALCOA+ data-integrity linter: checks Attributable / Contemporaneous / Complete / Accurate / Consistent in code and surfaces the human-judgment slice as a 【待補】 checklist it never auto-concludes. DEGRADED lints any CSV/JSON record against a declared contract; FULL snaps onto an agentic-sop-kit run dir. The report is a DRAFT — the human owns the verdict. Pure stdlib.",
+      "category": "compliance",
+      "tags": [
+        "alcoa-plus",
+        "data-integrity",
+        "gmp",
+        "gxp",
+        "audit-trail",
+        "stdlib"
+      ]
     },
     {
       "name": "plugin-forge",
       "source": "./plugins/plugin-forge",
-      "description": "Claude Code plugin linter + scaffolder: `lint` validates a plugin or whole marketplace against a house grammar (a strict superset of the manifest/frontmatter checks plus stdlib-only, hook-protocol, and test-harness invariants); `scaffold` generates a grammar-conformant plugin skeleton. Pure stdlib; self-hosting; standalone on any plugin."
+      "description": "Claude Code plugin linter + scaffolder: `lint` validates a plugin or whole marketplace against a house grammar (a strict superset of the manifest/frontmatter checks plus stdlib-only, hook-protocol, and test-harness invariants); `scaffold` generates a grammar-conformant plugin skeleton. Pure stdlib; self-hosting; standalone on any plugin.",
+      "category": "development",
+      "tags": [
+        "plugin-linter",
+        "scaffolder",
+        "marketplace",
+        "ci",
+        "stdlib"
+      ]
     }
   ]
 }

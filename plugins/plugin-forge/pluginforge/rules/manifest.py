@@ -1,10 +1,41 @@
 # SPDX-License-Identifier: MIT
-"""Tier-0 manifest checks (strict superset of validate_manifests) + recommended fields."""
+"""Tier-0 manifest checks (strict superset of validate_manifests) + recommended fields + the
+shape of plugin.json `userConfig` (HARD: Claude Code rejects a malformed option at load)."""
 import json
 import os
+import re
 from ..model import Finding
 
 _REC = ("author", "license", "keywords")
+# plugin.json userConfig: each key an identifier; each value a STRICT object (unknown keys are
+# load errors in Claude Code) with a known type + title + description.
+_UC_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_UC_TYPES = {"string", "number", "boolean", "directory", "file"}
+_UC_FIELDS = {"type", "title", "description", "required", "default", "options", "multiple",
+              "sensitive", "min", "max"}
+
+
+def _user_config(uc, name):
+    loc = ".claude-plugin/plugin.json"
+
+    def bad(key, detail):
+        return Finding(f"manifest:userConfig:{key}", "manifest", "HARD", name, loc, detail)
+
+    if not isinstance(uc, dict):
+        return [bad("shape", "userConfig must be an object of {key: option}")]
+    out = []
+    for key, opt in uc.items():
+        if not _UC_KEY.match(str(key)):
+            out.append(bad(key, f"userConfig key {key!r} must be an identifier"))
+        elif not isinstance(opt, dict):
+            out.append(bad(key, f"userConfig.{key} must be an object"))
+        elif opt.get("type") not in _UC_TYPES:
+            out.append(bad(key, f"userConfig.{key}.type must be one of {sorted(_UC_TYPES)}"))
+        elif not opt.get("title") or not opt.get("description"):
+            out.append(bad(key, f"userConfig.{key} needs title + description"))
+        elif set(opt) - _UC_FIELDS:
+            out.append(bad(key, f"userConfig.{key} has unknown field(s) {sorted(set(opt) - _UC_FIELDS)}"))
+    return out
 
 
 def _name(plugin_dir):
@@ -27,6 +58,8 @@ def check_plugin_manifest(plugin_dir, strict):
     if not d.get("name") or not d.get("version"):
         findings.append(Finding("manifest:plugin:fields", "manifest", "HARD", name,
                                 ".claude-plugin/plugin.json", "plugin.json missing name/version"))
+    if "userConfig" in d:
+        findings.extend(_user_config(d["userConfig"], name))
     if strict:
         for rec in _REC:
             if not d.get(rec):

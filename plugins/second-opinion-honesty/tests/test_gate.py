@@ -47,6 +47,22 @@ class TestHelpers(unittest.TestCase):
             open(os.path.join(d, ".ack"), "w").close()
             self.assertTrue(gate.is_acked(proj, rid))
 
+    def test_review_found_in_plugin_data_dir(self):
+        # the CLI's default output moved to ${CLAUDE_PLUGIN_DATA} when set; the gate and
+        # ack must find a review there as well as in the project
+        with tempfile.TemporaryDirectory() as proj, tempfile.TemporaryDirectory() as data:
+            os.environ["CLAUDE_PLUGIN_DATA"] = data
+            try:
+                d = os.path.join(data, ".second-opinion-runs", "run_y")
+                os.makedirs(d)
+                open(os.path.join(d, "second_opinion.json"), "w").close()
+                self.assertTrue(gate.review_exists(proj, "run_y"))
+                self.assertEqual(gate.review_dir(proj, "run_y"), d)
+                open(os.path.join(d, ".ack"), "w").close()
+                self.assertTrue(gate.is_acked(proj, "run_y"))
+            finally:
+                os.environ.pop("CLAUDE_PLUGIN_DATA", None)
+
 
 class TestDecide(unittest.TestCase):
     def test_not_opted_in_allows_stop(self):

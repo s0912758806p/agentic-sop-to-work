@@ -139,7 +139,9 @@ Requires **Python 3.8+** as `python3` (macOS/Linux out of the box; on Windows en
 ```
 agentic-sop-to-work/
 ├── .claude-plugin/marketplace.json
-├── tests/test_docs_freshness.py   # repo-level gate: README/CHANGELOG claims bound to the tree
+├── tests/                        # repo-level: docs-freshness gate · sopcore tests · run-dir contract test
+├── shared/sopcore/               # shared core of the companions — vendored into each as <pkg>/_core/
+├── tools/sync_core.py            # vendors shared/sopcore (+ shared test harness); --check runs in CI
 └── plugins/
     ├── agentic-sop-kit/
     │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
@@ -200,7 +202,9 @@ agentic-sop-to-work/
 ```
 agentic-sop-to-work/
 ├── .claude-plugin/marketplace.json
-├── tests/test_docs_freshness.py   # repo 層級閘門：README／CHANGELOG 的宣稱綁定實際檔案樹
+├── tests/                        # repo 層級：文件新鮮度閘門 · sopcore 測試 · run 目錄契約測試
+├── shared/sopcore/               # companion 共用核心——各自 vendor 成 <pkg>/_core/
+├── tools/sync_core.py            # vendor shared/sopcore（含共用測試骨架）；CI 跑 --check
 └── plugins/
     ├── agentic-sop-kit/
     │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/

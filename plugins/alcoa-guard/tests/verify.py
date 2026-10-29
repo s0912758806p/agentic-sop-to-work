@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+# GENERATED from shared/sopcore/harness.py by tools/sync_core.py — do not edit this copy; edit the source and re-run `python3 tools/sync_core.py`.
+# sopcore-sha256: d3ea6f737ffdf37e9ed4effa3c6cf98196b85781f05751811f543a906d87d087
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 s0912758806p
-# Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Regression runner — every unit + integration test must pass.
 
 Each test file is self-contained (it puts the plugin root on sys.path), so we just run
-them as subprocesses. Mirrors the kit's verify.py role: one command for CI and humans.
+them as subprocesses. One command for CI and humans:
     python3 tests/verify.py        # exit 0 = all green, 1 = something failed
 """
 import glob
@@ -17,7 +17,7 @@ TESTS = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
-    files = sorted(f for f in glob.glob(os.path.join(TESTS, "test_*.py")))
+    files = sorted(glob.glob(os.path.join(TESTS, "test_*.py")))
     failed, ran = [], 0
     for f in files:
         r = subprocess.run([sys.executable, f], capture_output=True, text=True)

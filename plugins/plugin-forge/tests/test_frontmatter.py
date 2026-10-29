@@ -31,5 +31,20 @@ class TestFrontmatter(unittest.TestCase):
             out = frontmatter.check(d, strict=False)
             self.assertTrue(out and all(f.severity == "SOFT" for f in out))
 
+    def test_agent_needs_name_and_description(self):
+        with tempfile.TemporaryDirectory() as d:
+            _write(os.path.join(d, "agents", "ok.md"), "---\nname: ok\ndescription: d\n---\nbody\n")
+            self.assertEqual(frontmatter.check(d, strict=True), [])
+            _write(os.path.join(d, "agents", "bad.md"), "---\nname: bad\n---\nbody\n")
+            out = frontmatter.check(d, strict=False)
+            self.assertTrue(any(f.severity == "HARD" and "agents" in f.location for f in out))
+
+    def test_strict_soft_flags_shipping_commands(self):
+        with tempfile.TemporaryDirectory() as d:
+            _write(os.path.join(d, "commands", "x.md"), "---\ndescription: d\n---\n")
+            self.assertEqual(frontmatter.check(d, strict=False), [])
+            out = frontmatter.check(d, strict=True)
+            self.assertEqual([(f.severity, f.id) for f in out], [("SOFT", "frontmatter:commands-dir")])
+
 if __name__ == "__main__":
     unittest.main()

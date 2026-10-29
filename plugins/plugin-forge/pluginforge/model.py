@@ -8,7 +8,7 @@ from typing import List, Optional
 @dataclass
 class Finding:
     id: str
-    rule: str        # manifest|frontmatter|hooks|stdlib|tests
+    rule: str        # manifest|frontmatter|hooks|stdlib|tests|vendored-core-drift
     severity: str    # HARD|SOFT
     plugin: str
     location: str
