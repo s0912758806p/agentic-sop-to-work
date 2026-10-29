@@ -13,7 +13,8 @@ stall / revisits exhausted, unreadable branch artifact) — JSON key ORDER inclu
 Run-specific text is normalised before comparing: the temp out-base → <BASE>, the kit dir
 → <KIT>, and the interpreter version that fe.json's `python3 --version` prints. Line
 endings compare as "\n" on both sides: the kit writes text mode (CRLF on Windows) and a
-Windows checkout may turn the goldens into CRLF too — neither is a contract change.
+Windows checkout may turn the goldens into CRLF too — neither is a contract change. On
+Windows the path separator is normalised to "/" as well, for the same reason.
 Regenerate ONLY for an intended contract change: python3 test_golden.py --regen
 """
 import json
@@ -94,10 +95,13 @@ def _scenarios(d):
     return out
 
 
-def _normalise(text, base):
+def _normalise(text, base, sep=os.sep):
     for root, tag in ((base, "<BASE>"), (KIT, "<KIT>")):
         for form in (root, json.dumps(root)[1:-1]):
             text = text.replace(form, tag)
+    if sep == "\\":
+        # Windows joins run paths with "\" (JSON-escaped as "\\"); the goldens use "/".
+        text = text.replace("\\\\", "/").replace("\\", "/")
     return re.sub(r"Python \d+\.\d+\.\d+\S*", "Python <VER>", text)
 
 
@@ -150,6 +154,12 @@ def _load_golden():
 
 
 class GoldenRunDirs(unittest.TestCase):
+    def test_windows_paths_normalise_to_the_golden_form(self):
+        base = "C:\\t\\x"
+        raw = json.dumps({"out": base + "\\fail_gate/a.json"}) + "\n" + base + "\\flow/report.md"
+        self.assertEqual(_normalise(raw, base, sep="\\"),
+                         '{"out": "<BASE>/fail_gate/a.json"}\n<BASE>/flow/report.md')
+
     def test_run_dirs_match_golden(self):
         golden = _load_golden()
         self.assertTrue(golden, "tests/golden/ is empty (fail-closed) — regenerate on purpose")
