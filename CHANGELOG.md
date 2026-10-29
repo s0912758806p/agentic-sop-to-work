@@ -20,6 +20,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 ### Recorded (missing entry, backfilled)
 - **second-opinion-honesty** (v0.2.0) — opt-in, project-scoped acknowledgement Stop-hook (`hooks/stop_ack.py`). It blocks session stop only when `.second-opinion/require_ack` exists and the latest DRAFT run has no acknowledged review, and it is retry-capped by `SECONDOP_MAX_ACK_RETRIES`. Shipped 2026-06-14 in #3; this entry was never written at the time.
 
+## [1.10.1] — 2026-10-29
+Bug fixes only; no run-dir format change (`run_manifest.json` keys and the artifact shape are untouched).
+
+### Fixed
+- **Stop / SessionStart hooks ran twice** in a project that was bootstrapped *and* had the plugin installed: the plugin's `hooks/stop_gate.py` and the project's `kit/hooks/stop_regression.py` both ran `verify.py` and shared `tests/.retry_count`, which halved the retry cap. The same doubling hit SessionStart (`hooks/session_check.py` and the snippet's `check_deps.py`). The logic now lives once in `kit/hooks/_regression_core.py`. The plugin hooks step aside when the project's `.claude/settings.json` or `settings.local.json` already registers `stop_regression.py` / `check_deps.py`; an unreadable settings file never disables the gate. `kit/hooks/stop_regression.py` stays as a working shim for older projects.
+- **`check_deps.py` raised `KeyError: 'tool'`** on a flow with a `branch` or `cmd` step. It now classifies steps with `graph._kind`, the same rule the topology analyser uses.
+- **`.fix_attempts` counted successful runs**, so re-running a passing `--run-id` could be refused as `fix_exhausted`. Only failed executions count now; the ceiling (1 + `--max-fix-retries` failures) is unchanged.
+- **A missing branch artifact silently took `default`.** If the artifact a `branch` reads is missing or not valid JSON, the run is now a hard failure, and `failure.artifact` names the file.
+- `run.py` and `check_deps.py` left file handles open (`open().read()`).
+- `tests/integration/test_flow.py` leaked a temp dir per run.
+- Docs pointed at `~/.claude/agentic-sop-kit/bootstrap.py`, which does not exist for plugin installs. They now say `${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py` (`skills/agentic-sop/SKILL.md`, `README.md`, `kit/README.md`, `bootstrap.py`).
+
+### Changed
+- **`bootstrap.py` no longer writes hooks into the project** by default, because the plugin hook owns them. `--with-hooks` keeps the manual path for people using the kit without the plugin. `--no-hooks` is still accepted and does nothing.
+- New meta-test `kit/tests/test_plugin_hooks.py` (in CI, not registered, because it needs the plugin beside the kit) covers the dedupe and the bootstrap change.
+
 ## [1.10.0] — 2026-09-08
 ### Added
 - **Graph Engineering** — the tier above Loop Engineering: Loop Engineering makes **one** loop trustworthy; this composes trustworthy loops into a **bounded graph**. Nodes are steps (a node is *not* an agent — `one skill, one tool` is unchanged), edges are typed handoff contracts, and state is a declaration rather than a container. Every *feature* is **opt-in**: a flow declaring none of `reads` / `writes` / `schema_ref` / `back` produces **byte-identical artifacts and the same manifest key set** as v1.9.0, guarded by `tests/integration/test_legacy_flow.py`. The one thing that is not opt-in is topology legality — see **Breaking**.

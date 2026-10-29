@@ -14,7 +14,7 @@
 
 ## 2. 安裝（複製即用）
 
-> **一鍵導入（推薦）**：`python3 ~/.claude/agentic-sop-kit/bootstrap.py --project /path/to/your-project` — 複製 kit ＋ 裝 `/sop-flow` slash command ＋ 合併 SessionStart/Stop hooks（冪等、不靜默覆蓋）。canonical kit 現位於 `~/.claude/agentic-sop-kit/`。下列為等效的手動步驟。
+> **一鍵導入（推薦）**：`python3 "${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py" --project /path/to/your-project` — 複製 kit ＋ 裝 `/sop-flow` slash command（冪等、不靜默覆蓋）。canonical kit 在 plugin 內的 `${CLAUDE_PLUGIN_ROOT}/kit/`。SessionStart/Stop hooks 由 **plugin** 負責（v1.10.1 起 bootstrap 預設不再寫進專案 settings，避免每次停止跑兩遍 verify）；沒裝 plugin 時加 `--with-hooks`。下列為等效的手動步驟。
 ```bash
 # 把整個資料夾複製到你的專案任意位置（路徑會自動相對解析，無硬編碼）
 cp -r agentic-sop-kit /path/to/your-project/
@@ -38,11 +38,12 @@ python3 agentic-sop-kit/workflow/run.py --input /path/to/your_input.txt
 ## 4. （選用）讓 agent 在 Claude Code 觸發
 - **Slash command**：`mkdir -p .claude/commands && cp agentic-sop-kit/commands/sop-flow.md .claude/commands/` → 之後輸入 `/sop-flow`。
   （`mkdir -p` 必要：全新專案通常還沒有 `.claude/commands/`。）
-- **Hook**（開場依賴檢查 + 停止前自動回歸驗證）：`mkdir -p .claude`；若無 `.claude/settings.json` 就以 `agentic-sop-kit/hooks/settings.snippet.json` 為起點建立，否則把其 `hooks` 區段（`SessionStart` + `Stop`）合併進去。
+- **Hook**（開場依賴檢查 + 停止前自動回歸驗證）：**裝了 plugin 就不用做**——plugin 的 hook 會在有 `agentic-sop-kit/` 的專案自動生效。只有沒裝 plugin 時才手動：`mkdir -p .claude`；若無 `.claude/settings.json` 就以 `agentic-sop-kit/hooks/settings.snippet.json` 為起點建立，否則把其 `hooks` 區段（`SessionStart` + `Stop`）合併進去。
   - 若把 kit 放在 `agentic-sop-kit/` 以外的位置，記得改 snippet 內 `$CLAUDE_PROJECT_DIR/agentic-sop-kit/...` 路徑。
+  - 兩者並存（舊專案 settings 已註冊 `stop_regression.py`／`check_deps.py`，又裝了 plugin）也只會跑一次：plugin hook 偵測到就讓位。
 
 ## 4b. 自動回歸驗證（更新不弄壞既有功能）
-裝好上面的 **Stop hook** 後即生效，全自動：
+Stop hook（plugin 的，或上面手動裝的）就緒後即生效，全自動：
 - 每次 agent 準備停止前跑 `tests/verify.py`：**變更偵測**（SOP/任一 skill/編排層自上次通過後沒變 → 直接放行、不跑測試）→ 有變動才跑**單元層（受影響 skill）＋整合層（整條串接）**。
 - 結果寫進 `tests/regression_log.jsonl`（時間、變更項、pass/fail、指標）。
 - **全 pass = 正常**，放行；**任一 fail** → hook 以 `decision:block` 把失敗原因餵回 agent 去修；保留紀錄供人決定修正或回滾。
@@ -130,7 +131,7 @@ skills/extract|compute|report/     # 線性範例：各一個單一工具 skill�
 skills/draft|verdict|accept/       # 圖範例：退回邊目標 / 判定來源 / 終端節點
 workflow/flow.json  workflow/run.py  workflow/examples/
 commands/sop-flow.md
-hooks/settings.snippet.json  hooks/stop_regression.py   # SessionStart 依賴檢查 + Stop 自動回歸
+hooks/settings.snippet.json  hooks/stop_regression.py  hooks/_regression_core.py   # 手動 hook 設定 + Stop 回歸（共用核心）
 tests/registry.json                # 受測功能登錄表（skill→單元測試 / 整合測試）
 tests/unit/  tests/integration/  tests/verify.py        # 兩層測試 + 變更偵測驗證腳本
 tests/regression_log.jsonl         # 回歸紀錄（執行後產生）

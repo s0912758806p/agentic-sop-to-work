@@ -87,5 +87,28 @@ class Branch(unittest.TestCase):
             self.assertIn("nope", r.stdout + r.stderr)
 
 
+    def test_missing_branch_artifact_is_a_hard_failure(self):
+        """A branch reading an artifact that does not exist must FAIL, not route on empty data
+        through `default` (v1.10.0 silently took the default path)."""
+        with tempfile.TemporaryDirectory() as d:
+            t = _emit_tool(d, "a", {"x": 1})
+            b = _emit_tool(d, "b", {"y": 2})
+            flow = {"name": "missing-art", "input_default": t, "steps": [
+                {"skill": "a", "tool": t, "in": "$INPUT", "out": "$RUN/a.json"},
+                {"branch": "$RUN/nope.json", "cases": [{"default": True, "goto": "b"}]},
+                {"skill": "b", "tool": b, "in": "$RUN/a.json", "out": "$RUN/b.json"}]}
+            fp = os.path.join(d, "f.json")
+            with open(fp, "w") as fh:
+                json.dump(flow, fh)
+            runs = os.path.join(d, "runs")
+            r = _run(fp, "--out-base", runs, "--run-id", "m")
+            self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+            with open(os.path.join(runs, "m", "run_manifest.json"), encoding="utf-8") as fh:
+                m = json.load(fh)
+            self.assertEqual(m["state"], "FAILED")
+            self.assertIn("nope.json", m["failure"]["artifact"])
+            self.assertFalse(os.path.exists(os.path.join(runs, "m", "b.json")), "default must not run")
+
+
 if __name__ == "__main__":
     unittest.main()

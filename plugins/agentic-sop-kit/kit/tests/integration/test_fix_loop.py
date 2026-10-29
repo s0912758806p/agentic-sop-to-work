@@ -37,9 +37,20 @@ def _failing_flow(d):
                    "gate": {"type": "schema_gate", "args": {"required": ["id", "name"]}}}]})
 
 
-def _run(flow, runs, run_id, *extra):
+def _passing_flow(d):
+    tool = os.path.join(d, "ok.py")
+    with open(tool, "w", encoding="utf-8") as f:
+        f.write('import json,argparse\n'
+                'a=argparse.ArgumentParser();a.add_argument("--in");a.add_argument("--out");x=a.parse_args()\n'
+                'json.dump({"schema":"t@1","produced_by":"ok","data":{"id":1},"trace":[]},open(x.out,"w"))\n')
+    return _write(d, "flow.json", {
+        "name": "always-passes", "input_default": tool,
+        "steps": [{"skill": "ok", "tool": tool, "in": "$INPUT", "out": "$RUN/a.json"}]})
+
+
+def _run(flow, runs, run_id, *extra, py=()):
     return subprocess.run(
-        [sys.executable, RUN, "--flow", flow, "--out-base", runs, "--run-id", run_id,
+        [sys.executable, *py, RUN, "--flow", flow, "--out-base", runs, "--run-id", run_id,
          "--stall-window", "0", *extra],
         capture_output=True, text=True)
 
@@ -86,6 +97,24 @@ class FixLoopCeiling(unittest.TestCase):
                 self.assertEqual(r.returncode, 2)
                 m = json.load(open(os.path.join(runs, rid, "run_manifest.json"), encoding="utf-8"))
                 self.assertNotIn("fix_exhausted", m)
+
+    def test_successful_runs_do_not_consume_the_budget(self):
+        """.fix_attempts counts FAILED attempts only: re-running a passing run-id is not a fix
+        retry, so it must never be refused as fix_exhausted (v1.10.0 counted every run)."""
+        with tempfile.TemporaryDirectory() as d:
+            flow = _passing_flow(d)
+            runs, rid = os.path.join(d, "runs"), "green"
+            for k in range(4):
+                r = _run(flow, runs, rid, "--max-fix-retries", "1")
+                self.assertEqual(r.returncode, 0, f"exec {k + 1}: {r.stdout}{r.stderr}")
+
+    def test_counter_read_closes_its_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            flow = _failing_flow(d)
+            runs = os.path.join(d, "runs")
+            _run(flow, runs, "rw", "--max-fix-retries", "3")
+            r = _run(flow, runs, "rw", "--max-fix-retries", "3", py=("-W", "always::ResourceWarning"))
+            self.assertNotIn("ResourceWarning", r.stderr)
 
 
 if __name__ == "__main__":

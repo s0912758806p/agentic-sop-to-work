@@ -41,7 +41,7 @@ intake → 分類/前置檢查 → 確定性層(程式) → 生成層(Claude，�
 
 ## 落地：導入 agentic-sop-kit（不要重造）
 方法論已封裝成可攜套件，**直接導入、別重寫**：
-1. 一鍵導入：`python3 ~/.claude/agentic-sop-kit/bootstrap.py --project /path/to/project`（複製 kit＋裝 `/sop-flow`＋合併 Stop-hook）。canonical 在 `~/.claude/agentic-sop-kit/`。
+1. 一鍵導入：`python3 "${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py" --project /path/to/project`（複製 kit＋裝 `/sop-flow`）。canonical kit 在本 plugin 的 `${CLAUDE_PLUGIN_ROOT}/kit/`；Stop 回歸閘門由 plugin hook 負責（沒裝 plugin 才加 `--with-hooks`）。
 2. `python3 agentic-sop-kit/check_deps.py` 驗依賴；`workflow/run.py` 跑通範例。
 3. 用 `templates/human_sop_template.md` 寫 SOP（每步標工具）；依拆解規則把每個「步驟×工具」用 `templates/skill_template/` 建成 `skills/<name>/`。
 4. 依上一節的拓撲在 `workflow/flow.json` 接線（節點順序、`schema_ref`、`reads`/`writes`、退回邊）；

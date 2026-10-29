@@ -6,7 +6,7 @@
 
 失敗時 manifest 帶機器可讀 `failure{step,gate_type,message,artifact}`，供上層定向修復。
 `--max-fix-retries N`（預設讀 `SOPKIT_MAX_FIX_RETRIES`、否則 3；與 Stop-hook 回歸共用同一上限）對同一 `--run-id` 封頂自動修復重試：這支引擎只負責**程式強制的上限**
-——同一 run-id 執行超過 1+N 次即拒跑、寫 `fix_exhausted`；實際的修復（重生/改輸入）由 `/sop-flow`
+——同一 run-id **失敗**超過 1+N 次即拒跑、寫 `fix_exhausted`（成功的執行不消耗額度）；實際的修復（重生/改輸入）由 `/sop-flow`
 的 Claude 層執行，引擎本身維持零 LLM、確定性。"""
 import argparse
 import json
@@ -181,13 +181,15 @@ def main(argv=None):
 
     # --- code-enforced fix-loop ceiling (per run-id) -------------------------
     # The /sop-flow Claude layer auto-fixes by re-invoking with the SAME --run-id.
-    # This counter caps total executions at 1 + max_fix_retries and refuses past it
-    # — the real "封頂" lives in code, not in the prose of the command.
+    # This counter holds FAILED executions only (a passing re-run is not a fix retry); past
+    # 1 + max_fix_retries failures the run-id is refused — the real "封頂" lives in code,
+    # not in the prose of the command.
     counter_path = os.path.join(run, ".fix_attempts")
     prev = 0
     if os.path.exists(counter_path):
         try:
-            prev = int(open(counter_path, encoding="utf-8").read().strip() or "0")
+            with open(counter_path, encoding="utf-8") as cf:
+                prev = int(cf.read().strip() or "0")
         except ValueError:
             prev = 0
     if prev > a.max_fix_retries:
@@ -198,8 +200,10 @@ def main(argv=None):
         kit.write_artifact(mani, os.path.join(run, "run_manifest.json"))
         print(f"  ⛔ fix-loop exhausted ({a.max_fix_retries} retries) — STOP, human needed ｜ 自動修復達上限，交人")
         raise SystemExit(2)
-    with open(counter_path, "w", encoding="utf-8") as cf:
-        cf.write(str(prev + 1))
+
+    def _count_failure():
+        with open(counter_path, "w", encoding="utf-8") as cf:
+            cf.write(str(prev + 1))
 
     print(f"flow={flow['name']} run={rid} attempt={prev + 1}")
 
@@ -227,6 +231,7 @@ def main(argv=None):
         # Stall detection: turn the failure into a progress signature, append to the per-run
         # history, and if there is no verifiable progress (idle / A→B→A thrash) STOP as a stall
         # (decision A: also drop a .stalled marker so the next same-run-id call is refused).
+        _count_failure()
         if failure is not None:
             sig = progress.progress_signature(failure, run_dir=run)
             try:
@@ -262,6 +267,7 @@ def main(argv=None):
     def _stop_back_edge(kind, frm, goto, extra, message):
         """Deterministic early stop on a bounded back-edge (exhausted bound, or no progress).
         Never falls through to the next step: a capped loop STOPS and hands to a human."""
+        _count_failure()
         edge = {"frm": frm, "to": goto, "max_revisits": extra.get("max_revisits")}
         mani = {"flow": flow["name"], "run_id": rid, "state": "FAILED", "back_edge": edge,
                 "steps": steps, "error": message, "human_review_required": True,
@@ -276,10 +282,17 @@ def main(argv=None):
         node = node_names[i]
         if "branch" in st:
             art = resolve(st["branch"])
-            data = kit.read_artifact(art).get("data", {}) if os.path.exists(art) else {}
+            bfail = lambda msg: {"step": f"branch@{i}", "gate_type": None, "message": msg, "artifact": art}
+            # A branch routes on a prior step's artifact. If that artifact is missing or
+            # unreadable there is nothing to decide on: routing empty data through `default`
+            # would hide the upstream fault, so it is a hard failure.
+            try:
+                data = kit.read_artifact(art).get("data", {})
+            except (OSError, ValueError, AttributeError) as e:
+                _fail(f"branch@{i}", f"branch: cannot read {art} ｜ 讀不到分支依據的產物：{e}",
+                      bfail(f"branch artifact unreadable: {e}"))
             case, why = resolve_branch_case(st.get("cases", []), data)
             goto = case.get("goto") if case is not None else None
-            bfail = lambda msg: {"step": f"branch@{i}", "gate_type": None, "message": msg, "artifact": art}
             if goto is None:
                 _fail(f"branch@{i}", f"branch: no usable case ｜ 無可用分支：{why}", bfail(why))
             if goto not in name2idx:

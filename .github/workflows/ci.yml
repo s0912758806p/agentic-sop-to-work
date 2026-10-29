@@ -60,12 +60,14 @@ jobs:
       # verify --all runs every registered test, selftest.py included.
       - name: Kit regression (verify --all)
         run: python plugins/agentic-sop-kit/kit/tests/verify.py --all
-      # Meta-tests of verify / the Stop hook / the health gate. Deliberately NOT in the
-      # registry (verify-in-verify recursion), so they must be run here explicitly.
-      - name: Kit meta-tests (verify, Stop hook, health gate)
+      # Meta-tests of verify / the Stop hook / the plugin-hook dedupe / the health gate.
+      # Deliberately NOT in the registry (verify-in-verify recursion, or they need the plugin
+      # beside the kit), so they must be run here explicitly.
+      - name: Kit meta-tests (verify, Stop hook, plugin hooks, health gate)
         run: |
           python plugins/agentic-sop-kit/kit/tests/test_verify.py
           python plugins/agentic-sop-kit/kit/tests/test_stop_hook.py
+          python plugins/agentic-sop-kit/kit/tests/test_plugin_hooks.py
           python plugins/agentic-sop-kit/kit/tests/integration/test_health_gate.py
       - name: Second Opinion regression
         run: python plugins/second-opinion-honesty/tests/verify.py
