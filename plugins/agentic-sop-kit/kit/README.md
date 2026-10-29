@@ -1,6 +1,6 @@
 # agentic-sop-kit — 分享 / 安裝說明
 
-**Loop Engineering 的參考工具包**——把「人工 SOP」轉成一條**受控迴圈**：一串各綁單一工具的 skill ＋ **編排層** ＋ 迴圈控制（`lib/loop/`：有界終止／可觀測健康／有界狀態）的可重用套件。
+**Loop Engineering 的參考工具包**——把「人工 SOP」轉成一條**受控迴圈**：一串各綁單一工具的 skill ＋ **編排層** ＋ 迴圈控制（`sopkit/loop/`：有界終止／可觀測健康／有界狀態）的可重用套件。
 **整包可複製到任何專案，不改程式就能跑**（範例純 Python 標準庫）。方法論見 [`SOP.md`](SOP.md)。
 
 **Graph Engineering（一個迴圈不夠用時）**：同一套不變量下降到節點與邊——具名節點、
@@ -50,6 +50,7 @@ Stop hook（plugin 的，或上面手動裝的）就緒後即生效，全自動�
 - **防迴圈**：`stop_hook_active` + 重試上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停手、提示人工介入。同一上限亦套用於 `run.py` 的 in-run fix-loop（兩層共用一個旋鈕）。
   - fix-loop 為**雙終止**：budget（看次數，`SOPKIT_MAX_FIX_RETRIES`）＋ stall（看進度，`SOPKIT_STALL_WINDOW`，預設 2）——連續無可驗證進度（idle / A→B→A thrash）即確定性早停、拒絕重跑。
 - **健康監測**：回歸迴圈附帶確定性健康讀數——覆蓋縮水（註冊測試數掉到基線下）走 `verify` exit 3 硬擋（接 Stop-hook）；變慢／flaky 為 advisory、不擋。刻意降覆蓋用 `verify.py --rebaseline`。旋鈕：`SOPKIT_HEALTH_SLOWDOWN_FACTOR`（變慢倍數門檻，預設 2.0）、`SOPKIT_HEALTH_FLAKY_WINDOW`（flaky 判讀的最近 run 數，預設 10）。
+- 以上所有 `SOPKIT_*` 旋鈕只在 `sopkit/config.py` 讀取，而且是**呼叫時**才讀（v1.11.0 以前 `SOPKIT_ROOT`／`SOPKIT_SCHEMA_DIR` 在第一次 import 時就凍結）。
 - **有界狀態**：迴圈 run-state 不無限長——`verify` 自動把 `regression_log.jsonl` 截到最近 `SOPKIT_STATE_KEEP_LOG`（200，且不低於保底 50，保住健康窗）；舊 run 目錄用 `run.py --prune`（人授權刪除，保留最新 `SOPKIT_STATE_KEEP_RUNS`=20）。
 - 「更好」指標（步數/時間/成功率）只記入 log，由**人**回看趨勢判斷，hook 不自動下結論。
 
@@ -122,9 +123,12 @@ python3 agentic-sop-kit/workflow/run.py      # (a) 不改程式即跑通範例�
 ## 7. 目錄
 ```
 SOP.md  README.md  check_deps.py  requirements.txt
-lib/kit.py                         # 可攜核心（路徑/依賴/artifact/編排進入點）
-lib/graph.py  lib/schema.py        # 靜態拓撲分析 / schema 註冊表與型別驗證
-lib/gates.py  lib/flow.py  lib/loop/   # 確定性閘門 / 控制流判定 / 迴圈控制
+sopkit/kit.py  sopkit/config.py    # 可攜核心（路徑/依賴/artifact）/ 所有 SOPKIT_* 的唯一讀取點
+sopkit/runner.py  sopkit/engine.py # 執行迴圈（RunContext / build_manifest / step_loop）/ 步驟執行器 + --plan
+sopkit/graph.py  sopkit/schema.py  # 靜態拓撲分析 / schema 註冊表與型別驗證
+sopkit/gates.py  sopkit/flow.py  sopkit/loop/   # 確定性閘門 / 控制流判定 / 迴圈控制
+sopkit/console.py                  # safe_print（cp950/cp1252 主控台不崩）
+lib/*.py                           # 已棄用的相容 shim（v1.10 的 `import kit` 照跑；v2.0 移除）
 workflow/schemas/                  # 每個 artifact tag 的欄位與型別宣告（SOPKIT_SCHEMA_DIR 可改指向別處）
 templates/human_sop_template.md  templates/skill_template/
 skills/extract|compute|report/     # 線性範例：各一個單一工具 skill（SKILL.md + tool.py）
@@ -140,15 +144,15 @@ runs/<run_id>/                     # 執行後產生（run-scoped；不覆蓋既
 ```
 
 ## 8. 設計保證
-- **無硬編碼**：路徑相對 `lib/kit.py` 解析（或 `SOPKIT_ROOT` 覆寫）；專案專屬值走 `--in/--out`/env。
+- **無硬編碼**：路徑相對 kit 根解析（`sopkit/config.py`；`SOPKIT_ROOT` 可覆寫，呼叫時才讀）；專案專屬值走 `--in/--out`/env。
 - **缺依賴明確報錯**：`kit.require_deps()` 列出全部缺項並中止（非靜默）。
-- **單一工具 skill / 可獨立重用**：`skills/<name>/` + `lib/kit.py` 可單獨抽出到別專案。
+- **單一工具 skill / 可獨立重用**：`skills/<name>/` + `sopkit/` 可單獨抽出到別專案。
 - **DRAFT / 人核准**：產出永遠標 DRAFT，永不自動歸檔。
 - **自動回歸把關**：Stop hook + 變更偵測，更新後只在「有變」時跑「受影響單元 + 整合」兩層；fail 自動回饋去修、`stop_hook_active`+重試上限防迴圈；指標只記 log 由人判趨勢。
 
 ## 9. 閘門與拓撲檢查（確定性、零 LLM）
 
-**5 deterministic gates**（`lib/gates.py`，產出後驗、fail 即停）：
+**5 deterministic gates**（`sopkit/gates.py`，產出後驗、fail 即停）：
 
 | Gate | 擋什麼 |
 |------|--------|
@@ -158,7 +162,7 @@ runs/<run_id>/                     # 執行後產生（run-scoped；不覆蓋既
 | `recompute_gate` | 宣稱的數字與重算結果不符 |
 | `residual_gate` | 宣告為必填的欄位仍是【待補】（其他位置的【待補】是誠實空白，一律不擋） |
 
-**靜態拓撲檢查**（`lib/graph.py`，`--plan` 期即判、exit 2）：不可達節點、read-before-write、
+**靜態拓撲檢查**（`sopkit/graph.py`，`--plan` 期即判、exit 2）：不可達節點、read-before-write、
 寫入衝突、無界環、退回邊宣告不實或缺上界、孤邊、被 goto 指到的重名、畸形步驟。
 拓撲不合法**不必跑就知道**；**執行期套用完全相同的判定**（`graph.analyze` 是唯一權威，
 不存在「某些問題只對某些流程算數」的例外）。

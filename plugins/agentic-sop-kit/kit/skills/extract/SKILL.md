@@ -26,4 +26,4 @@ SOP 流程的第 1 步。把文字輸入中的 `key: number`（或 `key = number
 `python3 skills/extract/tool.py --in <input.txt> --out <out/a.json>`
 
 ## 獨立重用
-本目錄（`skills/extract/`）+ `lib/kit.py` 可單獨抽出放到別專案；無專案專屬硬編碼，依 `--in/--out` 即可運作。
+本目錄（`skills/extract/`）+ `sopkit/` 可單獨抽出放到別專案；無專案專屬硬編碼，依 `--in/--out` 即可運作。

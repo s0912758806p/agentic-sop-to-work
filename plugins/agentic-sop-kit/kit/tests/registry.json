@@ -37,6 +37,24 @@
       "tests": [
         "tests/unit/test_accept.py"
       ]
+    },
+    "ai_claims": {
+      "dir": "skills/ai_claims",
+      "tests": [
+        "tests/unit/test_ai_claims.py"
+      ]
+    },
+    "be_api": {
+      "dir": "skills/be_api",
+      "tests": [
+        "tests/unit/test_be_api.py"
+      ]
+    },
+    "db_rows": {
+      "dir": "skills/db_rows",
+      "tests": [
+        "tests/unit/test_db_rows.py"
+      ]
     }
   },
   "integration": {
@@ -66,7 +84,11 @@
       "tests/integration/test_backedge_stall.py",
       "tests/unit/test_residual.py",
       "tests/test_graph_docs.py",
-      "tests/integration/test_golden.py"
+      "tests/integration/test_golden.py",
+      "tests/compat/test_lib_shims.py",
+      "tests/unit/test_config.py",
+      "tests/unit/test_console.py",
+      "tests/integration/test_cmd_forms.py"
     ],
     "watch": [
       "workflow",
@@ -76,7 +98,8 @@
       "new_skill.py",
       "export_claude_skill.py",
       "README.md",
-      "workflow/schemas"
+      "workflow/schemas",
+      "sopkit"
     ]
   }
 }

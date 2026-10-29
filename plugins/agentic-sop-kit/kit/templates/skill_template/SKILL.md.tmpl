@@ -24,7 +24,7 @@ SOP 流程的第 <n> 步。<做什麼>。
 `python3 skills/<skill-name>/tool.py --in <…> --out <…>`
 
 ## 獨立重用
-`skills/<skill-name>/` + `lib/kit.py` 可單獨抽出放別專案；無硬編碼，依 `--in/--out` 即運作。
+`skills/<skill-name>/` + `sopkit/` 可單獨抽出放別專案；無硬編碼，依 `--in/--out` 即運作。
 
 ## 測試（納入即登記，否則 verify.py 會 fail-loud）
 - 寫 `tests/unit/test_<skill-name>.py`（subprocess 跑本工具 CLI；至少涵蓋正常值 + fail-loud 邊界）。

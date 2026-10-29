@@ -49,7 +49,7 @@ mega agent 的退化通常是悄悄發生的——程式碼看起來分了模組
 
 驗證方式：要求對方**指出宣告在哪**（哪個檔案、哪一行說了 owner 與型別）。
 說不出來、只能說「大家都讀那個 dict」→ FAIL。若有靜態檢查器能在不執行的情況下判掉這三項 → PASS 的最強證據。
-（`agentic-sop-kit` 的做法：`reads`/`writes`/`schema_ref` 宣告在 flow.json，`lib/graph.py` 在 `--plan` 期判掉，
+（`agentic-sop-kit` 的做法：`reads`/`writes`/`schema_ref` 宣告在 flow.json，`sopkit/graph.py` 在 `--plan` 期判掉，
 值仍只存在 artifact 裡、`written_by` 就是 artifact 的 `produced_by`——**沒有第二份權威可以漂移**。）
 
 ### 檢查 3 — 每步是否有明確且可程式化檢查的成功標準

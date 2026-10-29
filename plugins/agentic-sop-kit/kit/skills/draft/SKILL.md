@@ -30,4 +30,4 @@ description: Use to produce a first draft, or to revise one from an upstream ver
 `python3 skills/draft/tool.py --in <$RUN/verdict.json> --out <$RUN/draft.json>`
 
 ## 獨立重用
-`skills/draft/` + `lib/kit.py` 可單獨抽出；只要給得出 `verdict@1`（或不給）即可運作。
+`skills/draft/` + `sopkit/` 可單獨抽出；只要給得出 `verdict@1`（或不給）即可運作。

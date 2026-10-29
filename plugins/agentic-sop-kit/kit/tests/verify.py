@@ -4,7 +4,7 @@
 """自動回歸驗證腳本（任務 2 核心）。被 Stop hook 觸發，也可手動執行。
 
 流程：
-  1. 交叉比對 registry.json vs workflow/flow.json：任何 flow 用到卻未登記測試的 skill → fail-loud（exit 3）。
+  1. 交叉比對 registry.json vs workflow/flow.json ＋ workflow/examples/*.json：任何 flow 用到卻未登記測試的 skill → fail-loud（exit 3）。
   2. 變更偵測（內容雜湊快照 .verify_state.json；不依賴 git，跨環境可用）：
      自上次「通過」後，SOP/任一 skill 目錄/編排層皆無變動 → 直接結束、不跑測試（exit 0）。
   3. 有變動 → 跑兩層：
@@ -125,13 +125,22 @@ def _snapshot():
 
 
 def _flow_skills():
+    """Skills used by workflow/flow.json AND every workflow/examples/*.json — a shipped example
+    running an unregistered (untested) skill is the same hole as the main flow doing so.
+    The step count (a log metric) stays the main flow's."""
     flow = _load(os.path.join(KIT, "workflow", "flow.json"), {"steps": []})
+    flows = [flow]
+    ex = os.path.join(KIT, "workflow", "examples")
+    if os.path.isdir(ex):
+        flows += [_load(os.path.join(ex, fn), {"steps": []})
+                  for fn in sorted(os.listdir(ex)) if fn.endswith(".json")]
     seen, out = set(), []
-    for st in flow.get("steps", []):
-        s = st.get("skill")
-        if s and s not in seen:
-            seen.add(s)
-            out.append(s)
+    for f in flows:
+        for st in f.get("steps", []):
+            s = st.get("skill")
+            if s and s not in seen:
+                seen.add(s)
+                out.append(s)
     return out, len(flow.get("steps", []))
 
 

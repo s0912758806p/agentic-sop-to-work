@@ -29,4 +29,4 @@ description: Use as a terminal node that emits accepted@1 only when an upstream 
 `python3 skills/accept/tool.py --in <$RUN/verdict.json> --out <$RUN/accepted.json>`
 
 ## 獨立重用
-`skills/accept/` + `lib/kit.py` 可單獨抽出；只要上游給 `verdict@1` 即可運作。
+`skills/accept/` + `sopkit/` 可單獨抽出；只要上游給 `verdict@1` 即可運作。

@@ -12,7 +12,7 @@
   - `SessionStart` → 若目前專案有 `agentic-sop-kit/` 就跑 `check_deps.py`，否則略過。
   - `Stop` → 若目前專案有 `agentic-sop-kit/tests/verify.py` 就跑回歸閘門（變更偵測 → 兩層測試 → 失敗以 `decision:block` 餵回去修；重試上限防迴圈），否則略過。
   - **不會雙跑**：專案的 `.claude/settings.json`（或 `settings.local.json`）若已註冊 kit 自己的 `stop_regression.py`／`check_deps.py`（v1.10.1 以前 bootstrap 寫入的），plugin hook 自動讓位。兩邊共用同一份實作 `kit/hooks/_regression_core.py`。
-- **`kit/`**：可攜的 `agentic-sop-kit` 副本（含 `bootstrap.py`、`SOP.md`、`lib/`、`workflow/`、`tests/`、`templates/`、範例 skills）。
+- **`kit/`**：可攜的 `agentic-sop-kit` 副本（含 `bootstrap.py`、`SOP.md`、`sopkit/`（引擎套件；`lib/` 為相容 shim）、`workflow/`、`tests/`、`templates/`、範例 skills）。
 
 ## 引擎能力（kit 的 `run.py` 編排器，v1.10）
 除了線性 demo，引擎還支援以下能力——**全部確定性、由程式決定、附加式**（既有流程照常運作）：

@@ -26,4 +26,4 @@ SOP 流程的第 2 步。讀上游 readings、算統計、透傳來源追溯。
 `python3 skills/compute/tool.py --in <out/a.json> --out <out/b.json>`
 
 ## 獨立重用
-`skills/compute/` + `lib/kit.py` 可單獨抽出；只要上游給 `readings@1` artifact 即可運作。
+`skills/compute/` + `sopkit/` 可單獨抽出；只要上游給 `readings@1` artifact 即可運作。

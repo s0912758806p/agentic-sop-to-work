@@ -32,7 +32,7 @@ It exercises, in shipped code, everything the linear examples cannot:
 - **Retry history preserved** — a revisit archives the previous artifact (`draft.visit1.json`, …)
   instead of overwriting it; the manifest's `path_taken[].archived_previous` names each one.
 - **Per-edge progress sensing** — identical routing state across revisits is an `idle` stall
-  (`lib/loop/progress.py`), which stops the loop *before* the bound when nothing is improving.
+  (`sopkit/loop/progress.py`), which stops the loop *before* the bound when nothing is improving.
 
 The engine and gates stay domain-neutral: each domain plugs in only via its `tool.py` (or a `cmd`)
 and config — no engine changes. `map_over` is covered in `tests/integration/test_map.py`.

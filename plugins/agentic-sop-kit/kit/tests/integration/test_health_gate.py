@@ -23,8 +23,9 @@ def _copy_kit(dst):
 # irrelevant to it. So the disposable copy runs a minimal registry instead of the full
 # one: same guarantee, a fraction of the work (this meta-test runs verify 7+ times).
 # Two constraints, or the test would go green for the wrong reason:
-#   • the 3 skills flow.json uses must stay registered, else verify exits 3 for
-#     "used by flow but no registered test" — a registry error, not coverage shrink;
+#   • the skills flow.json and workflow/examples/*.json use must stay registered, else
+#     verify exits 3 for "used by flow but no registered test" — a registry error, not
+#     coverage shrink;
 #   • integration.tests needs >= 2 entries, because _shrink_registry() pops one and an
 #     empty list makes verify exit 3 for "integration layer mandatory" instead.
 _MIN_INTEGRATION = ["tests/unit/test_gates.py", "tests/unit/test_flow.py"]
@@ -46,10 +47,14 @@ class HealthGate(unittest.TestCase):
         with open(self.reg, encoding="utf-8") as f:
             reg = json.load(f)
         flow_skills = set()
-        with open(os.path.join(self.kit, "workflow", "flow.json"), encoding="utf-8") as f:
-            for st in json.load(f).get("steps", []):
-                if st.get("skill"):
-                    flow_skills.add(st["skill"])
+        ex = os.path.join(self.kit, "workflow", "examples")
+        flows = [os.path.join(self.kit, "workflow", "flow.json")] + [
+            os.path.join(ex, fn) for fn in sorted(os.listdir(ex)) if fn.endswith(".json")]
+        for fp in flows:
+            with open(fp, encoding="utf-8") as f:
+                for st in json.load(f).get("steps", []):
+                    if st.get("skill"):
+                        flow_skills.add(st["skill"])
         reg["skills"] = {k: v for k, v in reg["skills"].items() if k in flow_skills}
         reg["integration"]["tests"] = list(_MIN_INTEGRATION)
         with open(self.reg, "w", encoding="utf-8") as f:

@@ -110,9 +110,17 @@ def _collect(run_dir, base):
     return files
 
 
+def _hermetic_env():
+    """Knobs from the caller's environment (e.g. the Stop-hook meta-test exports
+    SOPKIT_MAX_FIX_RETRIES=2) would change manifest values: run on defaults only."""
+    return {k: v for k, v in os.environ.items()
+            if not k.startswith(("SOPKIT_", "CLAUDE_PLUGIN_OPTION_", "CLAUDE_PLUGIN_DATA"))}
+
+
 def produce():
     """{scenario: {filename: normalised text}} from the engine in this tree."""
     result = {}
+    env = _hermetic_env()
     base = tempfile.mkdtemp()
     try:
         fx = os.path.join(base, "fixtures")
@@ -120,7 +128,7 @@ def produce():
         for name, (flow, invocations) in _scenarios(fx).items():
             for extra in invocations:
                 subprocess.run([sys.executable, RUN, "--flow", flow, "--out-base", base,
-                                "--run-id", name, *extra], capture_output=True, text=True)
+                                "--run-id", name, *extra], capture_output=True, text=True, env=env)
             result[name] = _collect(os.path.join(base, name), base)
     finally:
         shutil.rmtree(base, ignore_errors=True)
