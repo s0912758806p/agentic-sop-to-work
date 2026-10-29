@@ -52,6 +52,16 @@ class TestRecompute(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(derived, 2)
 
+    def test_empty_mean_fails_not_zero(self):
+        # sopcore semantics (v0.3.0): nothing to recompute -> cannot confirm the stated value.
+        ok, derived, reason = arithmetic.recompute("mean", [], 0.0)
+        self.assertFalse(ok)
+        self.assertIsNone(derived)
+
+    def test_sum_is_fsum(self):
+        self.assertTrue(arithmetic.recompute("sum", [0.1] * 10, 1.0)[0])
+        self.assertEqual(arithmetic.recompute("sum", [0.1] * 10, 1.0)[1], 1.0)
+
 
 class TestReevalVerdict(unittest.TestCase):
     def test_below_lower_limit_should_be_fail(self):

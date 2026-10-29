@@ -20,6 +20,7 @@ class Record:
     raw_text: str = ""
     mode: str = "DEGRADED"              # FULL|DEGRADED
     source: str = ""
+    run_id: Optional[str] = None        # FULL mode: the kit run's id
 
 
 @dataclass

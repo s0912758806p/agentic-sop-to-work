@@ -3,6 +3,7 @@
 FULL mode findings are HARD; DEGRADED findings are SOFT. A deterministic GREEN always still
 ships the human-judgment checklist so it cannot be read as 'fully compliant'."""
 from datetime import date
+from ._core import findings as core_findings
 from .model import Verdict
 from .rules import attributable, temporal, complete, accurate, consistent
 
@@ -34,13 +35,8 @@ def run_rules(record, contract, as_of=None, only=None):
             findings.extend(mod.check(record, contract, severity, as_of=as_of))
         else:
             findings.extend(mod.check(record, contract, severity))
-    seen, deduped = set(), []
-    for f in findings:
-        if f.id not in seen:
-            seen.add(f.id)
-            deduped.append(f)
-    hard = sum(1 for f in deduped if f.severity == "HARD")
-    soft = sum(1 for f in deduped if f.severity == "SOFT")
+    deduped = core_findings.dedupe(findings)
+    hard, soft = core_findings.count(deduped)
     return Verdict(mode=record.mode, hard=hard, soft=soft,
                    human_items=len(HUMAN_CHECKLIST), findings=deduped,
                    checklist=list(HUMAN_CHECKLIST))

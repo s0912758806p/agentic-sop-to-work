@@ -7,7 +7,8 @@
     python3 -m secondop.review --doc <file> --inputs <...>    # DEGRADED mode (task 5)
 
 It reads the draft, runs the deterministic checks, writes second_opinion.{json,md}, and
-prints the human-readable report. It NEVER approves/rejects — the advisory LLM pass and
+prints the human-readable report. A run dir that is not a finished kit run (no manifest, or
+state != OK_FOR_REVIEW, e.g. FAILED) is refused with exit 2. It NEVER approves/rejects — the advisory LLM pass and
 the human decision are driven by the /second-opinion command/skill on top of this.
 """
 import argparse
@@ -15,11 +16,15 @@ import os
 import sys
 
 from . import checks, core, llm_contract, reader, report
+from ._core import cli
+
+LABEL = "second-opinion"
+OUT_DIR = ".second-opinion-runs"
 
 
 def _emit(draft, out_base, label, advisory_path=None):
     det = checks.run_checks(draft)
-    out_base = out_base or os.path.join(os.getcwd(), ".second-opinion-runs")
+    out_base = out_base or cli.default_out_base(OUT_DIR)
     out_dir = os.path.join(out_base, draft.run_id or label)
     # Always (re)write the envelope so the /second-opinion command can drive the LLM pass.
     core.write_json(llm_contract.build_llm_envelope(draft, det),
@@ -55,20 +60,20 @@ def run_degraded(doc_path, inputs_paths, out_base=None, advisory_path=None):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Second Opinion — deterministic honesty review (zero-LLM)")
-    ap.add_argument("--run-dir", help="an agentic-sop-kit run_dir (FULL mode)")
+    cli.add_run_args(ap, out_base_help=f"output base dir (default ./{OUT_DIR})")
     ap.add_argument("--doc", help="a plain document (DEGRADED mode)")
     ap.add_argument("--inputs", nargs="*", default=None, help="source inputs for DEGRADED mode")
-    ap.add_argument("--out-base", default=None, help="output base dir (default ./.second-opinion-runs)")
     ap.add_argument("--advisory", default=None,
                     help="path to the LLM's candidate findings JSON (folds the capped advisory pass in)")
     a = ap.parse_args(argv)
 
     if a.run_dir:
-        if not os.path.exists(os.path.join(a.run_dir, "run_manifest.json")):
-            print(f"no run_manifest.json in {a.run_dir!r} — for a plain document use "
-                  f"--doc … --inputs …", file=sys.stderr)
-            return 2
-        rep, jpath, mpath = run_full(a.run_dir, a.out_base, a.advisory)
+        try:
+            rep, jpath, mpath = run_full(a.run_dir, a.out_base, a.advisory)
+        except reader.NotAKitRun as e:
+            return cli.refuse(LABEL, f"{e} — for a plain document use --doc … --inputs …")
+        except reader.ContractError as e:   # e.g. RunNotReviewable: a FAILED run
+            return cli.refuse(LABEL, str(e))
     elif a.doc:
         if not a.inputs:
             print("DEGRADED mode needs --inputs <file...> (the sources to check claims "

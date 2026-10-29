@@ -1,13 +1,22 @@
 # SPDX-License-Identifier: MIT
 """alcoa-guard CLI. FULL: --run-dir <kit run>. DEGRADED: --record <file> --contract <file>.
 Exits 0 on success (findings never change the exit code — the HARD count lives in the report
-for a human, and the v0.2 hook, to gate on); exits 2 if required arguments are missing."""
+for a human, and a future hook, to gate on); exits 2 if required arguments are missing or the
+run dir is not a finished kit run (no manifest, or state != OK_FOR_REVIEW, e.g. FAILED).
+
+Output: --out-base <dir> is the exact output dir. Without it, reports land in
+./.alcoa-guard-runs/<run_id> (FULL) or ./.alcoa-guard-runs/degraded — never inside the
+reviewed run dir (before v0.2.0 FULL mode wrote <run_dir>/.alcoa-guard/)."""
 import argparse
 import os
 import sys
 from datetime import date
 from . import contract as contract_mod
 from . import reader, checks, report
+from ._core import cli
+
+LABEL = "alcoa-guard"
+OUT_DIR = ".alcoa-guard-runs"
 
 
 def run_degraded(record_path, contract_path, out_base=None, as_of=None):
@@ -15,7 +24,7 @@ def run_degraded(record_path, contract_path, out_base=None, as_of=None):
     rec = reader.read_degraded(record_path, c)
     verdict = checks.run_rules(rec, c, as_of=as_of)
     rep = report.build(verdict)
-    out = out_base or os.path.join(os.getcwd(), ".alcoa-guard-runs", "degraded")
+    out = out_base or os.path.join(cli.default_out_base(OUT_DIR), "degraded")
     jpath, mpath = report.write(rep, out)
     return rep, jpath, mpath
 
@@ -24,8 +33,8 @@ def run_full(run_dir, contract_path=None, out_base=None, as_of=None):
     rec, run_data = reader.read_full(run_dir)
     c = contract_mod.load(contract_path) if contract_path else contract_mod.infer_from_run(run_data)
     verdict = checks.run_rules(rec, c, as_of=as_of)
-    rep = report.build(verdict)
-    out = out_base or os.path.join(run_dir, ".alcoa-guard")
+    rep = report.build(verdict, run_id=rec.run_id)
+    out = out_base or os.path.join(cli.default_out_base(OUT_DIR), rec.run_id or "full")
     jpath, mpath = report.write(rep, out)
     return rep, jpath, mpath
 
@@ -37,15 +46,18 @@ def _as_of(s):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="alcoa-guard — deterministic ALCOA+ data-integrity linter")
-    ap.add_argument("--run-dir", help="an agentic-sop-kit run dir (FULL mode)")
+    cli.add_run_args(ap, out_base_help=f"output dir (default ./{OUT_DIR}/<run_id> or "
+                                       f"./{OUT_DIR}/degraded)")
     ap.add_argument("--record", help="a record file: CSV or JSON (DEGRADED mode)")
     ap.add_argument("--contract", default=None, help="path to a .alcoa.json integrity contract")
-    ap.add_argument("--out-base", default=None)
     ap.add_argument("--as-of", default=None, help="reference date YYYY-MM-DD for future-date checks")
     a = ap.parse_args(argv)
     as_of = _as_of(a.as_of)
     if a.run_dir:
-        rep, jpath, mpath = run_full(a.run_dir, a.contract, a.out_base, as_of)
+        try:
+            rep, jpath, mpath = run_full(a.run_dir, a.contract, a.out_base, as_of)
+        except reader.ContractError as e:   # no manifest, or a FAILED run
+            return cli.refuse(LABEL, str(e))
     elif a.record:
         if not a.contract:
             print("DEGRADED mode needs --contract <.alcoa.json>", file=sys.stderr)

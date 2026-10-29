@@ -31,6 +31,19 @@ class TestStdlib(unittest.TestCase):
             _pkg(d, "demo", "import demo\nfrom demo import m\n")
             self.assertEqual(stdlib.check(d, strict=True), [])
 
+    def test_vendored_core_import_allowed(self):
+        with tempfile.TemporaryDirectory() as d:
+            _pkg(d, "demo", "from demo._core import run_contract\nfrom ._core import markers\n")
+            os.makedirs(os.path.join(d, "demo", "_core"))
+            self.assertEqual(stdlib.check(d, strict=True), [])
+
+    def test_cross_plugin_import_is_hard(self):
+        # a sibling plugin's package is NOT local: vendor the shared core instead
+        with tempfile.TemporaryDirectory() as d:
+            _pkg(d, "demo", "from secondop._core import run_contract\n")
+            out = stdlib.check(d, strict=True)
+            self.assertTrue(any(f.severity == "HARD" and "secondop" in f.detail for f in out))
+
     def test_tests_and_examples_skipped(self):
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tests"))

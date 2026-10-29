@@ -42,11 +42,34 @@ class TestReader(unittest.TestCase):
                 json.dump({"data": {"vals": [1, 2, 3]}}, f)
             man = os.path.join(d, "run_manifest.json")
             with open(man, "w", encoding="utf-8") as f:
-                json.dump({"steps": [{"skill": "compute", "out": art}], "final_output": art}, f)
+                json.dump({"run_id": "r9", "state": "OK_FOR_REVIEW",
+                           "steps": [{"skill": "compute", "out": art}], "final_output": art}, f)
             rec, run_data = reader.read_full(d)
             self.assertEqual(rec.mode, "FULL")
+            self.assertEqual(rec.run_id, "r9")
             self.assertEqual(rec.fields["vals"], [1, 2, 3])
             self.assertEqual(run_data["data"]["vals"], [1, 2, 3])
+
+    def _run(self, d, state, out):
+        with open(os.path.join(d, "b.stats.json"), "w", encoding="utf-8") as f:
+            json.dump({"data": {"vals": [1]}}, f)
+        with open(os.path.join(d, "run_manifest.json"), "w", encoding="utf-8") as f:
+            json.dump({"run_id": "r", "state": state,
+                       "steps": [{"skill": "compute", "out": out},
+                                 {"skill": "branch→x", "out": "/nowhere/z.json"}]}, f)
+
+    def test_read_full_refuses_failed_run(self):
+        with tempfile.TemporaryDirectory() as d:
+            self._run(d, "FAILED", "b.stats.json")
+            with self.assertRaises(reader.RunNotReviewable):
+                reader.read_full(d)
+
+    def test_read_full_relocated_run_resolves_by_basename(self):
+        # the kit writes absolute paths; a moved run dir must still be readable
+        with tempfile.TemporaryDirectory() as d:
+            self._run(d, "OK_FOR_REVIEW", "/old/place/run/b.stats.json")
+            rec, _ = reader.read_full(d)
+            self.assertEqual(rec.fields["vals"], [1])
 
 if __name__ == "__main__":
     unittest.main()

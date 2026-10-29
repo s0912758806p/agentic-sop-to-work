@@ -1,39 +1,65 @@
+# GENERATED from shared/sopcore/harness.py by tools/sync_core.py — do not edit this copy; edit the source and re-run `python3 tools/sync_core.py`.
+# sopcore-sha256: 3b5db368e8b575f5cfd4336fc747c22fe69f3f8e53b3c2c01c079159d03b9ef1
 # SPDX-License-Identifier: MIT
-"""Invariant: alcoaguard is STDLIB-ONLY (a blank project runs it with python3 alone).
-Parses every alcoaguard/*.py AND alcoaguard/rules/*.py and asserts each top-level import is a
-stdlib module (or the package's own 'alcoaguard')."""
+"""Invariant: the alcoaguard engine is STDLIB-ONLY (a blank project runs it with python3 alone).
+
+Parses every .py under alcoaguard/ (subpackages and the vendored _core/ included; examples/
+are fixtures and excluded) and asserts each absolute import is stdlib or alcoaguard itself.
+"""
 import ast
-import glob
+import importlib.util
 import os
 import sys
+import sysconfig
 import unittest
 
 PLUGIN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PKG = os.path.join(PLUGIN, "alcoaguard")
+OWN = "alcoaguard"
+_STDLIB = set(getattr(sys, "stdlib_module_names", ()))   # Python 3.10+
+_STDLIB_DIR = os.path.normcase(os.path.realpath(sysconfig.get_paths()["stdlib"]))
 
-_STDLIB = set(getattr(sys, "stdlib_module_names", ()))
-_FALLBACK = {"json", "csv", "math", "os", "re", "sys", "argparse", "dataclasses", "typing", "datetime"}
-ALLOWED = (_STDLIB or _FALLBACK) | {"alcoaguard"}
+
+def _is_stdlib(name):
+    if name == OWN or name in sys.builtin_module_names or name in _STDLIB:
+        return True
+    if _STDLIB:
+        return False
+    spec = importlib.util.find_spec(name)   # < 3.10: decide by where the module lives
+    if spec is None:
+        return False
+    origin = spec.origin or ""
+    if origin in ("built-in", "frozen"):
+        return True
+    origin = os.path.normcase(os.path.realpath(origin))
+    return origin.startswith(_STDLIB_DIR) and "site-packages" not in origin
+
+
+def _sources():
+    for root, dirs, files in os.walk(PKG):
+        dirs[:] = [d for d in dirs if d not in ("examples", "__pycache__")]
+        for fn in files:
+            if fn.endswith(".py"):
+                yield os.path.join(root, fn)
 
 
 class TestNoThirdParty(unittest.TestCase):
     def test_engine_is_stdlib_only(self):
+        paths = list(_sources())
+        self.assertGreater(len(paths), 0, f"no source files found under {PKG!r}")
         offenders = []
-        paths = glob.glob(os.path.join(PKG, "*.py")) + glob.glob(os.path.join(PKG, "rules", "*.py"))
-        self.assertGreater(len(paths), 0, f"no alcoaguard source files found under {PKG!r}")
         for path in paths:
             with open(path, encoding="utf-8") as fh:
                 tree = ast.parse(fh.read(), filename=path)
+            rel = os.path.relpath(path, PKG)
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
-                    for alias in node.names:
-                        top = alias.name.split(".")[0]
-                        if top not in ALLOWED:
-                            offenders.append(f"{os.path.basename(path)}: import {alias.name}")
+                    names = [a.name for a in node.names]
                 elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                    top = node.module.split(".")[0]
-                    if top not in ALLOWED:
-                        offenders.append(f"{os.path.basename(path)}: from {node.module}")
+                    names = [node.module]
+                else:
+                    continue
+                offenders += [f"{rel}: {n}" for n in names if not _is_stdlib(n.split(".")[0])]
         self.assertEqual(offenders, [], f"third-party imports found: {offenders}")
 
 

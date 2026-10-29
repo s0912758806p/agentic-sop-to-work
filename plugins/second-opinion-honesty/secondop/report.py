@@ -3,12 +3,13 @@
 # Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Assemble the Second Opinion report — a machine JSON + a human-readable markdown
 DRAFT. The schema is built so it CANNOT express "Second Opinion approved this":
-`verdict` is the frozen literal "ADVISORY_ONLY" and `human_owns_verdict` is always True.
+`verdict` is the frozen literal "ADVISORY_ONLY" and `human_owns_verdict` is always True
+(the frame and the dual write are the suite's shared ones, in _core/report.py).
 """
-import os
 from dataclasses import asdict
 
-from . import core
+from ._core import findings as core_findings
+from ._core import report as core_report
 
 BANNER = ("DRAFT — adversarial SECOND OPINION, advisory only; a human owns the final "
           "verdict. This report neither approves nor rejects, and is not a controlled record.")
@@ -38,9 +39,10 @@ def build(draft, findings, llm=None, dropped=None):
     by_vector = {}
     for f in findings:
         by_vector[f.vector] = by_vector.get(f.vector, 0) + 1
+    hard, soft = core_findings.count(findings)
     summary = {
-        "hard": sum(1 for f in findings if f.severity == "HARD"),
-        "soft": sum(1 for f in findings if f.severity == "SOFT"),
+        "hard": hard,
+        "soft": soft,
         "by_vector": by_vector,
         "deterministic": sum(1 for f in findings if f.origin == "deterministic"),
         "advisory": sum(1 for f in findings if f.origin == "advisory"),
@@ -56,8 +58,7 @@ def build(draft, findings, llm=None, dropped=None):
             "draft_path": draft.draft_path,
             "input_sources": sorted({s.get("source") for s in draft.sources if s.get("source")}),
         },
-        "verdict": "ADVISORY_ONLY",      # frozen — never "approved"
-        "human_owns_verdict": True,      # constant
+        **core_report.frame(),           # verdict=ADVISORY_ONLY, human_owns_verdict=True — never "approved"
         "banner": BANNER,
         "summary": summary,
         "mode_explainer": _mode_explainer(draft.mode),
@@ -120,9 +121,4 @@ def to_markdown(rep):
 
 
 def write(rep, out_dir):
-    os.makedirs(out_dir, exist_ok=True)
-    jpath = core.write_json(rep, os.path.join(out_dir, "second_opinion.json"))
-    mpath = os.path.join(out_dir, "second_opinion.md")
-    with open(mpath, "w", encoding="utf-8") as f:
-        f.write(to_markdown(rep))
-    return jpath, mpath
+    return core_report.write_dual(rep, out_dir, "second_opinion", to_markdown)

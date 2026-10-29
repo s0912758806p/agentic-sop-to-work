@@ -14,9 +14,8 @@ Vector #4 (conclusion overreach) is intentionally NOT here — it is judgment, s
 lives in the capped advisory LLM layer.
 """
 from . import arithmetic, core
+from ._core import findings, markers
 from .model import Finding
-
-_PLACEHOLDER = "【待補】"
 
 
 def _sev(draft):
@@ -24,7 +23,9 @@ def _sev(draft):
 
 
 def _is_placeholder(claim):
-    return claim.kind == "placeholder" or str(claim.value).strip() == _PLACEHOLDER
+    # 【待補】 is an honest blank, not a fabrication: skipped here (alcoa-guard flags it —
+    # see _core/markers.py for why the two plugins differ on purpose).
+    return claim.kind == "placeholder" or markers.is_tbd(claim.value)
 
 
 def check_arith_verdict(draft):
@@ -101,10 +102,9 @@ REGISTRY = {
 
 def run_checks(draft, only=None):
     """Run all registered deterministic checks; stable dedupe by finding id."""
-    seen = {}
+    out = []
     for name, fn in REGISTRY.items():
         if only and name not in only:
             continue
-        for f in fn(draft):
-            seen[f.id] = f
-    return list(seen.values())
+        out.extend(fn(draft))
+    return findings.dedupe(out)

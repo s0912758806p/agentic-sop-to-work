@@ -1,9 +1,13 @@
 # SPDX-License-Identifier: MIT
-"""Read a record into the normalized model. DEGRADED: CSV/JSON file. FULL: a kit run dir."""
+"""Read a record into the normalized model. DEGRADED: CSV/JSON file. FULL: a kit run dir,
+read through _core/run_contract.py — the suite's single definition of a run dir (only an
+OK_FOR_REVIEW run is read; a FAILED one raises RunNotReviewable; `branch→` entries are
+skipped; a relocated run resolves by basename)."""
 import csv
 import json
-import os
 from dataclasses import fields as dc_fields
+from ._core import run_contract
+from ._core.run_contract import ContractError, NotAKitRun, RunNotReviewable  # noqa: F401
 from .model import Record, Entry
 
 
@@ -32,18 +36,16 @@ def read_degraded(record_path, contract):
 
 
 def read_full(run_dir):
-    """Return (Record, run_data). Reads the last JSON artifact named in run_manifest.json."""
-    with open(os.path.join(run_dir, "run_manifest.json"), encoding="utf-8") as f:
-        manifest = json.load(f)
-    json_arts = [s.get("out") for s in manifest.get("steps", [])
-                 if str(s.get("out", "")).endswith(".json")]
+    """Return (Record, run_data): run_data is the artifact that feeds the run's deliverable
+    (final_output when JSON, else the last JSON step artifact). Raises
+    run_contract.ContractError (NotAKitRun / RunNotReviewable) for a non-reviewable run."""
+    rc = run_contract.load(run_dir)
+    art = rc.feeding_artifact()
     run_data, fields = {}, {}
-    data_path = json_arts[-1] if json_arts else None
-    if data_path and not os.path.isabs(data_path):
-        data_path = os.path.join(run_dir, data_path)
-    if data_path and os.path.exists(data_path):
-        with open(data_path, encoding="utf-8") as f:
-            run_data = json.load(f)
-        for k, v in (run_data.get("data", {}) or {}).items():
-            fields[k] = v
-    return Record(fields=fields, entries=[], mode="FULL", source=run_dir), run_data
+    if art is not None:
+        run_data = {"schema": art.schema, "produced_by": art.produced_by,
+                    "data": art.data, "trace": art.trace}
+        data = art.data if isinstance(art.data, dict) else {}
+        fields.update(data)
+    return Record(fields=fields, entries=[], mode="FULL", source=run_dir,
+                  run_id=rc.run_id), run_data

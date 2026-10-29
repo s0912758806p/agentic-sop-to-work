@@ -3,10 +3,13 @@
 # Source: https://github.com/s0912758806p/agentic-sop-to-work
 """Contract reader -> one NormalizedDraft for both modes.
 
-FULL mode (read_full): point at an agentic-sop-kit run_dir. Pools the trace across all
-JSON step artifacts (the verbatim allow-set), then harvests from the artifact that
-feeds the final report (NOT by parsing the markdown — the report's numbers are rendered
-from that JSON, so harvesting there keeps the authoritative trace link).
+FULL mode (read_full): point at an agentic-sop-kit run_dir. The run dir is read through
+_core/run_contract.py — the suite's single definition of it (only an OK_FOR_REVIEW run is
+read; a FAILED one raises RunNotReviewable; `branch→` entries are skipped; a relocated run
+resolves by basename). It pools the trace across all JSON step artifacts (the verbatim
+allow-set), then harvests from the artifact that feeds the final report (NOT by parsing the
+markdown — the report's numbers are rendered from that JSON, so harvesting there keeps the
+authoritative trace link).
 
 Recognized, DOMAIN-NEUTRAL convention inside `data`:
   • data.results[]    -> Verdicts (#1) + each record's `value` as a claim (#2/#3)
@@ -17,6 +20,8 @@ import json
 import os
 
 from . import core, extract
+from ._core import markers, run_contract
+from ._core.run_contract import ContractError, NotAKitRun, RunNotReviewable  # noqa: F401
 from .model import Aggregate, Claim, NormalizedDraft, Verdict
 
 _PASS_WORDS = {"pass", "passed", "符合", "conform", "conforms", "within", "ok", "合格", "in spec"}
@@ -48,7 +53,7 @@ def _scalar_claim(idp, label, value, sources):
         return Claim(id=idp, value=value, label=label, location=idp, kind="number",
                      sourced=core.is_sourced(value, sources))
     s = str(value).strip()
-    if s == "【待補】":
+    if markers.is_tbd(s):
         return Claim(id=idp, value=s, label=label, location=idp, kind="placeholder", sourced=None)
     # identifier heuristic: short, single token, contains a digit (lot/batch/date/code).
     # Prose (conclusions, names with spaces) is left for the advisory #4 layer.
@@ -111,53 +116,31 @@ def _harvest(data, sources, produced_by):
     return claims, aggregates, verdicts
 
 
-def _resolve(run_dir, p):
-    """Resolve an artifact path. The kit writes ABSOLUTE paths, but a shipped or
-    relocated run_dir needs them resolved by basename relative to run_dir."""
-    if not p:
-        return p
-    if os.path.isabs(p) and os.path.exists(p):
-        return p
-    cand = os.path.join(run_dir, os.path.basename(p))
-    return cand if os.path.exists(cand) else p
-
-
 def read_full(run_dir):
-    manifest = core.read_json(os.path.join(run_dir, "run_manifest.json"))
-    steps = manifest.get("steps", []) or []
-    final_output = _resolve(run_dir, manifest.get("final_output"))
-
-    sources, seen, feeding = [], set(), None
-    for st in steps:
-        out = _resolve(run_dir, st.get("out"))
-        if not out or not str(out).endswith(".json") or not os.path.exists(out):
-            continue
-        art = core.read_json(out)
-        for t in art.get("trace", []) or []:
-            key = (str(t.get("value")), t.get("source"), t.get("locator"))
-            if key not in seen:
-                seen.add(key)
-                sources.append(t)
-        feeding = art  # last JSON artifact feeds the report
+    """Raises run_contract.ContractError (NotAKitRun / RunNotReviewable) for a run dir that
+    is not reviewable — the CLI turns that into exit 2."""
+    rc = run_contract.load(run_dir)
+    sources = rc.pooled_trace()
+    feeding = rc.feeding_artifact()
+    final_output = rc.final_output
 
     raw_text = ""
     if final_output and os.path.exists(final_output):
         if str(final_output).endswith(".json"):
-            feeding = core.read_json(final_output)
-            raw_text = json.dumps(feeding.get("data", {}), ensure_ascii=False, indent=2)
+            raw_text = json.dumps(feeding.data if feeding else {}, ensure_ascii=False, indent=2)
         else:
             with open(final_output, encoding="utf-8") as f:
                 raw_text = f.read()
 
-    data = (feeding or {}).get("data", {})
-    produced_by = (feeding or {}).get("produced_by")
+    data = feeding.data if feeding else {}
+    produced_by = feeding.produced_by if feeding else None
     claims, aggregates, verdicts = _harvest(data, sources, produced_by)
 
     return NormalizedDraft(
         mode="FULL", sources=sources, claims=claims, aggregates=aggregates,
-        verdicts=verdicts, raw_text=raw_text, run_id=manifest.get("run_id"),
+        verdicts=verdicts, raw_text=raw_text, run_id=rc.run_id,
         produced_by=produced_by, draft_path=final_output,
-        notes=[f"FULL mode: pooled {len(sources)} trace tokens from {manifest.get('flow')}"])
+        notes=[f"FULL mode: pooled {len(sources)} trace tokens from {rc.flow}"])
 
 
 def read_degraded(doc_path, inputs_paths):

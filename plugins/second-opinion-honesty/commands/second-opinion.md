@@ -29,6 +29,8 @@ Run the deterministic checker. It writes `second_opinion.{json,md}` and an LLM e
 - DEGRADED: `PYTHONPATH="$ROOT" python3 -m secondop.review --doc <doc> --inputs <file...> --out-base "$OUT"`
 
 Note the output dir it prints (the `wrote …` lines). Call it `RUNOUT`.
+If it exits 2 on a run dir (not a finished `OK_FOR_REVIEW` run, e.g. `FAILED`), show the
+refusal message and STOP — never review a failed run as if it had finished.
 
 ## Step 2 — advisory adversarial pass (you, capped, ADVISORY only)
 Read `RUNOUT/llm_input.json`. It gives you `draft_text`, `declared_sources`, `claims`,
