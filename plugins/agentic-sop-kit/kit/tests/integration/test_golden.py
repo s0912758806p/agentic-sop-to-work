@@ -95,13 +95,26 @@ def _scenarios(d):
     return out
 
 
-def _normalise(text, base, sep=os.sep):
+def _forms(root):
+    """Every spelling of a path that can reach a run dir file, longest first: raw, inside
+    a repr() (an OSError message), and each of those JSON-escaped."""
+    reprd = root.replace("\\", "\\\\")
+    forms = {root, reprd, json.dumps(root)[1:-1], json.dumps(reprd)[1:-1]}
+    return sorted(forms, key=len, reverse=True)
+
+
+_PATH_TOKEN = re.compile(r"(<BASE>|<KIT>)([^\s\"']*)")
+
+
+def _normalise(text, base, sep=os.sep, is_json=True):
     for root, tag in ((base, "<BASE>"), (KIT, "<KIT>")):
-        for form in (root, json.dumps(root)[1:-1]):
+        for form in _forms(root):
             text = text.replace(form, tag)
     if sep == "\\":
-        # Windows joins run paths with "\" (JSON-escaped as "\\"); the goldens use "/".
-        text = text.replace("\\\\", "/").replace("\\", "/")
+        # Windows joins run paths with "\". Only inside a path token after <BASE>/<KIT>,
+        # and in JSON only runs of >= 2 backslashes (a single one is an escape like \n).
+        run = re.compile(r"\\{2,}" if is_json else r"\\+")
+        text = _PATH_TOKEN.sub(lambda m: m.group(1) + run.sub("/", m.group(2)), text)
     return re.sub(r"Python \d+\.\d+\.\d+\S*", "Python <VER>", text)
 
 
@@ -112,7 +125,7 @@ def _collect(run_dir, base):
         if fn.startswith(".") or not os.path.isfile(p):
             continue
         with open(p, encoding="utf-8") as f:
-            files[fn] = _normalise(f.read(), base)
+            files[fn] = _normalise(f.read(), base, is_json=fn.endswith(".json"))
     return files
 
 
@@ -155,10 +168,16 @@ def _load_golden():
 
 class GoldenRunDirs(unittest.TestCase):
     def test_windows_paths_normalise_to_the_golden_form(self):
-        base = "C:\\t\\x"
-        raw = json.dumps({"out": base + "\\fail_gate/a.json"}) + "\n" + base + "\\flow/report.md"
-        self.assertEqual(_normalise(raw, base, sep="\\"),
-                         '{"out": "<BASE>/fail_gate/a.json"}\n<BASE>/flow/report.md')
+        base = "C:\\T\\tmp1"
+        oserr = "cannot read %s\\r/nope.json: [Errno 2] No such file: %r" % (base, base + "\\r/nope.json")
+        raw = json.dumps({"out": base + "\\r/a.json", "error": oserr, "msg": "refused:\n  - x"})
+        self.assertEqual(
+            _normalise(raw, base, sep="\\"),
+            json.dumps({"out": "<BASE>/r/a.json",
+                        "error": "cannot read <BASE>/r/nope.json: [Errno 2] No such file: '<BASE>/r/nope.json'",
+                        "msg": "refused:\n  - x"}))
+        self.assertEqual(_normalise(base + "\\flow/report.md", base, sep="\\", is_json=False),
+                         "<BASE>/flow/report.md")
 
     def test_run_dirs_match_golden(self):
         golden = _load_golden()
