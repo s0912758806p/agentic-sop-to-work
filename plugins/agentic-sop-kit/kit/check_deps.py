@@ -10,11 +10,9 @@
 import ast
 import json
 import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
-import kit  # noqa: E402
-from graph import _kind  # noqa: E402  步驟種類的唯一判定（branch / cmd 沒有 tool）
+from sopkit import kit  # 本檔在 kit 根，sopkit 直接可 import
+from sopkit.graph import kind  # 步驟種類的唯一判定（branch / cmd 沒有 tool）
 
 
 def _deps_of(tool_path):
@@ -38,7 +36,7 @@ def _flow_tools():
         flow = json.load(f)
     out, seen = [], set()
     for st in flow["steps"]:
-        if _kind(st) not in ("tool", "map"):
+        if kind(st) not in ("tool", "map"):
             continue                       # branch / cmd 步驟沒有 tool.py，也就沒有 DEPS
         tp = kit.kit_path(st["tool"])
         if tp not in seen:

@@ -15,9 +15,11 @@ import json
 import os
 import re
 
+from sopkit import config  # 本檔在 kit 根，sopkit 直接可 import
+
 
 def _root():
-    return os.environ.get("SOPKIT_ROOT") or os.path.dirname(os.path.abspath(__file__))
+    return config.kit_root()   # SOPKIT_ROOT, read at call time (sopkit/config.py)
 
 
 _TEST_STUB = '''# SPDX-License-Identifier: MIT

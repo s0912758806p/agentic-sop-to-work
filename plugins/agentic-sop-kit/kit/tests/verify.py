@@ -31,8 +31,9 @@ REG = os.path.join(KIT, "tests", "registry.json")
 STATE = os.path.join(KIT, "tests", ".verify_state.json")
 LOG = os.path.join(KIT, "tests", "regression_log.jsonl")
 BASELINE = os.path.join(KIT, "tests", ".health_baseline.json")
-sys.path.insert(0, os.path.join(KIT, "lib"))
-from loop import health, state  # noqa: E402
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit import config  # noqa: E402
+from sopkit.loop import health, state  # noqa: E402
 
 # 變更偵測時忽略的（產生物 / 快取 / 紀錄）——它們變動不代表「功能」變動。
 _SKIP_DIRS = {"runs", "__pycache__", ".git", ".pytest_cache"}
@@ -276,7 +277,7 @@ def main(argv=None):
         print(f"WARNING: 無法寫入回歸紀錄 {LOG}: {e}", file=sys.stderr)
 
     # cut #3: bounded state — keep the regression log to the last log_keep lines.
-    _rotate_log(state.log_keep_count(int(os.environ.get("SOPKIT_STATE_KEEP_LOG", "200"))))
+    _rotate_log(state.log_keep_count(config.keep_log()))
 
     # (5) 判定 + 快照更新
     print(f"— verdict={verdict}  通過 {n_pass}/{len(all_res)}  指標 {json.dumps(metrics, ensure_ascii=False)}")
@@ -285,8 +286,8 @@ def main(argv=None):
         baseline = _read_baseline()
         report = health.assess_health(
             reg, _log_entries(), baseline,
-            factor=float(os.environ.get("SOPKIT_HEALTH_SLOWDOWN_FACTOR", "2.0")),
-            window=int(os.environ.get("SOPKIT_HEALTH_FLAKY_WINDOW", "10")))
+            factor=config.health_slowdown_factor(),
+            window=config.health_flaky_window())
         if report["hard"]:
             for h in report["hard"]:
                 print(f"❌ HEALTH(hard): {h['message']}", file=sys.stderr)

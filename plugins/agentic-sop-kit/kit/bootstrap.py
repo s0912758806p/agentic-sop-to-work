@@ -22,8 +22,7 @@ import sys
 
 KIT_SRC = os.path.dirname(os.path.abspath(__file__))   # 本 kit 根（canonical）
 DEST_NAME = "agentic-sop-kit"
-sys.path.insert(0, os.path.join(KIT_SRC, "lib"))
-from kit import COPY_EXCLUDE  # noqa: E402  複製排除規則的唯一來源（含執行期狀態）
+from sopkit.kit import COPY_EXCLUDE  # 複製排除規則的唯一來源（含執行期狀態）；本檔在 kit 根
 
 # 複製時排除的執行期/雜項（保持目標乾淨）
 IGNORE = shutil.ignore_patterns(*COPY_EXCLUDE)
@@ -91,7 +90,6 @@ def merge_hooks(project):
 
 def export_claude_skills(project):
     """順便把每個已登記的 skill 產成「對話可觸發的 runner skill」到 <project>/.claude/skills/。"""
-    sys.path.insert(0, KIT_SRC)
     try:
         import export_claude_skill as ex
         reg = _load_json(os.path.join(KIT_SRC, "tests", "registry.json"))

@@ -12,8 +12,8 @@ artifact 的 `defects` 導出，不由模型決定。編排層再用 branch pred
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "lib"))
-import kit  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # kit root → sopkit
+from sopkit import kit  # noqa: E402
 
 DEPS = [{"kind": "python", "min": "3.8"}]
 WHO = "verdict"

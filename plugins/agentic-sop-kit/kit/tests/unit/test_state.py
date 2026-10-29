@@ -11,8 +11,8 @@ import unittest
 
 RUN = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "workflow", "run.py")
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "lib"))
-from loop import state  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))  # kit root → sopkit
+from sopkit.loop import state  # noqa: E402
 
 
 class LogKeep(unittest.TestCase):

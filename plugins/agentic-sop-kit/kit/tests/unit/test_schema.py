@@ -17,9 +17,8 @@ import tempfile
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(KIT, "lib"))
-import gates  # noqa: E402
-import schema  # noqa: E402
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit import gates, schema  # noqa: E402
 
 
 def _mkregistry(*decls):

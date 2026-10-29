@@ -5,8 +5,8 @@ import os
 import sys
 import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "lib"))
-from loop import health  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))  # kit root → sopkit
+from sopkit.loop import health  # noqa: E402
 
 
 def _entry(trigger="all", total=1.0, unit=None, integration=None):

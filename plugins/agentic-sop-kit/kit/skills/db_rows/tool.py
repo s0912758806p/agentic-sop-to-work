@@ -6,8 +6,8 @@ query; keep a recompute_gate so the reported total is re-derived and verified.""
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "lib"))
-import kit  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # kit root → sopkit
+from sopkit import kit  # noqa: E402
 
 DEPS = [{"kind": "python", "min": "3.8"}]
 WHO = "db_rows"
