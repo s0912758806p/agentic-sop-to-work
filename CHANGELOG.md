@@ -42,6 +42,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 ### Recorded (missing entry, backfilled)
 - **second-opinion-honesty** (v0.2.0) — opt-in, project-scoped acknowledgement Stop-hook (`hooks/stop_ack.py`). It blocks session stop only when `.second-opinion/require_ack` exists and the latest DRAFT run has no acknowledged review, and it is retry-capped by `SECONDOP_MAX_ACK_RETRIES`. Shipped 2026-06-14 in #3; this entry was never written at the time.
 
+## [1.12.0] — 2026-10-29
+Platform alignment (Phase 4, kit part). The run-dir format is unchanged; `test_golden.py` and `tests/test_run_contract.py` still pass.
+
+### Changed
+- **`/sop-flow` is a skill.** `commands/sop-flow.md` moved to `skills/sop-flow/SKILL.md` (`disable-model-invocation: true`). The invocation stays `/agentic-sop-kit:sop-flow`. The drifted copy `kit/commands/sop-flow.md` is **deleted**. `bootstrap.py` now *generates* the project's `.claude/commands/sop-flow.md` from the skill: skill-only frontmatter keys are dropped, the body is verbatim, and a GENERATED marker is added. One source, so the two can no longer drift.
+- **Default run dir:** `--out-base`, then `$CLAUDE_PLUGIN_DATA/runs` when the kit is the installed plugin's own kit, then `kit/runs`. `kit/runs` *inside the plugin cache* is **deprecated** and prints a notice, because a plugin update replaces that directory and the runs with it; v2.0 removes it. A bootstrapped project's `agentic-sop-kit/runs` is project data and keeps working with no notice. `/sop-flow` still passes `--out-base .agentic-sop-runs` explicitly, so second-opinion and alcoa-guard find the runs where they always did.
+- **Hooks use exec form** (`command` + `args`, no shell), so `${CLAUDE_PLUGIN_ROOT}` needs no quoting. Each hook script first checks for Python ≥ 3.8; on an older interpreter it prints why and no-ops instead of erroring the session. The check is written in syntax old interpreters can parse.
+
+### Added
+- **`userConfig`** in `plugin.json`: `max_fix_retries` (3), `stall_window` (2), `keep_runs` (20). Precedence is resolved in `sopkit/config.py`: `SOPKIT_*` env, then `CLAUDE_PLUGIN_OPTION_*`, then the default. Claude Code gives these options to hooks, but not to Bash run from a skill, so the `sop-flow` skill forwards them, and `${CLAUDE_PLUGIN_DATA}`, through `${user_config.*}` substitution. An unsubstituted or non-numeric option value is ignored; a bootstrap-generated project command carries the literal placeholders.
+- Tests:
+  - userConfig precedence and run-dir resolution (`tests/unit/test_config.py`)
+  - the hook Python-version guard and exec form, and bootstrap generating the command from the skill (`tests/test_plugin_hooks.py`)
+- Checked locally: `claude plugin validate --strict` passes for the plugin and the marketplace.
+
 ## [1.11.0] — 2026-10-29
 Zero-break refactor. The run-dir format is unchanged **byte for byte**: `run_manifest.json` keys, key order and the artifact shape are the same. A new golden test pins that.
 

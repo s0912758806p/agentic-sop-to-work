@@ -136,7 +136,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 把零散的單一工具 skill **依 SOP 實際順序**串成完整流程：
 - **`workflow/flow.json`**：宣告順序與 I/O 接線（`$INPUT`、`$RUN` 佔位；上一步 `out` = 下一步 `in`）。
 - **`workflow/run.py`**：逐步以子程序跑各 skill、串接 artifact、產 run-scoped `run_manifest.json`、**人核准 STOP**；任一步失敗（含缺依賴）→ 立即停止、回報該步 stderr。 失敗時 manifest 帶 `failure{step,gate_type,message,artifact}`；`/sop-flow` 據此做**封頂自動修復**（同 run-id **失敗** ≤ 1＋`--max-fix-retries` 次，程式強制上限；成功的重跑不消耗額度），終點仍 DRAFT＋人核准。
-- **`commands/sop-flow.md`**：slash command，讓 agent 在目標專案 `/sop-flow` 觸發流程。
+- **`/sop-flow`**：唯一來源是 plugin 的 `skills/sop-flow/SKILL.md`（`/agentic-sop-kit:sop-flow`）；`bootstrap.py` 由它產生目標專案的 `.claude/commands/sop-flow.md`。
 - **Hooks**：裝了 plugin 時由 plugin 的 `hooks/hooks.json` 負責（只在有 `agentic-sop-kit/` 的專案生效）；沒裝 plugin 時用 `hooks/settings.snippet.json` 手動合併（或 `bootstrap.py --with-hooks`）。
   - **SessionStart**：跑 `check_deps.py`，缺依賴在 session 開場就明確報錯。
   - **Stop**（自動回歸驗證）：在 agent 準備停止時跑 `tests/verify.py`——見下節。
@@ -202,7 +202,7 @@ stdlib-only 由 `tests/test_no_third_party.py` 與 `plugin-forge lint --all --st
 1. 用 `templates/human_sop_template.md` 寫下你的 Human SOP（標出每步工具）。
 2. 依拆解規則，每個「步驟×工具」用 **`python3 new_skill.py --name <name>`** scaffold 出 `skills/<name>/`（自動去 `.tmpl`、替換名稱、建單元測試骨架並登記 `tests/registry.json`）；接著填 DEPS / I-O / run()。（也可手動複製 `templates/skill_template/`。）
 3. 在 `workflow/flow.json` 按 SOP 順序列出 steps 與接線。
-4. `python3 check_deps.py` → `python3 workflow/run.py` 驗證；安裝 `commands/` + `hooks/` 讓 agent 觸發。
+4. `python3 check_deps.py` → `python3 workflow/run.py` 驗證；用 `bootstrap.py` 裝 `/sop-flow`；hook 由 plugin 負責（沒裝 plugin 才加 `--with-hooks`）。
 5. **完成工具後**，用 **`python3 export_claude_skill.py --skill <name> --project .`**（或 `--all`）產出可被 Claude 載入、對話即可觸發的 **runner skill**（寫到 `.claude/skills/`）——它只去執行你那支確定性工具並回報 DRAFT，不讓模型自行重做（守住控制流鐵則）。導入時加 `bootstrap.py --with-claude-skills` 會順便產生；要收回已產生的 runner skill，用 `export_claude_skill.py --remove --skill <name> --project .`（或 `--all`，只刪本工具產生的、手改過的會被拒絕除非 `--force`）。
 
 ## 目錄結構
@@ -226,7 +226,6 @@ agentic-sop-kit/
   templates/                  # human_sop_template.md + skill_template/
   skills/<name>/              # 單一工具 skill（SKILL.md + tool.py）
   workflow/flow.json,run.py   # 編排層（--plan 靜態驗證 / --graph 畫拓撲）
-  commands/sop-flow.md        # slash command
   hooks/settings.snippet.json # hook 設定（SessionStart 依賴檢查 + Stop 自動回歸）
   hooks/stop_regression.py    # Stop hook（專案版 shim）：自動回歸驗證 + 防迴圈
   hooks/_regression_core.py   # Stop/SessionStart hook 的唯一實作（plugin hook 與專案 hook 共用）

@@ -27,7 +27,8 @@ python3 agentic-sop-kit/check_deps.py
 ## 3. 跑範例流程（30 秒驗證）
 ```bash
 python3 agentic-sop-kit/workflow/run.py
-# → 依序跑 extract → compute → report，產出在 agentic-sop-kit/runs/<run_id>/
+# → 依序跑 extract → compute → report，產出在 agentic-sop-kit/runs/<run_id>/（--out-base 可改；
+#   plugin 內附的 kit 預設寫到 $CLAUDE_PLUGIN_DATA/runs，不寫進會被更新清掉的 plugin 快取）
 #   report.md（DRAFT 報告）、run_manifest.json（覆核包）
 
 # 換自己的輸入：
@@ -36,8 +37,7 @@ python3 agentic-sop-kit/workflow/run.py --input /path/to/your_input.txt
 看到 `✅ 流程完成 → …/report.md` 就成功了。產出是 **DRAFT，需人覆核**。
 
 ## 4. （選用）讓 agent 在 Claude Code 觸發
-- **Slash command**：`mkdir -p .claude/commands && cp agentic-sop-kit/commands/sop-flow.md .claude/commands/` → 之後輸入 `/sop-flow`。
-  （`mkdir -p` 必要：全新專案通常還沒有 `.claude/commands/`。）
+- **Slash command**：由 `bootstrap.py` 從 plugin 的 `skills/sop-flow/SKILL.md`（唯一來源）產生 `.claude/commands/sop-flow.md` → 之後輸入 `/sop-flow`。裝了 plugin 也可以直接用 `/agentic-sop-kit:sop-flow`。
 - **Hook**（開場依賴檢查 + 停止前自動回歸驗證）：**裝了 plugin 就不用做**——plugin 的 hook 會在有 `agentic-sop-kit/` 的專案自動生效。只有沒裝 plugin 時才手動：`mkdir -p .claude`；若無 `.claude/settings.json` 就以 `agentic-sop-kit/hooks/settings.snippet.json` 為起點建立，否則把其 `hooks` 區段（`SessionStart` + `Stop`）合併進去。
   - 若把 kit 放在 `agentic-sop-kit/` 以外的位置，記得改 snippet 內 `$CLAUDE_PROJECT_DIR/agentic-sop-kit/...` 路徑。
   - 兩者並存（舊專案 settings 已註冊 `stop_regression.py`／`check_deps.py`，又裝了 plugin）也只會跑一次：plugin hook 偵測到就讓位。
@@ -50,6 +50,7 @@ Stop hook（plugin 的，或上面手動裝的）就緒後即生效，全自動�
 - **防迴圈**：`stop_hook_active` + 重試上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停手、提示人工介入。同一上限亦套用於 `run.py` 的 in-run fix-loop（兩層共用一個旋鈕）。
   - fix-loop 為**雙終止**：budget（看次數，`SOPKIT_MAX_FIX_RETRIES`）＋ stall（看進度，`SOPKIT_STALL_WINDOW`，預設 2）——連續無可驗證進度（idle / A→B→A thrash）即確定性早停、拒絕重跑。
 - **健康監測**：回歸迴圈附帶確定性健康讀數——覆蓋縮水（註冊測試數掉到基線下）走 `verify` exit 3 硬擋（接 Stop-hook）；變慢／flaky 為 advisory、不擋。刻意降覆蓋用 `verify.py --rebaseline`。旋鈕：`SOPKIT_HEALTH_SLOWDOWN_FACTOR`（變慢倍數門檻，預設 2.0）、`SOPKIT_HEALTH_FLAKY_WINDOW`（flaky 判讀的最近 run 數，預設 10）。
+- 裝成 plugin 時，`max_fix_retries`／`stall_window`／`keep_runs` 也能在 plugin 的 **userConfig** 設定（`CLAUDE_PLUGIN_OPTION_*`）。優先序：`SOPKIT_*` 環境變數 > userConfig > 預設；沒替換成功或不是數字的 userConfig 值一律當沒設。
 - 以上所有 `SOPKIT_*` 旋鈕只在 `sopkit/config.py` 讀取，而且是**呼叫時**才讀（v1.11.0 以前 `SOPKIT_ROOT`／`SOPKIT_SCHEMA_DIR` 在第一次 import 時就凍結）。
 - **有界狀態**：迴圈 run-state 不無限長——`verify` 自動把 `regression_log.jsonl` 截到最近 `SOPKIT_STATE_KEEP_LOG`（200，且不低於保底 50，保住健康窗）；舊 run 目錄用 `run.py --prune`（人授權刪除，保留最新 `SOPKIT_STATE_KEEP_RUNS`=20）。
 - 「更好」指標（步數/時間/成功率）只記入 log，由**人**回看趨勢判斷，hook 不自動下結論。
@@ -134,7 +135,6 @@ templates/human_sop_template.md  templates/skill_template/
 skills/extract|compute|report/     # 線性範例：各一個單一工具 skill（SKILL.md + tool.py）
 skills/draft|verdict|accept/       # 圖範例：退回邊目標 / 判定來源 / 終端節點
 workflow/flow.json  workflow/run.py  workflow/examples/
-commands/sop-flow.md
 hooks/settings.snippet.json  hooks/stop_regression.py  hooks/_regression_core.py   # 手動 hook 設定 + Stop 回歸（共用核心）
 tests/registry.json                # 受測功能登錄表（skill→單元測試 / 整合測試）
 tests/unit/  tests/integration/  tests/verify.py        # 兩層測試 + 變更偵測驗證腳本

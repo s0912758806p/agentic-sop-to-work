@@ -1,7 +1,7 @@
 {
   "name": "agentic-sop-kit",
-  "description": "Convert human SOPs into deterministic agentic workflows — linear or as a bounded graph (typed handoff edges, unique field ownership, bounded back-edges, static topology validation). Bundles the six-rung-ladder + agentic-sop + agentic-workflow-audit skills, the /sop-flow command, a project-scoped Stop-hook regression gate, and the portable agentic-sop-kit.",
-  "version": "1.11.0",
+  "description": "Convert human SOPs into deterministic agentic workflows — linear or as a bounded graph (typed handoff edges, unique field ownership, bounded back-edges, static topology validation). Bundles the six-rung-ladder + agentic-sop + agentic-workflow-audit skills, the /sop-flow skill, a project-scoped Stop-hook regression gate, and the portable agentic-sop-kit.",
+  "version": "1.12.0",
   "author": {
     "name": "s0912758806p",
     "url": "https://github.com/s0912758806p"
@@ -21,5 +21,28 @@
     "graph",
     "topology",
     "state-machine"
-  ]
+  ],
+  "userConfig": {
+    "max_fix_retries": {
+      "type": "number",
+      "title": "Max auto-fix retries",
+      "description": "Ceiling on auto-fix re-runs per run-id, shared by the fix-loop and the Stop-hook regression gate. The SOPKIT_MAX_FIX_RETRIES env var overrides it.",
+      "default": 3,
+      "min": 0
+    },
+    "stall_window": {
+      "type": "number",
+      "title": "Stall window",
+      "description": "Consecutive identical failures that count as no progress (0 disables stall detection). The SOPKIT_STALL_WINDOW env var overrides it.",
+      "default": 2,
+      "min": 0
+    },
+    "keep_runs": {
+      "type": "number",
+      "title": "Run dirs to keep",
+      "description": "How many run dirs run.py --prune keeps (newest first). The SOPKIT_STATE_KEEP_RUNS env var overrides it.",
+      "default": 20,
+      "min": 1
+    }
+  }
 }

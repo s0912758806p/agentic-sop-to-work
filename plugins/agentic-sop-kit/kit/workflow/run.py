@@ -44,7 +44,9 @@ def main(argv=None):
                     help="evict run dirs beyond SOPKIT_STATE_KEEP_RUNS (newest kept); deletes — human-authorized")
     a = ap.parse_args(argv)
 
-    base = a.out_base or kit.kit_path("runs")
+    base, notice = config.runs_base(a.out_base)
+    if notice and not (a.graph or a.plan):
+        safe_print("  ⚠️ " + notice, file=sys.stderr)
     if a.prune:
         raise SystemExit(runner.prune_runs(base, config.keep_runs()))
 
@@ -62,7 +64,7 @@ def main(argv=None):
     if a.plan:
         raise SystemExit(print_plan(flow, a.stall_window))
 
-    ctx = runner.RunContext(flow, kit.run_dir(a.out_base, a.run_id),
+    ctx = runner.RunContext(flow, kit.run_dir(base, a.run_id),
                             a.input or kit.kit_path(flow["input_default"]),
                             max_fix_retries=a.max_fix_retries, stall_window=a.stall_window,
                             allow_mutations=a.allow_mutations)

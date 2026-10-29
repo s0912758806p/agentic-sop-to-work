@@ -1,6 +1,6 @@
 # agentic-sop-to-work
 
-[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fs0912758806p%2Fagentic-sop-to-work%2Fmain%2Fplugins%2Fagentic-sop-kit%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue&prefix=v)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-6-8A2BE2)](plugins)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fs0912758806p%2Fagentic-sop-to-work%2Fmain%2Fplugins%2Fagentic-sop-kit%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue&prefix=v)](plugins/agentic-sop-kit/.claude-plugin/plugin.json) [![Skills](https://img.shields.io/badge/skills-7-8A2BE2)](plugins)
 
 > **Loop Engineering** — make an agent's loop produce **verifiable progress**, stay **honest**, and stay **bounded**, by deterministic mechanism rather than vibes. `agentic-sop-kit` is the reference toolkit: it turns a human SOP into a **controlled loop**, not a one-shot script — no fabrication, no "mega-agent" rot.
 > **Loop Engineering** — 用確定性機制(不是 vibes)讓 agent 的迴圈**每次迭代產生可驗證進度、不自我欺騙、不失控**。`agentic-sop-kit` 是它的參考工具包:把人工 SOP 變成一條**受控迴圈**——不臆造、不退化成 mega agent。
@@ -106,8 +106,8 @@ flowchart LR
 
 | | |
 |---|---|
-| **3 Skills** (auto-trigger by intent) | `six-rung-ladder` — minimalist "should I build this at all?" filter (**decide**) · `agentic-sop` — methodology + entry point + smart intake (**build**) · `agentic-workflow-audit` — read-only mega-agent auditor (**audit**) |
-| **Command** `/agentic-sop-kit:sop-flow` | runs the kit's orchestration, reports a DRAFT |
+| **4 Skills** | auto-trigger by intent: `six-rung-ladder` — minimalist "should I build this at all?" filter (**decide**) · `agentic-sop` — methodology + entry point + smart intake (**build**) · `agentic-workflow-audit` — read-only mega-agent auditor (**audit**); user-invoked: `/agentic-sop-kit:sop-flow` — runs the kit's orchestration, reports a DRAFT (a skill since v1.12.0; same invocation as the old command) |
+| **Settings** (`userConfig`) | `max_fix_retries` · `stall_window` · `keep_runs` — set when enabling the plugin; a `SOPKIT_*` env var still wins |
 | **Hooks** (project-scoped) | `SessionStart` dep-check · `Stop` regression gate — **no-op until a project adopts the kit**; steps aside when the project registers the kit's own hooks, so the gate never runs twice |
 | **Portable kit** `kit/` | copy-into-any-project methodology + runnable example |
 | **Plugin** `second-opinion-honesty` | adversarial honesty reviewer — checks a finished DRAFT's claims against its evidence (fabrication / overreach / invented IDs); deterministic findings are HARD, the LLM red-team layer is advisory and capped; reads a run dir read-only, never imports the kit |
@@ -144,7 +144,7 @@ agentic-sop-to-work/
 ├── tools/sync_core.py            # vendors shared/sopcore (+ shared test harness); --check runs in CI
 └── plugins/
     ├── agentic-sop-kit/
-    │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
+    │   ├── .claude-plugin/plugin.json · skills/ · hooks/
     │   └── kit/   # portable kit: sopkit/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
     ├── second-opinion-honesty/    # honesty reviewer (secondop/)
     ├── alcoa-guard/               # ALCOA+ data-integrity linter (alcoaguard/)
@@ -169,8 +169,8 @@ agentic-sop-to-work/
 
 | | |
 |---|---|
-| **3 支 Skills**（依意圖自動觸發） | `six-rung-ladder` —「到底該不該做」的極簡過濾網（**decide**） · `agentic-sop` — 方法論與入口＋智慧意圖分流（**build**） · `agentic-workflow-audit` — 唯讀的 mega-agent 稽核者（**audit**） |
-| **指令** `/agentic-sop-kit:sop-flow` | 跑 kit 的編排、回報 DRAFT |
+| **4 支 Skills** | 依意圖自動觸發：`six-rung-ladder` —「到底該不該做」的極簡過濾網（**decide**） · `agentic-sop` — 方法論與入口＋智慧意圖分流（**build**） · `agentic-workflow-audit` — 唯讀的 mega-agent 稽核者（**audit**）；手動呼叫：`/agentic-sop-kit:sop-flow` — 跑 kit 的編排、回報 DRAFT（v1.12.0 起是 skill，呼叫方式不變） |
+| **設定**（`userConfig`） | `max_fix_retries` · `stall_window` · `keep_runs` — 啟用 plugin 時設定；`SOPKIT_*` 環境變數仍優先 |
 | **Hooks**（專案範圍） | `SessionStart` 依賴檢查 · `Stop` 回歸閘門 — **專案未導入 kit 前一律 no-op**；專案已自行註冊 kit 的 hook 時自動讓位，閘門不會跑兩遍 |
 | **可攜 kit** `kit/` | 複製到任何專案就能用的方法論 ＋ 可運行範例 |
 | **Plugin** `second-opinion-honesty` | 對抗式誠實審查者 — 拿完成的 DRAFT 的宣稱去對它自己的證據（臆造／超譯／發明編號）；確定性發現為 HARD、LLM 紅隊層只能 advisory 且封頂；唯讀讀取 run 目錄，不 import kit |
@@ -207,7 +207,7 @@ agentic-sop-to-work/
 ├── tools/sync_core.py            # vendor shared/sopcore（含共用測試骨架）；CI 跑 --check
 └── plugins/
     ├── agentic-sop-kit/
-    │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
+    │   ├── .claude-plugin/plugin.json · skills/ · hooks/
     │   └── kit/   # 可攜 kit：sopkit/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
     ├── second-opinion-honesty/    # 誠實審查者 (secondop/)
     ├── alcoa-guard/               # ALCOA+ 資料完整性 linter (alcoaguard/)
