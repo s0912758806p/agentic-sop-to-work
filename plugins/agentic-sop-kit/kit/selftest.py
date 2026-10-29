@@ -18,6 +18,8 @@ import unittest
 
 KIT = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
+sys.path.insert(0, os.path.join(KIT, "lib"))
+from kit import copy_kit  # noqa: E402
 
 
 def run(args, **kw):
@@ -27,7 +29,7 @@ def run(args, **kw):
 def fresh_copy():
     d = tempfile.mkdtemp()
     dst = os.path.join(d, "agentic-sop-kit")
-    shutil.copytree(KIT, dst, ignore=shutil.ignore_patterns("runs", "__pycache__"))
+    copy_kit(KIT, dst)
     return d, dst
 
 
@@ -110,6 +112,25 @@ class Kit(unittest.TestCase):
             r = run([os.path.join(k, "check_deps.py")])
             self.assertEqual(r.returncode, 1, "新增 skill 的缺依賴應被涵蓋（依 flow.json）\n" + r.stdout)
             self.assertIn("totally_absent_exe_zzz", r.stdout)
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+    def test_bootstrap_never_carries_runtime_state(self):
+        # 來源 kit 的回歸快照/計數/紀錄/健康基線若被帶進目標，目標第一次 verify 會判「無變更」而略過全部測試
+        d, k = fresh_copy()
+        try:
+            state = ["tests/.verify_state.json", "tests/.retry_count",
+                     "tests/regression_log.jsonl", "tests/.health_baseline.json"]
+            for rel in state:
+                open(os.path.join(k, rel), "w").write("{}\n")
+            proj = os.path.join(d, "proj")
+            os.makedirs(proj)
+            r = run([os.path.join(k, "bootstrap.py"), "--project", proj, "--no-hooks"])
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            dest = os.path.join(proj, "agentic-sop-kit")
+            self.assertTrue(os.path.exists(os.path.join(dest, "tests", "verify.py")), "kit 本體應被複製")
+            leaked = [rel for rel in state if os.path.exists(os.path.join(dest, rel))]
+            self.assertEqual(leaked, [], "執行期狀態不得被帶進目標專案")
         finally:
             shutil.rmtree(d, ignore_errors=True)
 

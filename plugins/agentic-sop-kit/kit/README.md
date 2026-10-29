@@ -48,7 +48,7 @@ python3 agentic-sop-kit/workflow/run.py --input /path/to/your_input.txt
 - **全 pass = 正常**，放行；**任一 fail** → hook 以 `decision:block` 把失敗原因餵回 agent 去修；保留紀錄供人決定修正或回滾。
 - **防迴圈**：`stop_hook_active` + 重試上限（`SOPKIT_MAX_FIX_RETRIES`，預設 3），達上限即停手、提示人工介入。同一上限亦套用於 `run.py` 的 in-run fix-loop（兩層共用一個旋鈕）。
   - fix-loop 為**雙終止**：budget（看次數，`SOPKIT_MAX_FIX_RETRIES`）＋ stall（看進度，`SOPKIT_STALL_WINDOW`，預設 2）——連續無可驗證進度（idle / A→B→A thrash）即確定性早停、拒絕重跑。
-- **健康監測**：回歸迴圈附帶確定性健康讀數——覆蓋縮水（註冊測試數掉到基線下）走 `verify` exit 3 硬擋（接 Stop-hook）；變慢／flaky 為 advisory、不擋。刻意降覆蓋用 `verify.py --rebaseline`。
+- **健康監測**：回歸迴圈附帶確定性健康讀數——覆蓋縮水（註冊測試數掉到基線下）走 `verify` exit 3 硬擋（接 Stop-hook）；變慢／flaky 為 advisory、不擋。刻意降覆蓋用 `verify.py --rebaseline`。旋鈕：`SOPKIT_HEALTH_SLOWDOWN_FACTOR`（變慢倍數門檻，預設 2.0）、`SOPKIT_HEALTH_FLAKY_WINDOW`（flaky 判讀的最近 run 數，預設 10）。
 - **有界狀態**：迴圈 run-state 不無限長——`verify` 自動把 `regression_log.jsonl` 截到最近 `SOPKIT_STATE_KEEP_LOG`（200，且不低於保底 50，保住健康窗）；舊 run 目錄用 `run.py --prune`（人授權刪除，保留最新 `SOPKIT_STATE_KEEP_RUNS`=20）。
 - 「更好」指標（步數/時間/成功率）只記入 log，由**人**回看趨勢判斷，hook 不自動下結論。
 
@@ -124,7 +124,7 @@ SOP.md  README.md  check_deps.py  requirements.txt
 lib/kit.py                         # 可攜核心（路徑/依賴/artifact/編排進入點）
 lib/graph.py  lib/schema.py        # 靜態拓撲分析 / schema 註冊表與型別驗證
 lib/gates.py  lib/flow.py  lib/loop/   # 確定性閘門 / 控制流判定 / 迴圈控制
-workflow/schemas/                  # 每個 artifact tag 的欄位與型別宣告
+workflow/schemas/                  # 每個 artifact tag 的欄位與型別宣告（SOPKIT_SCHEMA_DIR 可改指向別處）
 templates/human_sop_template.md  templates/skill_template/
 skills/extract|compute|report/     # 線性範例：各一個單一工具 skill（SKILL.md + tool.py）
 skills/draft|verdict|accept/       # 圖範例：退回邊目標 / 判定來源 / 終端節點

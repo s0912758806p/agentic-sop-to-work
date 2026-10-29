@@ -139,9 +139,14 @@ Requires **Python 3.8+** as `python3` (macOS/Linux out of the box; on Windows en
 ```
 agentic-sop-to-work/
 ├── .claude-plugin/marketplace.json
-└── plugins/agentic-sop-kit/
-    ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
-    └── kit/   # portable kit: lib/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
+├── tests/test_docs_freshness.py   # repo-level gate: README/CHANGELOG claims bound to the tree
+└── plugins/
+    ├── agentic-sop-kit/
+    │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
+    │   └── kit/   # portable kit: lib/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
+    ├── second-opinion-honesty/    # honesty reviewer (secondop/)
+    ├── alcoa-guard/               # ALCOA+ data-integrity linter (alcoaguard/)
+    └── plugin-forge/              # plugin linter + scaffolder (pluginforge/)
 ```
 
 **License** — MIT ([`LICENSE`](LICENSE) · [`NOTICE`](NOTICE)); keep the copyright/license notice in copies, including single files. Updating: `git push` → users run `/plugin marketplace update agentic-sop-to-work`; bump `plugin.json` `version` on each meaningful change.
@@ -195,9 +200,14 @@ agentic-sop-to-work/
 ```
 agentic-sop-to-work/
 ├── .claude-plugin/marketplace.json
-└── plugins/agentic-sop-kit/
-    ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
-    └── kit/   # 可攜 kit：lib/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
+├── tests/test_docs_freshness.py   # repo 層級閘門：README／CHANGELOG 的宣稱綁定實際檔案樹
+└── plugins/
+    ├── agentic-sop-kit/
+    │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
+    │   └── kit/   # 可攜 kit：lib/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
+    ├── second-opinion-honesty/    # 誠實審查者 (secondop/)
+    ├── alcoa-guard/               # ALCOA+ 資料完整性 linter (alcoaguard/)
+    └── plugin-forge/              # plugin linter + scaffolder (pluginforge/)
 ```
 
 **授權** — MIT（[`LICENSE`](LICENSE) · [`NOTICE`](NOTICE)）；副本需保留版權／授權聲明，含單一檔案。更新：`git push` → 使用者跑 `/plugin marketplace update agentic-sop-to-work`；每次有意義變更調高 `plugin.json` 的 `version`。

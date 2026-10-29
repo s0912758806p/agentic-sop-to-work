@@ -19,11 +19,11 @@ import sys
 
 KIT_SRC = os.path.dirname(os.path.abspath(__file__))   # 本 kit 根（canonical）
 DEST_NAME = "agentic-sop-kit"
+sys.path.insert(0, os.path.join(KIT_SRC, "lib"))
+from kit import COPY_EXCLUDE  # noqa: E402  複製排除規則的唯一來源（含執行期狀態）
+
 # 複製時排除的執行期/雜項（保持目標乾淨）
-IGNORE = shutil.ignore_patterns(
-    "runs", "__pycache__", "*.pyc", ".DS_Store",
-    "regression_log.jsonl", ".git", "*.egg-info",
-)
+IGNORE = shutil.ignore_patterns(*COPY_EXCLUDE)
 
 
 def _load_json(path):

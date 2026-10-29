@@ -12,19 +12,12 @@ import tempfile
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_EXCLUDE = {"runs", "__pycache__", ".git", ".pytest_cache"}
-_EXCLUDE_RELS = {"tests/.verify_state.json", "tests/.retry_count", "tests/regression_log.jsonl"}
+sys.path.insert(0, os.path.join(KIT, "lib"))
+from kit import copy_kit  # noqa: E402  唯一的複製規則（排除執行期狀態）
 
 
 def _copy_kit(dst):
-    def ignore(d, names):
-        skip = {n for n in names if n in _EXCLUDE}
-        for n in names:
-            rel = os.path.relpath(os.path.join(d, n), KIT).replace(os.sep, "/")
-            if rel in _EXCLUDE_RELS:
-                skip.add(n)
-        return skip
-    shutil.copytree(KIT, dst, ignore=ignore)
+    copy_kit(KIT, dst)
 
 
 class TestStopHook(unittest.TestCase):

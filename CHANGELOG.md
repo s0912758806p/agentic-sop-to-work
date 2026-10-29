@@ -3,6 +3,23 @@
 All notable changes to **agentic-sop-kit** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+### Added
+- **Repo-level docs-freshness gate** (`tests/test_docs_freshness.py`, in CI). It binds the README skills badge and the "N Skills / N 支 Skills" claims to the real `SKILL.md` count, checks that every marketplace plugin's `version` has a CHANGELOG entry, checks that `marketplace.json` lists exactly the dirs under `plugins/`, and checks that every `SOPKIT_*` env var the code reads is documented in `kit/README.md`. **Fail-closed**: if a claimed phrase can't be found, the test goes RED.
+- **`bootstrap` regression test** (`selftest.py`): a source kit's runtime state must never land in the target project.
+
+### Changed
+- **One copy rule for the kit.** `lib/kit.py` now holds `RUNTIME_STATE` / `COPY_EXCLUDE` / `copy_kit()`, and `bootstrap.py`, `selftest.py`, `test_verify.py`, `test_stop_hook.py` and `test_health_gate.py` all use it. Before, there were four hand-kept exclude lists that had already drifted.
+- CI now runs the `verify.py` and Stop-hook meta-tests (`tests/test_verify.py`, `tests/test_stop_hook.py`). They stay unregistered on purpose, to avoid verify-in-verify recursion, but nothing ran them before. CI also no longer runs `selftest.py` twice (`verify --all` already runs it), and it adds a Python 3.8 / 3.x × ubuntu / macOS matrix.
+- `kit/README.md` documents three env vars that the code already reads: `SOPKIT_HEALTH_SLOWDOWN_FACTOR`, `SOPKIT_HEALTH_FLAKY_WINDOW` and `SOPKIT_SCHEMA_DIR`.
+
+### Fixed
+- **`bootstrap.py` carried runtime state into target projects**: `.verify_state.json`, `.retry_count` and `.health_baseline.json`. If the source kit had a passing snapshot, the target's first `verify.py` saw "no change" and skipped every test. `.health_baseline.json` was also missing from `kit/tests/.gitignore`, so a bootstrapped project could commit it.
+- `tests/test_verify.py::test_watch_change_forces_all_units` hard-coded 3 skills, and the registry has 6. The test had been failing unnoticed because nothing ran it. It now derives the expected set from `registry.json`.
+
+### Recorded (missing entry, backfilled)
+- **second-opinion-honesty** (v0.2.0) — opt-in, project-scoped acknowledgement Stop-hook (`hooks/stop_ack.py`). It blocks session stop only when `.second-opinion/require_ack` exists and the latest DRAFT run has no acknowledged review, and it is retry-capped by `SECONDOP_MAX_ACK_RETRIES`. Shipped 2026-06-14 in #3; this entry was never written at the time.
+
 ## [1.10.0] — 2026-09-08
 ### Added
 - **Graph Engineering** — the tier above Loop Engineering: Loop Engineering makes **one** loop trustworthy; this composes trustworthy loops into a **bounded graph**. Nodes are steps (a node is *not* an agent — `one skill, one tool` is unchanged), edges are typed handoff contracts, and state is a declaration rather than a container. Every *feature* is **opt-in**: a flow declaring none of `reads` / `writes` / `schema_ref` / `back` produces **byte-identical artifacts and the same manifest key set** as v1.9.0, guarded by `tests/integration/test_legacy_flow.py`. The one thing that is not opt-in is topology legality — see **Breaking**.
