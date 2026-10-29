@@ -1,0 +1,162 @@
+{
+  "flow": "review-loop",
+  "run_id": "example_graph",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {
+      "skill": "draft",
+      "ok": true,
+      "out": "<BASE>/example_graph/draft.json",
+      "error": "[draft] OK → <BASE>/example_graph/draft.json"
+    },
+    {
+      "skill": "verdict",
+      "ok": true,
+      "out": "<BASE>/example_graph/verdict.json",
+      "error": "[verdict] OK → <BASE>/example_graph/verdict.json"
+    },
+    {
+      "skill": "branch→draft",
+      "ok": true,
+      "out": "<BASE>/example_graph/verdict.json",
+      "error": ""
+    },
+    {
+      "skill": "draft",
+      "ok": true,
+      "out": "<BASE>/example_graph/draft.json",
+      "error": "[draft] OK → <BASE>/example_graph/draft.json"
+    },
+    {
+      "skill": "verdict",
+      "ok": true,
+      "out": "<BASE>/example_graph/verdict.json",
+      "error": "[verdict] OK → <BASE>/example_graph/verdict.json"
+    },
+    {
+      "skill": "branch→draft",
+      "ok": true,
+      "out": "<BASE>/example_graph/verdict.json",
+      "error": ""
+    },
+    {
+      "skill": "draft",
+      "ok": true,
+      "out": "<BASE>/example_graph/draft.json",
+      "error": "[draft] OK → <BASE>/example_graph/draft.json"
+    },
+    {
+      "skill": "verdict",
+      "ok": true,
+      "out": "<BASE>/example_graph/verdict.json",
+      "error": "[verdict] OK → <BASE>/example_graph/verdict.json"
+    },
+    {
+      "skill": "branch→accept",
+      "ok": true,
+      "out": "<BASE>/example_graph/verdict.json",
+      "error": ""
+    },
+    {
+      "skill": "accept",
+      "ok": true,
+      "out": "<BASE>/example_graph/accepted.json",
+      "error": "[accept] OK → <BASE>/example_graph/accepted.json"
+    }
+  ],
+  "final_output": "<BASE>/example_graph/accepted.json",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。",
+  "topology": {
+    "nodes": [
+      "draft",
+      "verdict",
+      "gate",
+      "accept"
+    ],
+    "owners": {
+      "draft": "draft",
+      "verdict": "verdict"
+    },
+    "back_edges": [
+      {
+        "frm": "gate",
+        "to": "draft",
+        "max_revisits": 2
+      }
+    ]
+  },
+  "path_taken": [
+    {
+      "node": "draft",
+      "visit": 1,
+      "kind": "step",
+      "out": "<BASE>/example_graph/draft.json",
+      "ok": true
+    },
+    {
+      "node": "verdict",
+      "visit": 1,
+      "kind": "step",
+      "out": "<BASE>/example_graph/verdict.json",
+      "ok": true
+    },
+    {
+      "node": "gate",
+      "visit": 1,
+      "kind": "branch",
+      "goto": "draft"
+    },
+    {
+      "node": "draft",
+      "visit": 2,
+      "kind": "step",
+      "out": "<BASE>/example_graph/draft.json",
+      "ok": true,
+      "archived_previous": "<BASE>/example_graph/draft.visit1.json"
+    },
+    {
+      "node": "verdict",
+      "visit": 2,
+      "kind": "step",
+      "out": "<BASE>/example_graph/verdict.json",
+      "ok": true,
+      "archived_previous": "<BASE>/example_graph/verdict.visit1.json"
+    },
+    {
+      "node": "gate",
+      "visit": 2,
+      "kind": "branch",
+      "goto": "draft"
+    },
+    {
+      "node": "draft",
+      "visit": 3,
+      "kind": "step",
+      "out": "<BASE>/example_graph/draft.json",
+      "ok": true,
+      "archived_previous": "<BASE>/example_graph/draft.visit2.json"
+    },
+    {
+      "node": "verdict",
+      "visit": 3,
+      "kind": "step",
+      "out": "<BASE>/example_graph/verdict.json",
+      "ok": true,
+      "archived_previous": "<BASE>/example_graph/verdict.visit2.json"
+    },
+    {
+      "node": "gate",
+      "visit": 3,
+      "kind": "branch",
+      "goto": "accept"
+    },
+    {
+      "node": "accept",
+      "visit": 1,
+      "kind": "step",
+      "out": "<BASE>/example_graph/accepted.json",
+      "ok": true
+    }
+  ]
+}

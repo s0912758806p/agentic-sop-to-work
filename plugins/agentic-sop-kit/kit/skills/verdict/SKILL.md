@@ -28,4 +28,4 @@ description: Use to derive a deterministic reject/pass verdict from a draft@1 ar
 `python3 skills/verdict/tool.py --in <$RUN/draft.json> --out <$RUN/verdict.json>`
 
 ## 獨立重用
-`skills/verdict/` + `lib/kit.py` 可單獨抽出；只要上游給 `draft@1` 即可運作。
+`skills/verdict/` + `sopkit/` 可單獨抽出；只要上游給 `draft@1` 即可運作。

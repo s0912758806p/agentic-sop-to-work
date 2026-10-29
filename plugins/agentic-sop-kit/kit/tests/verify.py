@@ -4,7 +4,7 @@
 """自動回歸驗證腳本（任務 2 核心）。被 Stop hook 觸發，也可手動執行。
 
 流程：
-  1. 交叉比對 registry.json vs workflow/flow.json：任何 flow 用到卻未登記測試的 skill → fail-loud（exit 3）。
+  1. 交叉比對 registry.json vs workflow/flow.json ＋ workflow/examples/*.json：任何 flow 用到卻未登記測試的 skill → fail-loud（exit 3）。
   2. 變更偵測（內容雜湊快照 .verify_state.json；不依賴 git，跨環境可用）：
      自上次「通過」後，SOP/任一 skill 目錄/編排層皆無變動 → 直接結束、不跑測試（exit 0）。
   3. 有變動 → 跑兩層：
@@ -31,8 +31,9 @@ REG = os.path.join(KIT, "tests", "registry.json")
 STATE = os.path.join(KIT, "tests", ".verify_state.json")
 LOG = os.path.join(KIT, "tests", "regression_log.jsonl")
 BASELINE = os.path.join(KIT, "tests", ".health_baseline.json")
-sys.path.insert(0, os.path.join(KIT, "lib"))
-from loop import health, state  # noqa: E402
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit import config  # noqa: E402
+from sopkit.loop import health, state  # noqa: E402
 
 # 變更偵測時忽略的（產生物 / 快取 / 紀錄）——它們變動不代表「功能」變動。
 _SKIP_DIRS = {"runs", "__pycache__", ".git", ".pytest_cache"}
@@ -124,13 +125,22 @@ def _snapshot():
 
 
 def _flow_skills():
+    """Skills used by workflow/flow.json AND every workflow/examples/*.json — a shipped example
+    running an unregistered (untested) skill is the same hole as the main flow doing so.
+    The step count (a log metric) stays the main flow's."""
     flow = _load(os.path.join(KIT, "workflow", "flow.json"), {"steps": []})
+    flows = [flow]
+    ex = os.path.join(KIT, "workflow", "examples")
+    if os.path.isdir(ex):
+        flows += [_load(os.path.join(ex, fn), {"steps": []})
+                  for fn in sorted(os.listdir(ex)) if fn.endswith(".json")]
     seen, out = set(), []
-    for st in flow.get("steps", []):
-        s = st.get("skill")
-        if s and s not in seen:
-            seen.add(s)
-            out.append(s)
+    for f in flows:
+        for st in f.get("steps", []):
+            s = st.get("skill")
+            if s and s not in seen:
+                seen.add(s)
+                out.append(s)
     return out, len(flow.get("steps", []))
 
 
@@ -276,7 +286,7 @@ def main(argv=None):
         print(f"WARNING: 無法寫入回歸紀錄 {LOG}: {e}", file=sys.stderr)
 
     # cut #3: bounded state — keep the regression log to the last log_keep lines.
-    _rotate_log(state.log_keep_count(int(os.environ.get("SOPKIT_STATE_KEEP_LOG", "200"))))
+    _rotate_log(state.log_keep_count(config.keep_log()))
 
     # (5) 判定 + 快照更新
     print(f"— verdict={verdict}  通過 {n_pass}/{len(all_res)}  指標 {json.dumps(metrics, ensure_ascii=False)}")
@@ -285,8 +295,8 @@ def main(argv=None):
         baseline = _read_baseline()
         report = health.assess_health(
             reg, _log_entries(), baseline,
-            factor=float(os.environ.get("SOPKIT_HEALTH_SLOWDOWN_FACTOR", "2.0")),
-            window=int(os.environ.get("SOPKIT_HEALTH_FLAKY_WINDOW", "10")))
+            factor=config.health_slowdown_factor(),
+            window=config.health_flaky_window())
         if report["hard"]:
             for h in report["hard"]:
                 print(f"❌ HEALTH(hard): {h['message']}", file=sys.stderr)

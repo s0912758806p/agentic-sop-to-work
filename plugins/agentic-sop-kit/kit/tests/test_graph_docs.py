@@ -26,9 +26,8 @@ import sys
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(KIT, "lib"))
-import gates  # noqa: E402
-import graph  # noqa: E402
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit import gates, graph  # noqa: E402
 
 RUN = os.path.join(KIT, "workflow", "run.py")
 GRAPH_FLOW = os.path.join(KIT, "workflow", "examples", "graph.json")

@@ -1,0 +1,10 @@
+{
+  "schema": "verdict@1",
+  "produced_by": "verdict",
+  "data": {
+    "verdict": "reject",
+    "defects": 1,
+    "round": 2
+  },
+  "trace": []
+}

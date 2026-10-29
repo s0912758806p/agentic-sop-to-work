@@ -1,0 +1,16 @@
+{
+  "flow": "example-db",
+  "run_id": "example_db",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {
+      "skill": "db_rows",
+      "ok": true,
+      "out": "<BASE>/example_db/db.json",
+      "error": "[db_rows] OK → <BASE>/example_db/db.json"
+    }
+  ],
+  "final_output": "<BASE>/example_db/db.json",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

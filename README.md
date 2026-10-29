@@ -69,7 +69,7 @@ A linear pipeline cannot express "the reviewer sent it back". A graph can — wi
 - **Nodes are steps, not agents · 節點是步驟,不是 agent** — one node = one tool. Swap the tool for a model and people call it an agent, but `one skill, one tool` is unchanged. *節點就是「一個工具的一步」;`一 skill 一工具` 一個字不改。*
 - **Typed edges · 有型別的邊** — `schema_ref` makes the `schema` tag load-bearing: wrong tag or wrong shape is a hard failure. An untyped edge means the handoff contract is fiction. *邊沒有型別,交接協定就是假的。*
 - **State is a declaration, not a container · 狀態是宣告,不是容器** — no state store, so nothing can drift from the artifacts. A field's value stays in its owner node's artifact and `written_by` is that artifact's own `produced_by`. Exactly one declaring writer per field; the run manifest records `topology.owners` and `path_taken`. *唯一 writer + 所有路徑保證寫過,就是「誰給誰什麼」的契約——這是稽核條文「黑板式共享狀態 = FAIL」的可執行版本,條文本身一字未改。*
-- **Cycles are legal because they are bounded · 環合法是因為有界** — a backward `goto` must declare `back:true` + `max_revisits`. `--plan` refuses an unbounded cycle before anything runs, and `lib/loop/`'s progress sensor now measures **per edge**: identical routing state across revisits is an `idle` stall that stops the loop *before* the bound. *舊的 forward-only 從「禁止」改成「有界才准」。*
+- **Cycles are legal because they are bounded · 環合法是因為有界** — a backward `goto` must declare `back:true` + `max_revisits`. `--plan` refuses an unbounded cycle before anything runs, and `sopkit/loop/`'s progress sensor now measures **per edge**: identical routing state across revisits is an `idle` stall that stops the loop *before* the bound. *舊的 forward-only 從「禁止」改成「有界才准」。*
 - **Retry history survives · 退回歷史不被覆寫** — a revisit archives the previous artifact (`draft.visit1.json`) instead of overwriting it. *一個會覆寫的中央 store 會讓第一次嘗試消失。*
 
 <!-- BEGIN GENERATED: topology -->
@@ -119,9 +119,9 @@ flowchart LR
 - **`cmd` steps** (allowlisted; mutations need `--allow-mutations`) · **`--plan`** dry-run — lists every step **and statically validates the whole topology** (unreachable node · read-before-write · write conflict · unbounded cycle · dangling goto), exit 2 before anything runs.
 - **`branch`** · **bounded back-edges** (`back:true` + `max_revisits`) · **`map_over`** (per-item) — control flow in code, never the model.
 - **`--graph`** draws the topology as Mermaid · the run manifest carries `topology` (field owners, back-edges and their bounds) and `path_taken` (the walk actually performed, with archived earlier attempts).
-- **Examples** — dependency-free FE / BE / DB / AI flows plus a four-node `graph.json` with a real bounded back-edge, in [`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/).
+- **Examples** — dependency-free FE / BE / DB / AI flows plus a four-node `graph.json` with a real bounded back-edge, in [`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/). Every skill an example runs has a `SKILL.md` and a registered unit test, and `verify.py` fails loud if one is missing.
 - **Capped auto fix-loop** — on a gate failure, `/sop-flow` auto-fixes & re-runs (`run.py --max-fix-retries`; code-enforced per run-id, capped by `SOPKIT_MAX_FIX_RETRIES`, default 3 — the same knob as the Stop-hook regression loop); exhausted → stop for a human; never patches output to pass.
-- **Loop control** (Loop Engineering, in [`kit/lib/loop/`](plugins/agentic-sop-kit/kit/lib/loop/)) — keeps the loop bounded, observed, and bounded-in-state: **stall** stops on no verifiable progress (`SOPKIT_STALL_WINDOW`); **health** hard-gates a coverage drop and flags slowdown/flaky (advisory); **state** auto-rotates the run log and prunes run dirs on demand (`run.py --prune`). All deterministic.
+- **Loop control** (Loop Engineering, in [`kit/sopkit/loop/`](plugins/agentic-sop-kit/kit/sopkit/loop/)) — keeps the loop bounded, observed, and bounded-in-state: **stall** stops on no verifiable progress (`SOPKIT_STALL_WINDOW`); **health** hard-gates a coverage drop and flags slowdown/flaky (advisory); **state** auto-rotates the run log and prunes run dirs on demand (`run.py --prune`). All deterministic.
 
 **Iron rules** — facts only from inputs (`【待補】` for gaps) · deterministic work in code, gates hermetic & LLM-free · DRAFT + human approval · gates check truth, not keywords · a shared state needs a contract: one declaring writer per field, guaranteed on every path. **Real enforcement is the Stop-hook and the static topology gate, not prose.**
 
@@ -145,7 +145,7 @@ agentic-sop-to-work/
 └── plugins/
     ├── agentic-sop-kit/
     │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
-    │   └── kit/   # portable kit: lib/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
+    │   └── kit/   # portable kit: sopkit/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
     ├── second-opinion-honesty/    # honesty reviewer (secondop/)
     ├── alcoa-guard/               # ALCOA+ data-integrity linter (alcoaguard/)
     └── plugin-forge/              # plugin linter + scaffolder (pluginforge/)
@@ -182,9 +182,9 @@ agentic-sop-to-work/
 - **`cmd` 步驟**（白名單；會改動環境的需 `--allow-mutations`）· **`--plan`** 乾跑——列出每步**並靜態驗證整張拓撲**（不可達節點・read-before-write・寫入衝突・無界環・孤邊），不合法在跑之前就 exit 2。
 - **`branch`** · **有界退回邊**（`back:true` ＋ `max_revisits`）· **`map_over`**（逐項）— 控制流由程式決定，不交給模型。
 - **`--graph`** 畫拓撲（Mermaid）· manifest 帶 `topology`（欄位 owner、退回邊與上界）與 `path_taken`（實走路徑、被歸檔的前一次產物）。
-- **範例** — 免依賴的 FE／BE／DB／AI 流程，外加四節點、含真的有界退回邊的 `graph.json`：[`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/)。
+- **範例** — 免依賴的 FE／BE／DB／AI 流程，外加四節點、含真的有界退回邊的 `graph.json`：[`kit/workflow/examples/`](plugins/agentic-sop-kit/kit/workflow/examples/)。範例用到的每個 skill 都有 `SKILL.md` 與登記的單元測試，缺了 `verify.py` 會明確報錯。
 - **封頂自動修復 fix-loop**——閘門失敗時 `/sop-flow` 自動修復並重跑（`run.py --max-fix-retries`，依 run-id 程式強制上限；與 Stop-hook 回歸共用 `SOPKIT_MAX_FIX_RETRIES`、預設 3）；用盡才停下交人；永不為過關竄改輸出。
-- **迴圈控制**（Loop Engineering，位於 [`kit/lib/loop/`](plugins/agentic-sop-kit/kit/lib/loop/)）——把迴圈維持**有界、可觀測、狀態有界**：**stall** 在無可驗證進度時早停（`SOPKIT_STALL_WINDOW`）；**health** 對覆蓋縮水硬擋、對變慢/flaky 給 advisory；**state** 自動輪替 run log、按需 `run.py --prune` 清理 run 目錄。全確定性。
+- **迴圈控制**（Loop Engineering，位於 [`kit/sopkit/loop/`](plugins/agentic-sop-kit/kit/sopkit/loop/)）——把迴圈維持**有界、可觀測、狀態有界**：**stall** 在無可驗證進度時早停（`SOPKIT_STALL_WINDOW`）；**health** 對覆蓋縮水硬擋、對變慢/flaky 給 advisory；**state** 自動輪替 run log、按需 `run.py --prune` 清理 run 目錄。全確定性。
 
 **鐵則** — 事實只來自輸入（缺標 `【待補】`）· 確定性用程式、閘門 hermetic 零 LLM · DRAFT ＋ 人核准 · 閘門查真相不查關鍵字 · 共享狀態必須有契約：每個欄位唯一 writer、且所有路徑保證寫過。**真正的強制力在 Stop-hook 與靜態拓撲閘門，不在散文。**
 
@@ -208,7 +208,7 @@ agentic-sop-to-work/
 └── plugins/
     ├── agentic-sop-kit/
     │   ├── .claude-plugin/plugin.json · skills/ · commands/ · hooks/
-    │   └── kit/   # 可攜 kit：lib/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
+    │   └── kit/   # 可攜 kit：sopkit/ · workflow/ · tests/ · templates/ · examples/ · SOP.md
     ├── second-opinion-honesty/    # 誠實審查者 (secondop/)
     ├── alcoa-guard/               # ALCOA+ 資料完整性 linter (alcoaguard/)
     └── plugin-forge/              # plugin linter + scaffolder (pluginforge/)

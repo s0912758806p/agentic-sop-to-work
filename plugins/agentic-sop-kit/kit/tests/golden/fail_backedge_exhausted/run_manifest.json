@@ -1,0 +1,80 @@
+{
+  "flow": "back-edge",
+  "run_id": "fail_backedge_exhausted",
+  "state": "FAILED",
+  "back_edge": {
+    "frm": "step1",
+    "to": "loop",
+    "max_revisits": 1
+  },
+  "steps": [
+    {
+      "skill": "loop",
+      "ok": true,
+      "out": "<BASE>/fail_backedge_exhausted/l.json",
+      "error": ""
+    },
+    {
+      "skill": "branch→loop",
+      "ok": true,
+      "out": "<BASE>/fail_backedge_exhausted/l.json",
+      "error": ""
+    },
+    {
+      "skill": "loop",
+      "ok": true,
+      "out": "<BASE>/fail_backedge_exhausted/l.json",
+      "error": ""
+    }
+  ],
+  "error": "back-edge step1->loop exhausted its bound: 1 revisit(s) used — STOP, human needed ｜ 退回次數已達上限，交人處理",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。",
+  "revisit_exhausted": true,
+  "revisits": 1,
+  "max_revisits": 1,
+  "topology": {
+    "nodes": [
+      "loop",
+      "step1",
+      "done"
+    ],
+    "owners": {},
+    "back_edges": [
+      {
+        "frm": "step1",
+        "to": "loop",
+        "max_revisits": 1
+      }
+    ]
+  },
+  "path_taken": [
+    {
+      "node": "loop",
+      "visit": 1,
+      "kind": "step",
+      "out": "<BASE>/fail_backedge_exhausted/l.json",
+      "ok": true
+    },
+    {
+      "node": "step1",
+      "visit": 1,
+      "kind": "branch",
+      "goto": "loop"
+    },
+    {
+      "node": "loop",
+      "visit": 2,
+      "kind": "step",
+      "out": "<BASE>/fail_backedge_exhausted/l.json",
+      "ok": true,
+      "archived_previous": "<BASE>/fail_backedge_exhausted/l.visit1.json"
+    },
+    {
+      "node": "step1",
+      "visit": 2,
+      "kind": "branch",
+      "goto": "loop"
+    }
+  ]
+}

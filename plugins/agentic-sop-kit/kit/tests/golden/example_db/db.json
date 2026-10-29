@@ -1,0 +1,13 @@
+{
+  "schema": "rows@1",
+  "produced_by": "db_rows",
+  "data": {
+    "rows": [
+      10,
+      20,
+      30
+    ],
+    "total": 60
+  },
+  "trace": []
+}

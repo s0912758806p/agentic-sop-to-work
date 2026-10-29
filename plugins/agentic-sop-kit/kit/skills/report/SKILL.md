@@ -25,4 +25,4 @@ SOP 流程的第 3 步。讀上游 stats，輸出標示 DRAFT 的 Markdown 報�
 `python3 skills/report/tool.py --in <out/b.json> --out <out/report.md>`
 
 ## 獨立重用
-`skills/report/` + `lib/kit.py` 可單獨抽出；只要上游給 `stats@1` artifact 即可運作。產出永遠是 DRAFT，永不自動歸檔。
+`skills/report/` + `sopkit/` 可單獨抽出；只要上游給 `stats@1` artifact 即可運作。產出永遠是 DRAFT，永不自動歸檔。

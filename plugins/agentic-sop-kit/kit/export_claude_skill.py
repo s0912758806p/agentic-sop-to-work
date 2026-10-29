@@ -21,12 +21,14 @@ import json
 import os
 import re
 
+from sopkit import config  # 本檔在 kit 根，sopkit 直接可 import
+
 # 出現在「我們產生的」runner skill 內容中 → 用來辨識，避免 --remove 誤刪手寫/改過的 skill。
 _MARKER = "agentic-sop-kit 自動產生"
 
 
 def _root():
-    return os.environ.get("SOPKIT_ROOT") or os.path.dirname(os.path.abspath(__file__))
+    return config.kit_root()   # SOPKIT_ROOT, read at call time (sopkit/config.py)
 
 
 def _frontmatter(md_path):

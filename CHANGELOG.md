@@ -42,6 +42,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); the project fol
 ### Recorded (missing entry, backfilled)
 - **second-opinion-honesty** (v0.2.0) — opt-in, project-scoped acknowledgement Stop-hook (`hooks/stop_ack.py`). It blocks session stop only when `.second-opinion/require_ack` exists and the latest DRAFT run has no acknowledged review, and it is retry-capped by `SECONDOP_MAX_ACK_RETRIES`. Shipped 2026-06-14 in #3; this entry was never written at the time.
 
+## [1.11.0] — 2026-10-29
+Zero-break refactor. The run-dir format is unchanged **byte for byte**: `run_manifest.json` keys, key order and the artifact shape are the same. A new golden test pins that.
+
+### Changed
+- **Engine is now a package, `kit/sopkit/`, with relative imports.** `kit/lib/*.py` became re-export shims, and `kit/lib/` itself is **deprecated** and removed in v2.0. A v1.10-style custom tool doing `sys.path.insert(..., "lib"); import kit` keeps working unchanged. `import kit` returns the very same module object as `from sopkit import kit`. The shim raises a `DeprecationWarning` attributed to the shim itself, so default filters keep it silent: a tool's stderr is copied into the manifest's step `error`, and it must not change. Run with `python3 -W default` to see it.
+- **`run.py` split.** `run.py` is now argparse plus dispatch. The run loop lives in `sopkit/runner.py`: `RunContext`, `build_manifest`, `preflight` and `step_loop`. `build_manifest` is the single manifest exit and replaces seven hand-built dicts.
+- **One entry point.** `sopkit/` never touches `sys.path`. Every in-tree script either sits in the kit root or puts the kit root on the path and imports `sopkit`. Nothing outside `lib/` puts `kit/lib` on the path any more, and `tests/test_no_third_party.py` guards this.
+- **Dedupe.**
+  - name→index comes from `graph.build`.
+  - `gates._get` *is* `flow._path`.
+  - The back-edge bound check is `graph.valid_bound`.
+  - Step kinds are dispatched only through `graph.kind`, in the runner, the engine, `--plan` and `check_deps`.
+  - `_kind` / `_valid_bound` remain as aliases.
+- **`sopkit/config.py` is the single reader of every `SOPKIT_*` variable**, at call time. `SOPKIT_ROOT` and `SOPKIT_SCHEMA_DIR` were frozen at import before; `kit.KIT_ROOT` and `schema.DEFAULT_DIR` are still readable and are now computed on access. The hooks read `SOPKIT_MAX_FIX_RETRIES` through it too.
+- `verify.py` cross-checks the registry against `workflow/examples/*.json` as well as `flow.json`.
+
+### Added
+- **`cmd` as a list** (argv) runs **without a shell**. Inside a `cmd`, `$INPUT` / `$RUN` are now substituted: shell-quoted for a string cmd (`shlex.quote`, or `list2cmdline` on Windows), verbatim per element for a list cmd. Previously a `cmd` got no substitution at all, so a literal `$RUN` reached the shell as an (unset) env var.
+- **`safe_print`** (`sopkit/console.py`). Engine output no longer crashes a cp950 / cp1252 console.
+- `SKILL.md`, a registry entry and a unit test for the example skills `ai_claims`, `be_api` and `db_rows`.
+- Tests:
+  - `tests/integration/test_golden.py` byte-compares 14 run dirs against goldens captured from v1.10.1. It covers the bundled flow, every example, and each failure-manifest shape.
+  - `tests/compat/test_lib_shims.py` runs a v1.10-style custom tool through the shims.
+  - `tests/unit/test_config.py`, `tests/unit/test_console.py` and `tests/integration/test_cmd_forms.py`.
+
 ## [1.10.1] — 2026-10-29
 Bug fixes only; no run-dir format change (`run_manifest.json` keys and the artifact shape are untouched).
 

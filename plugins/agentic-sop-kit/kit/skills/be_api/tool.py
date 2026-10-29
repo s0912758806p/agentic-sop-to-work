@@ -6,8 +6,8 @@ keep a schema_gate so a malformed response is caught."""
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "lib"))
-import kit  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # kit root → sopkit
+from sopkit import kit  # noqa: E402
 
 DEPS = [{"kind": "python", "min": "3.8"}]
 WHO = "be_api"

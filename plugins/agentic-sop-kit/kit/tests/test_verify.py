@@ -13,8 +13,8 @@ import tempfile
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(KIT, "lib"))
-from kit import copy_kit  # noqa: E402  唯一的複製規則（排除執行期狀態）
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit.kit import copy_kit  # noqa: E402  唯一的複製規則（排除執行期狀態）
 
 
 def _copy_kit(dst):

@@ -5,9 +5,9 @@
 import os
 import sys
 
-# 可攜：相對本檔解析 kit lib（複製到任何專案皆可）
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "lib"))
-import kit  # noqa: E402
+# 可攜：相對本檔解析 kit 根（複製到任何專案皆可）；引擎在 sopkit/ 套件
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # kit root → sopkit
+from sopkit import kit  # noqa: E402
 
 # 完整宣告本 skill「那一個工具」的依賴；缺任一項 → require_deps 明確報錯（非靜默）。
 DEPS = [{"kind": "python", "min": "3.8"}]   # 例：+ {"kind":"module","name":"..."} / {"kind":"env","name":"..."} / {"kind":"exe","name":"..."}

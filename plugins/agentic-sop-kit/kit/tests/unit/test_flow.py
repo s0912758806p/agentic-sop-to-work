@@ -6,8 +6,8 @@ import sys
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(KIT, "lib"))
-import flow  # noqa: E402
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit import flow  # noqa: E402
 
 
 class Predicate(unittest.TestCase):

@@ -21,12 +21,16 @@ Stop gate behaviour:
     SOPKIT_MAX_FIX_RETRIES (default 3). At the cap, stop blocking and ask for a human.
 Blocking is signalled via stdout JSON, not the exit code; the Stop gate always exits 0.
 
-Pure stdlib; never imports the kit's lib/ (a hook must work even if lib/ is broken).
+Pure stdlib. Of the engine it imports only sopkit/config.py (the single SOPKIT_* reader,
+which itself imports nothing), so a hook keeps working even if the rest of the engine is broken.
 """
 import json
 import os
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # kit root → sopkit
+from sopkit import config  # noqa: E402
 
 STOP_MARK = "stop_regression.py"
 SESSION_MARK = "check_deps.py"
@@ -89,7 +93,7 @@ def stop_gate(kit, log_display=None, stdin=None):
     stop_active = _stop_active(stdin or sys.stdin)
     verify = os.path.join(kit, "tests", "verify.py")
     count_file = os.path.join(kit, "tests", ".retry_count")
-    max_retries = int(os.environ.get("SOPKIT_MAX_FIX_RETRIES", "3"))
+    max_retries = config.max_fix_retries()
 
     # The kit is absent / has no verify → nothing to enforce, allow stop.
     if not os.path.exists(verify):

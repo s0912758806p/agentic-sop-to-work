@@ -1,0 +1,25 @@
+{
+  "flow": "missing-branch-artifact",
+  "run_id": "fail_branch_artifact",
+  "state": "FAILED",
+  "failed_step": "branch@1",
+  "error": "branch: cannot read <BASE>/fail_branch_artifact/nope.json ｜ 讀不到分支依據的產物：[Errno 2] No such file or directory: '<BASE>/fail_branch_artifact/nope.json'",
+  "steps": [
+    {
+      "skill": "emit",
+      "ok": true,
+      "out": "<BASE>/fail_branch_artifact/a.json",
+      "error": ""
+    }
+  ],
+  "failure": {
+    "step": "branch@1",
+    "gate_type": null,
+    "message": "branch artifact unreadable: [Errno 2] No such file or directory: '<BASE>/fail_branch_artifact/nope.json'",
+    "artifact": "<BASE>/fail_branch_artifact/nope.json"
+  },
+  "fix_attempt": 1,
+  "max_fix_retries": 3,
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

@@ -1,0 +1,30 @@
+{
+  "flow": "always-fails",
+  "run_id": "fail_stall",
+  "state": "FAILED",
+  "stalled": true,
+  "stall_reason": "idle",
+  "failed_step": "emit",
+  "repeated_signature": "1a8932474889f53c",
+  "stall_rounds": 2,
+  "stall_window": 2,
+  "failure": {
+    "step": "emit",
+    "gate_type": "schema_gate",
+    "message": "gate schema_gate failed ｜ 閘門未過: missing required fields: ['name']",
+    "artifact": "<BASE>/fail_stall/a.json"
+  },
+  "fix_attempt": 2,
+  "max_fix_retries": 3,
+  "steps": [
+    {
+      "skill": "emit",
+      "ok": false,
+      "out": "<BASE>/fail_stall/a.json",
+      "error": "gate schema_gate failed ｜ 閘門未過: missing required fields: ['name']"
+    }
+  ],
+  "error": "stall detected (idle): no verifiable progress over 2 attempts — STOP, human needed ｜ 原地打轉，交人",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

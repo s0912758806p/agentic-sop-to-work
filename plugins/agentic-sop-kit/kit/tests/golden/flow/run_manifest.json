@@ -1,0 +1,28 @@
+{
+  "flow": "measurement-report",
+  "run_id": "flow",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {
+      "skill": "extract",
+      "ok": true,
+      "out": "<BASE>/flow/a.readings.json",
+      "error": "[extract] OK → <BASE>/flow/a.readings.json"
+    },
+    {
+      "skill": "compute",
+      "ok": true,
+      "out": "<BASE>/flow/b.stats.json",
+      "error": "[compute] OK → <BASE>/flow/b.stats.json"
+    },
+    {
+      "skill": "report",
+      "ok": true,
+      "out": "<BASE>/flow/report.md",
+      "error": "[report] OK → <BASE>/flow/report.md"
+    }
+  ],
+  "final_output": "<BASE>/flow/report.md",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

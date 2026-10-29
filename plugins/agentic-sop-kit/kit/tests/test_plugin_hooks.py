@@ -26,8 +26,8 @@ import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN_HOOKS = os.path.join(os.path.dirname(KIT), "hooks")
-sys.path.insert(0, os.path.join(KIT, "lib"))
-from kit import copy_kit  # noqa: E402
+sys.path.insert(0, KIT)  # kit root → sopkit
+from sopkit.kit import copy_kit  # noqa: E402
 
 MARKER_SCRIPT = ("import os, sys\n"
                  "open(os.path.join(os.path.dirname(os.path.abspath(__file__)), %r), 'w').close()\n"

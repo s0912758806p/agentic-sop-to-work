@@ -1,0 +1,16 @@
+{
+  "flow": "example-ai",
+  "run_id": "example_ai",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {
+      "skill": "ai_claims",
+      "ok": true,
+      "out": "<BASE>/example_ai/ai.json",
+      "error": "[ai_claims] OK → <BASE>/example_ai/ai.json"
+    }
+  ],
+  "final_output": "<BASE>/example_ai/ai.json",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

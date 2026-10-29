@@ -1,6 +1,6 @@
 # 轉換 SOP：Human SOP → 工具 Skill → Agentic Workflow（可分享 / 跨環境 / 跨專案重用）
 
-> **Loop Engineering 的方法論層**：把 Human SOP 工程化成一條**受控迴圈**——有界終止、可觀測健康、有界狀態（迴圈控制在 `lib/loop/`，感測在下方 gates）。
+> **Loop Engineering 的方法論層**：把 Human SOP 工程化成一條**受控迴圈**——有界終止、可觀測健康、有界狀態（迴圈控制在 `sopkit/loop/`，感測在下方 gates）。
 >
 > **Graph Engineering（一個迴圈不夠用時）**：Loop Engineering 讓**一個**迴圈可信；把多個可信的迴圈接成一張**有界的圖**時，同一套不變量下降到**節點與邊**的粒度——
 > **節點**＝一個工具的一步、**邊**＝有型別可驗證的交接契約、**狀態**＝節點宣告的 read-set / write-set、**退回邊**＝有界的反向條件邊。
@@ -24,14 +24,14 @@ flow.json 可放分支步驟，依**上一步 artifact 的 data** 由程式（�
   `{"when":{...},"goto":"draft","back":true,"max_revisits":2}`
   缺 `back:true`、或 `max_revisits` 不是正整數、或宣告了 `back` 卻指向前方 → `--plan` 期即 **exit 2**。
 - 舊規則（forward-only，`無迴圈`）從「**禁止**」改為「**有界才准**」：確定性沒有讓步，
-  因為每個環都必須經過一條帶上界的退回邊，且 `lib/loop/` 的進度感測器會**逐邊**量測——
+  因為每個環都必須經過一條帶上界的退回邊，且 `sopkit/loop/` 的進度感測器會**逐邊**量測——
   同一條退回邊上連續相同的路由狀態即 `idle`，在撞上界之前就確定性早停（雙終止：先到者停）。
 - 重訪不覆寫歷史：節點被退回重跑時，前一次的產物歸檔成 `<name>.visit<N>.<ext>`，
   並記在 `run_manifest.json` 的 `path_taken[].archived_previous`。
 - 運算子白名單：`== != < <= > >= in exists`；型別不符回 false、不丟例外。
 - 複雜判斷可由一支確定性 router skill 輸出 `data.route`，再用 `{"path":"route","op":"==",...}` 分流。
 
-## 拓撲的靜態驗證（lib/graph.py）
+## 拓撲的靜態驗證（sopkit/graph.py）
 `python3 workflow/run.py --plan` 除了列出操作，還把整張圖靜態驗證一遍，
 任一項不合法即 **exit 2**——拓撲不合法**不必跑就知道**。
 **執行期套用完全相同的判定**：`graph.analyze` 是唯一權威，沒有「某些問題只對某些流程算數」的例外。
@@ -65,18 +65,21 @@ flowchart LR
 ```
 <!-- END GENERATED: topology -->
 
-## 執行期硬閘門（lib/gates.py）與步驟型態
+## 執行期硬閘門（sopkit/gates.py）與步驟型態
 flow.json 每步可選掛 deterministic 閘門（產出後驗、fail 即停）。共 **5 deterministic gates**：
 `cmd_gate`（指令 exit 0）/ `schema_gate`（必填欄位；給了 `schema_ref` 就**連型別一起驗**）/
 `trace_gate`（值須 verbatim 溯源、防臆造）/ `recompute_gate`（數字重算相符）/
 `residual_gate`（宣告為必填的欄位仍是【待補】即擋；其他位置的【待補】是誠實空白，只計數不擋）。
 指令型步驟：`{"cmd":"...","out":"...","gate":{"type":"cmd_gate"}}`；會改動環境的標 `"mutates":true`，需 `--allow-mutations` 才跑。
+- `cmd` 為**字串**時經 shell 執行，其中的 `$INPUT`／`$RUN` 會代換成**已加引號**的路徑（POSIX 用 `shlex.quote`，Windows 用 `list2cmdline`），路徑含空白也安全。
+- `cmd` 為**清單**（argv）時**不經 shell**，`$INPUT`／`$RUN` 逐元素原樣代換——參數可能含空白、引號或 `;` 時用這個形式。
+- 主控台訊息走 `sopkit/console.py` 的 `safe_print`：cp950／cp1252 等非 UTF-8 主控台遇到無法編碼的字元會降級成 `?`，不會中途崩潰；檔案一律 UTF-8。
 `python3 workflow/run.py --plan` 先列出所有操作（不執行），mutating 操作會標示。
 
 本 kit 是一份**可複製到任何專案就能用**的轉換方法論 + 可運行範例。三個階段、各有**固定產物**與**交接介面**；
 無硬編碼、依賴完整宣告（缺項明確報錯）。範例流程 `extract → compute → report` 是本 SOP 的 worked instance。
 
-> 可攜性原則：所有路徑相對 kit 解析（`lib/kit.py::KIT_ROOT`，可被 `SOPKIT_ROOT` 覆寫）；專案專屬值一律參數化。
+> 可攜性原則：所有路徑相對 kit 解析（`sopkit/config.py::kit_root()`，可被 `SOPKIT_ROOT` 覆寫，呼叫時才讀）；專案專屬值一律參數化。
 
 ```
 Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
@@ -112,7 +115,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
    執行時以 `kit.require_deps()` 檢查，**缺任一項明確報錯（拋 `MissingDeps`），絕不靜默失敗**。
 3. **零硬編碼**：所有專案專屬值（路徑、專案名、設定）一律參數化（`--in/--out`、環境變數、config），程式內不得寫死。
 4. **明確 I/O 介面**：定義與上下游 skill 交換的資料格式（本 kit 用 JSON **artifact**：`{schema, produced_by, data, trace}`）。
-5. **可獨立抽出重用**：`skills/<name>/` + `lib/kit.py` 複製到別專案即可單獨運作（無專案耦合）。
+5. **可獨立抽出重用**：`skills/<name>/` + `sopkit/` 複製到別專案即可單獨運作（無專案耦合）。
 6. **納入即登記測試**：每新增一個 skill，**同步**寫一支單元測試並登記到 **`tests/registry.json`**（受測功能登錄表）。
    `tests/verify.py` 會交叉比對 `flow.json`——任何流程用到卻未登記測試的 skill 會 **fail-loud（exit 3）**，杜絕「加了 skill 卻忘了測」。
 7. **宣告 read-set / write-set**：節點在 flow.json 上宣告它讀哪些狀態欄位（`reads`）、寫哪些（`writes`）。
@@ -147,7 +150,7 @@ Human SOP ──(階段1: 記錄)──▶ 一份 SOP（固定模板）
 - **受測功能登錄表 `tests/registry.json`**：每個 skill 的單元測試 + 整條 workflow 的整合測試的單一事實來源。
 - **`tests/verify.py`**：
   1. **變更偵測**（內容雜湊快照，不依賴 git、跨環境可用）：自上次「通過」後 SOP/任一 skill/編排層無變動 → 直接結束、不跑測試。
-  2. 有變動 → 跑**兩層**：單元層（**受影響** skill 各自的測試；動到 `lib/`、`workflow/`、`registry.json` 等共用層則全跑）＋整合層（整條 workflow 串接、交接資料正確、失敗會傳播）。
+  2. 有變動 → 跑**兩層**：單元層（**受影響** skill 各自的測試；動到 `sopkit/`、`lib/`、`workflow/`、`registry.json` 等共用層則全跑）＋整合層（整條 workflow 串接、交接資料正確、失敗會傳播）。
   3. 寫**回歸紀錄** `tests/regression_log.jsonl`（時間、變更項、pass/fail、指標）。
   4. **判定**：全 pass = 正常（放行）；任一 fail → exit 2。「更好」指標（步數/時間/成功率）只記入 log，由人回看趨勢，hook 不自動下結論。
 - **Stop hook**（plugin 的 `hooks/stop_gate.py`，或專案版 `hooks/stop_regression.py`；兩者都呼叫 `hooks/_regression_core.py`）：
@@ -209,11 +212,16 @@ agentic-sop-kit/
   README.md                   # 分享/安裝說明（驗收 b）
   check_deps.py               # 聚合依賴檢查（驗收 c）
   requirements.txt            # 依賴清單（範例純 stdlib）
-  lib/kit.py                  # 可攜核心（路徑解析/依賴/artifact/編排進入點）
-  lib/graph.py                # 靜態拓撲分析（節點/邊/欄位所有權/有界環）
-  lib/schema.py               # schema 註冊表與型別驗證（讓交接邊有型別）
-  lib/gates.py, lib/flow.py   # 確定性閘門 / 控制流判定
-  lib/loop/                   # 迴圈控制（進度 stall、健康、有界狀態）
+  sopkit/kit.py               # 可攜核心（路徑解析/依賴/artifact）
+  sopkit/config.py            # 所有 SOPKIT_* 環境變數的唯一讀取點（呼叫時才讀）
+  sopkit/runner.py            # 執行迴圈：RunContext / build_manifest（manifest 唯一出口）/ step_loop
+  sopkit/engine.py            # 步驟執行器（tool / cmd / map）＋ --plan
+  sopkit/graph.py             # 靜態拓撲分析（節點/邊/欄位所有權/有界環）＋ 步驟種類的唯一判定
+  sopkit/schema.py            # schema 註冊表與型別驗證（讓交接邊有型別）
+  sopkit/gates.py, sopkit/flow.py  # 確定性閘門 / 控制流判定
+  sopkit/loop/                # 迴圈控制（進度 stall、健康、有界狀態）
+  sopkit/console.py           # safe_print：非 UTF-8 主控台降級輸出、不崩
+  lib/*.py                    # 已棄用的相容 shim（v1.10 自訂 tool 的 `import kit` 照跑；v2.0 移除）
   workflow/schemas/           # 被強制的 artifact tag 的欄位與型別宣告
   templates/                  # human_sop_template.md + skill_template/
   skills/<name>/              # 單一工具 skill（SKILL.md + tool.py）

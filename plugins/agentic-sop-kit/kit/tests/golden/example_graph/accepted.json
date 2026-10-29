@@ -1,0 +1,16 @@
+{
+  "schema": "accepted@1",
+  "produced_by": "accept",
+  "data": {
+    "accepted": true,
+    "rounds": 3,
+    "draft_status": "DRAFT"
+  },
+  "trace": [
+    {
+      "value": "3",
+      "source": "verdict@1",
+      "locator": "data.round"
+    }
+  ]
+}

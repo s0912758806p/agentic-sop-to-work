@@ -1,0 +1,22 @@
+{
+  "schema": "claims@1",
+  "produced_by": "ai_claims",
+  "data": {
+    "claims": [
+      12,
+      7
+    ]
+  },
+  "trace": [
+    {
+      "value": "12",
+      "source": "ai_source.json",
+      "locator": "source[0]"
+    },
+    {
+      "value": "7",
+      "source": "ai_source.json",
+      "locator": "source[1]"
+    }
+  ]
+}
