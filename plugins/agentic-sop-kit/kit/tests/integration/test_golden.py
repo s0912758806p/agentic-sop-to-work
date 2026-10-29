@@ -11,7 +11,9 @@ emit (gate failure, fix_exhausted, stall, already_stalled, topology_invalid, bac
 stall / revisits exhausted, unreadable branch artifact) — JSON key ORDER included.
 
 Run-specific text is normalised before comparing: the temp out-base → <BASE>, the kit dir
-→ <KIT>, and the interpreter version that fe.json's `python3 --version` prints.
+→ <KIT>, and the interpreter version that fe.json's `python3 --version` prints. Line
+endings compare as "\n" on both sides: the kit writes text mode (CRLF on Windows) and a
+Windows checkout may turn the goldens into CRLF too — neither is a contract change.
 Regenerate ONLY for an intended contract change: python3 test_golden.py --regen
 """
 import json
@@ -142,7 +144,7 @@ def _load_golden():
         if os.path.isdir(d):
             out[name] = {}
             for fn in sorted(os.listdir(d)):
-                with open(os.path.join(d, fn), encoding="utf-8", newline="") as f:
+                with open(os.path.join(d, fn), encoding="utf-8") as f:   # universal newlines
                     out[name][fn] = f.read()
     return out
 
