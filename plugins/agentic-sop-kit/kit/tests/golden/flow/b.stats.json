@@ -1,0 +1,41 @@
+{
+  "schema": "stats@1",
+  "produced_by": "compute",
+  "data": {
+    "stats": {
+      "count": 5,
+      "sum": 356.92,
+      "mean": 71.384,
+      "min": 0.12,
+      "max": 250.0
+    },
+    "skipped": []
+  },
+  "trace": [
+    {
+      "value": "99.4",
+      "source": "sample_readings.txt",
+      "locator": "line 2"
+    },
+    {
+      "value": "0.3",
+      "source": "sample_readings.txt",
+      "locator": "line 3"
+    },
+    {
+      "value": "7.1",
+      "source": "sample_readings.txt",
+      "locator": "line 4"
+    },
+    {
+      "value": "250",
+      "source": "sample_readings.txt",
+      "locator": "line 5"
+    },
+    {
+      "value": "0.12",
+      "source": "sample_readings.txt",
+      "locator": "line 7"
+    }
+  ]
+}

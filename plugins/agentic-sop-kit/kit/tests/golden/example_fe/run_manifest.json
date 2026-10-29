@@ -1,0 +1,16 @@
+{
+  "flow": "example-fe",
+  "run_id": "example_fe",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {
+      "skill": "cmd: python3 --version",
+      "ok": true,
+      "out": "<BASE>/example_fe/fe.json",
+      "error": ""
+    }
+  ],
+  "final_output": "<BASE>/example_fe/fe.json",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

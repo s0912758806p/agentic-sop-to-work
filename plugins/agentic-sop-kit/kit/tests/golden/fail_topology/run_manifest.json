@@ -1,0 +1,12 @@
+{
+  "flow": "unreachable",
+  "run_id": "fail_topology",
+  "state": "FAILED",
+  "topology_invalid": true,
+  "problems": [
+    "unreachable node 'dead': no path from the entry step reaches it"
+  ],
+  "error": "illegal topology — refused before executing ｜ 拓撲不合法，未執行即拒跑:\n  - unreachable node 'dead': no path from the entry step reaches it",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

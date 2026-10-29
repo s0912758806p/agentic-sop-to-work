@@ -1,0 +1,25 @@
+{
+  "flow": "always-fails",
+  "run_id": "fail_gate",
+  "state": "FAILED",
+  "failed_step": "emit",
+  "error": "gate schema_gate failed ｜ 閘門未過: missing required fields: ['name']",
+  "steps": [
+    {
+      "skill": "emit",
+      "ok": false,
+      "out": "<BASE>/fail_gate/a.json",
+      "error": "gate schema_gate failed ｜ 閘門未過: missing required fields: ['name']"
+    }
+  ],
+  "failure": {
+    "step": "emit",
+    "gate_type": "schema_gate",
+    "message": "gate schema_gate failed ｜ 閘門未過: missing required fields: ['name']",
+    "artifact": "<BASE>/fail_gate/a.json"
+  },
+  "fix_attempt": 1,
+  "max_fix_retries": 3,
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

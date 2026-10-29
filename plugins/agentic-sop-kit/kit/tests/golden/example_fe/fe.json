@@ -1,0 +1,11 @@
+{
+  "schema": "cmd@1",
+  "produced_by": "cmd",
+  "data": {
+    "command": "python3 --version",
+    "exit": 0,
+    "stdout": "Python <VER>
+    "stderr": ""
+  },
+  "trace": []
+}

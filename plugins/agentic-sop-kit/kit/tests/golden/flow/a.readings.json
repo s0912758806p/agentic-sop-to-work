@@ -1,0 +1,56 @@
+{
+  "schema": "readings@1",
+  "produced_by": "extract",
+  "data": {
+    "readings": [
+      {
+        "key": "assay purity",
+        "value": 99.4
+      },
+      {
+        "key": "moisture",
+        "value": 0.3
+      },
+      {
+        "key": "ph",
+        "value": 7.1
+      },
+      {
+        "key": "weight mg",
+        "value": 250.0
+      },
+      {
+        "key": "related impurity",
+        "value": 0.12
+      }
+    ],
+    "skipped": []
+  },
+  "trace": [
+    {
+      "value": "99.4",
+      "source": "sample_readings.txt",
+      "locator": "line 2"
+    },
+    {
+      "value": "0.3",
+      "source": "sample_readings.txt",
+      "locator": "line 3"
+    },
+    {
+      "value": "7.1",
+      "source": "sample_readings.txt",
+      "locator": "line 4"
+    },
+    {
+      "value": "250",
+      "source": "sample_readings.txt",
+      "locator": "line 5"
+    },
+    {
+      "value": "0.12",
+      "source": "sample_readings.txt",
+      "locator": "line 7"
+    }
+  ]
+}

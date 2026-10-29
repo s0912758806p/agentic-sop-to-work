@@ -1,0 +1,10 @@
+{
+  "schema": "api@1",
+  "produced_by": "be_api",
+  "data": {
+    "id": 1,
+    "name": "widget",
+    "price": 9.99
+  },
+  "trace": []
+}

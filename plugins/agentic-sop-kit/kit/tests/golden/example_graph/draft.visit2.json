@@ -1,0 +1,12 @@
+{
+  "schema": "draft@1",
+  "produced_by": "draft",
+  "data": {
+    "defects": 1,
+    "round": 2,
+    "addressed": [
+      "defect fixed in round 2"
+    ]
+  },
+  "trace": []
+}

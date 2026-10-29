@@ -1,0 +1,11 @@
+{
+  "flow": "always-fails",
+  "run_id": "fail_exhausted",
+  "state": "FAILED",
+  "fix_exhausted": true,
+  "attempts": 1,
+  "max_fix_retries": 0,
+  "error": "fix-loop exhausted: 0 auto-fix retries used ｜ 自動修復已達上限，交人處理",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

@@ -1,0 +1,10 @@
+{
+  "flow": "always-fails",
+  "run_id": "fail_already_stalled",
+  "state": "FAILED",
+  "stalled": true,
+  "stall_reason": "already_stalled",
+  "error": "run already marked stalled — no verifiable progress; STOP, human needed ｜ 已判定原地打轉，交人處理",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

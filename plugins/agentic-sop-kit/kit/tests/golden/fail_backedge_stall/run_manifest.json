@@ -1,0 +1,83 @@
+{
+  "flow": "back-edge",
+  "run_id": "fail_backedge_stall",
+  "state": "FAILED",
+  "back_edge": {
+    "frm": "step1",
+    "to": "loop",
+    "max_revisits": 1
+  },
+  "steps": [
+    {
+      "skill": "loop",
+      "ok": true,
+      "out": "<BASE>/fail_backedge_stall/l.json",
+      "error": ""
+    },
+    {
+      "skill": "branch→loop",
+      "ok": true,
+      "out": "<BASE>/fail_backedge_stall/l.json",
+      "error": ""
+    },
+    {
+      "skill": "loop",
+      "ok": true,
+      "out": "<BASE>/fail_backedge_stall/l.json",
+      "error": ""
+    }
+  ],
+  "error": "stall detected (idle) on back-edge step1->loop: no verifiable progress over 2 revisit(s) — STOP, human needed ｜ 原地打轉，交人",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。",
+  "stalled": true,
+  "stall_reason": "idle",
+  "repeated_signature": "7b87197dfd6aa1b1",
+  "stall_rounds": 2,
+  "stall_window": 2,
+  "max_revisits": 1,
+  "topology": {
+    "nodes": [
+      "loop",
+      "step1",
+      "done"
+    ],
+    "owners": {},
+    "back_edges": [
+      {
+        "frm": "step1",
+        "to": "loop",
+        "max_revisits": 1
+      }
+    ]
+  },
+  "path_taken": [
+    {
+      "node": "loop",
+      "visit": 1,
+      "kind": "step",
+      "out": "<BASE>/fail_backedge_stall/l.json",
+      "ok": true
+    },
+    {
+      "node": "step1",
+      "visit": 1,
+      "kind": "branch",
+      "goto": "loop"
+    },
+    {
+      "node": "loop",
+      "visit": 2,
+      "kind": "step",
+      "out": "<BASE>/fail_backedge_stall/l.json",
+      "ok": true,
+      "archived_previous": "<BASE>/fail_backedge_stall/l.visit1.json"
+    },
+    {
+      "node": "step1",
+      "visit": 2,
+      "kind": "branch",
+      "goto": "loop"
+    }
+  ]
+}

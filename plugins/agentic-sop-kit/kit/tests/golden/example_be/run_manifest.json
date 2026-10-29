@@ -1,0 +1,16 @@
+{
+  "flow": "example-be",
+  "run_id": "example_be",
+  "state": "OK_FOR_REVIEW",
+  "steps": [
+    {
+      "skill": "be_api",
+      "ok": true,
+      "out": "<BASE>/example_be/be.json",
+      "error": "[be_api] OK → <BASE>/example_be/be.json"
+    }
+  ],
+  "final_output": "<BASE>/example_be/be.json",
+  "human_review_required": true,
+  "banner": "DRAFT — 範例流程產出，需人員覆核；本 kit 永不自動歸檔進任何受控系統。"
+}

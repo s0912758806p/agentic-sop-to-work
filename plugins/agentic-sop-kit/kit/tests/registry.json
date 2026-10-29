@@ -65,7 +65,8 @@
       "tests/integration/test_revisit_bound.py",
       "tests/integration/test_backedge_stall.py",
       "tests/unit/test_residual.py",
-      "tests/test_graph_docs.py"
+      "tests/test_graph_docs.py",
+      "tests/integration/test_golden.py"
     ],
     "watch": [
       "workflow",
