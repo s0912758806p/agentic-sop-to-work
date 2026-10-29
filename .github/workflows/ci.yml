@@ -9,24 +9,67 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  # Static checks: OS/Python-independent, run once.
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Lint marketplace (plugin-forge, replaces validate_manifests)
-        run: python3 plugins/plugin-forge/pluginforge/lint.py --all --strict
-      - name: Kit self-test
-        run: python3 plugins/agentic-sop-kit/kit/selftest.py
+      - name: Lint marketplace (plugin-forge, house grammar)
+        run: python plugins/plugin-forge/pluginforge/lint.py --all --strict
+      - name: Docs freshness (claims bound to the tree, fail-closed)
+        run: python tests/test_docs_freshness.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # Official schema check. Advisory until the CLI is reliably installable on runners:
+      # if install fails the step warns instead of blocking.
+      - name: claude plugin validate --strict (advisory)
+        continue-on-error: true
+        run: |
+          if npm install -g @anthropic-ai/claude-code >/dev/null 2>&1; then
+            claude plugin validate . --strict
+            for p in plugins/*/; do claude plugin validate "$p" --strict; done
+          else
+            echo "::warning::claude CLI unavailable — skipped plugin validate"
+          fi
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, python: "3.8" }   # declared floor (README: Python 3.8+)
+          - { os: ubuntu-latest, python: "3.x" }
+          - { os: macos-latest, python: "3.x" }
+          - { os: windows-latest, python: "3.x", experimental: true }  # observation point
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      # verify --all runs every registered test, selftest.py included.
       - name: Kit regression (verify --all)
-        run: python3 plugins/agentic-sop-kit/kit/tests/verify.py --all
-      - name: Kit health-gate meta-test
-        run: python3 plugins/agentic-sop-kit/kit/tests/integration/test_health_gate.py
+        run: python plugins/agentic-sop-kit/kit/tests/verify.py --all
+      # Meta-tests of verify / the Stop hook / the health gate. Deliberately NOT in the
+      # registry (verify-in-verify recursion), so they must be run here explicitly.
+      - name: Kit meta-tests (verify, Stop hook, health gate)
+        run: |
+          python plugins/agentic-sop-kit/kit/tests/test_verify.py
+          python plugins/agentic-sop-kit/kit/tests/test_stop_hook.py
+          python plugins/agentic-sop-kit/kit/tests/integration/test_health_gate.py
       - name: Second Opinion regression
-        run: python3 plugins/second-opinion-honesty/tests/verify.py
+        run: python plugins/second-opinion-honesty/tests/verify.py
       - name: ALCOA Guard regression
-        run: python3 plugins/alcoa-guard/tests/verify.py
+        run: python plugins/alcoa-guard/tests/verify.py
       - name: Plugin Forge regression
-        run: python3 plugins/plugin-forge/tests/verify.py
+        run: python plugins/plugin-forge/tests/verify.py

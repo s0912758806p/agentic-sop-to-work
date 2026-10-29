@@ -13,19 +13,12 @@ import tempfile
 import unittest
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_EXCLUDE = {"runs", "__pycache__", ".git", ".pytest_cache"}
-_EXCLUDE_RELS = {"tests/.verify_state.json", "tests/.retry_count", "tests/regression_log.jsonl"}
+sys.path.insert(0, os.path.join(KIT, "lib"))
+from kit import copy_kit  # noqa: E402  唯一的複製規則（排除執行期狀態）
 
 
 def _copy_kit(dst):
-    def ignore(d, names):
-        skip = set(n for n in names if n in _EXCLUDE)
-        for n in names:
-            rel = os.path.relpath(os.path.join(d, n), KIT).replace(os.sep, "/")
-            if rel in _EXCLUDE_RELS:
-                skip.add(n)
-        return skip
-    shutil.copytree(KIT, dst, ignore=ignore)
+    copy_kit(KIT, dst)
 
 
 class TestVerify(unittest.TestCase):
@@ -131,9 +124,12 @@ class TestVerify(unittest.TestCase):
         r = self._run()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         last = self._log_entries()[-1]
-        self.assertEqual(sorted(last["affected_skills"]), ["compute", "extract", "report"],
+        # 期望值取自 registry 實際登記的 skill（不寫死數量——registry 長大時寫死的清單會悄悄過期）
+        registered = sorted(json.loads(self._read(self._reg_path()))["skills"])
+        self.assertGreaterEqual(len(registered), 3, "registry 讀不到 skill：期望值不可為空（fail-closed）")
+        self.assertEqual(sorted(last["affected_skills"]), registered,
                          "共用層變動應觸發全部 skill 單元測試")
-        self.assertEqual(len(last["unit"]), 3)
+        self.assertEqual(len(last["unit"]), len(registered))
 
 
 if __name__ == "__main__":

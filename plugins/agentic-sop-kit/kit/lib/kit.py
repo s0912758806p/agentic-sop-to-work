@@ -25,6 +25,18 @@ def kit_path(*parts):
     return os.path.join(KIT_ROOT, *parts)
 
 
+# 執行期狀態＝每個部署自己的回歸快照/重試計數/回歸紀錄/健康基線。複製 kit（bootstrap 導入、
+# 測試用拋棄式複本）時一律排除：帶過去的快照會讓目標的第一次 verify 判成「無變更」而略過全部測試。
+RUNTIME_STATE = (".verify_state.json", ".retry_count", "regression_log.jsonl", ".health_baseline.json")
+COPY_EXCLUDE = ("runs", "__pycache__", "*.pyc", ".DS_Store", ".git", ".pytest_cache",
+                "*.egg-info") + RUNTIME_STATE
+
+
+def copy_kit(src, dst):
+    """把 kit 從 src 複製到 dst，排除執行期狀態與雜項（唯一的複製規則來源）。"""
+    shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*COPY_EXCLUDE))
+
+
 class MissingDeps(Exception):
     """缺依賴 → 明確報錯（非靜默失敗）。"""
 
