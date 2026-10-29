@@ -100,8 +100,8 @@ def artifact(schema, produced_by, data, trace=None):
 
 
 def run_dir(base=None, run_id=None):
-    """run-scoped 輸出目錄（預設 <kit root>/runs/<run_id>；不覆蓋既有產物）。"""
-    base = base or kit_path("runs")
+    """run-scoped 輸出目錄（預設 config.runs_base()/<run_id>；不覆蓋既有產物）。"""
+    base = base or config.runs_base()[0]
     # 加隨機後綴避免同微秒平行執行碰撞（run-scoped 隔離）。
     run_id = run_id or (datetime.now().strftime("run_%Y%m%d_%H%M%S_") + uuid.uuid4().hex[:8])
     d = os.path.join(base, run_id)

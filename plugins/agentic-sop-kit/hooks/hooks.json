@@ -1,11 +1,11 @@
 {
-  "_comment": "Plugin hooks are PROJECT-SCOPED: the scripts act on the CURRENT project's agentic-sop-kit/ (via $CLAUDE_PROJECT_DIR) and no-op when the project has not adopted the kit, so installing this plugin globally never fires regression in unrelated projects. ${CLAUDE_PLUGIN_ROOT} resolves to this plugin's install location.",
+  "_comment": "Plugin hooks are PROJECT-SCOPED: the scripts act on the CURRENT project's agentic-sop-kit/ (via $CLAUDE_PROJECT_DIR) and no-op when the project has not adopted the kit, so installing this plugin globally never fires regression in unrelated projects. Exec form (command + args): no shell, so ${CLAUDE_PLUGIN_ROOT} needs no quoting. Each script checks the Python version first and no-ops with a message below 3.8.",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "startup",
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py\"" }
+          { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py"] }
         ]
       }
     ],
@@ -13,7 +13,7 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_gate.py\"" }
+          { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/stop_gate.py"] }
         ]
       }
     ]

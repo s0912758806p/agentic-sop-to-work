@@ -9,8 +9,16 @@ dependencies fail loud at session start. No-op for projects without the kit, and
 the project's own settings already run check_deps.py on SessionStart (projects bootstrapped
 before v1.10.1) — so the check never runs twice. Shared logic: kit/hooks/_regression_core.py.
 """
-import os
 import sys
+
+# Python-version guard FIRST, in syntax any Python 3 (and 2) can parse: the rest of the hook
+# imports modules that use 3.8 features, and a hook must never crash a session.
+if sys.version_info < (3, 8):
+    sys.stderr.write("agentic-sop-kit hook skipped: needs Python >= 3.8 (found %s)\n"
+                     % sys.version.split()[0])
+    sys.exit(0)
+
+import os  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kit", "hooks"))
 from _regression_core import SESSION_MARK, project_registers, session_check  # noqa: E402

@@ -1,19 +1,29 @@
 ---
+name: sop-flow
 description: Run the agentic-sop-kit workflow (extract→compute→report, or a declared topology) and report the DRAFT result. Works out-of-the-box (bundled demo) even before a project adopts the kit.
+argument-hint: "[--input <file>] [--run-id <id>]"
+disable-model-invocation: true
 ---
 
-執行 agentic-sop-kit 的編排流程並回報 DRAFT。**先判斷目前專案是否已導入 kit**：
+執行 agentic-sop-kit 的編排流程並回報 DRAFT。**先判斷目前專案是否已導入 kit**。
+
+**本 skill 是唯一來源**：`bootstrap.py` 會從這份檔案產生專案的 `.claude/commands/sop-flow.md`。要改流程說明就改這裡。
+
+下面每個 `run.py` 指令都要帶上這段環境變數前綴（以下記作 `$OPTS`）。plugin 的 userConfig 與資料目錄只會替換進 skill 內文，不會出現在 Bash 環境裡，所以得明寫：
+`CLAUDE_PLUGIN_OPTION_MAX_FIX_RETRIES="${user_config.max_fix_retries}" CLAUDE_PLUGIN_OPTION_STALL_WINDOW="${user_config.stall_window}" CLAUDE_PLUGIN_OPTION_KEEP_RUNS="${user_config.keep_runs}" CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA}"`
+（沒被替換的值，例如在 bootstrap 產生的專案 command 裡，引擎會當成沒設、用預設值；`SOPKIT_*` 環境變數永遠優先。）
 
 ### 情況 A — 專案已導入（`$CLAUDE_PROJECT_DIR/agentic-sop-kit/` 存在）
 跑該專案自己的、受 Stop-hook 閘門保護的流程：
 1. 依賴檢查：`python3 agentic-sop-kit/check_deps.py`（缺項明確列出 → 請使用者補齊，勿硬跑）。
-2. 跑流程：`python3 agentic-sop-kit/workflow/run.py`（可加 `--input <檔>` 換輸入）。$ARGUMENTS
+2. 跑流程：`$OPTS python3 agentic-sop-kit/workflow/run.py`（可加 `--input <檔>` 換輸入）。$ARGUMENTS
 3. 讀新產生的 `agentic-sop-kit/runs/<run_id>/report.md` 與 `run_manifest.json`，向使用者摘要。
 
 ### 情況 B — 尚未導入（開箱即用 demo，免 bootstrap）
 直接跑 plugin 內附的範例 kit，輸出寫到專案的 `.agentic-sop-runs/`：
 1. 依賴檢查：`python3 "${CLAUDE_PLUGIN_ROOT}/kit/check_deps.py"`。
-2. 跑範例：`python3 "${CLAUDE_PLUGIN_ROOT}/kit/workflow/run.py" --out-base "$CLAUDE_PROJECT_DIR/.agentic-sop-runs"`（可加 `--input <檔>`）。$ARGUMENTS
+2. 跑範例：`$OPTS python3 "${CLAUDE_PLUGIN_ROOT}/kit/workflow/run.py" --out-base "$CLAUDE_PROJECT_DIR/.agentic-sop-runs"`（可加 `--input <檔>`）。$ARGUMENTS
+   `--out-base` 要明寫：second-opinion／alcoa-guard 預設就是到 `.agentic-sop-runs/` 找 run。
 3. 讀 `.agentic-sop-runs/<run_id>/report.md` 與 `run_manifest.json`，向使用者摘要。
 4. 告訴使用者：要讓**這個專案**常駐 kit 並受 Stop-hook 回歸閘門保護，跑一次：
    `python3 "${CLAUDE_PLUGIN_ROOT}/kit/bootstrap.py" --project "$CLAUDE_PROJECT_DIR"`（加 `--with-claude-skills` 會順便產出對話可觸發的 runner skills）。
@@ -23,8 +33,8 @@ description: Run the agentic-sop-kit workflow (extract→compute→report, or a 
   寫入衝突／無界環／孤邊）——**據實回報那幾行問題、請人修 `flow.json`，不要硬跑**。
   要給人看圖用 `--graph`；跑完的狀態在 manifest 的 `topology` 與 `path_taken` 裡。
 - 產出一律是 **DRAFT** → 提醒需人覆核、永不自動歸檔進受控系統。
-- 任一步 `"state":"FAILED"` → **封頂自動修復（fix-loop，最多 3 次）**，再不行才交人：
-  1. 讀 manifest 的 `failure{step,gate_type,message,artifact}` 分類：**輸入問題／生成層輸出**（schema/trace 等）→ 修輸入或重生該段，**用相同 `--run-id` 重跑**（引擎對同 run-id 的**失敗**次數計數、超過 `--max-fix-retries 3` 會自行拒跑＝程式封頂）；**工具碼/recompute/cmd bug** → 診斷並提修正建議、不盲跑、不偷改輸出，交人；**判斷/受控步驟** → 不自動修，交人。
+- 任一步 `"state":"FAILED"` → **封頂自動修復（fix-loop，最多 `max_fix_retries` 次，預設 3）**，再不行才交人：
+  1. 讀 manifest 的 `failure{step,gate_type,message,artifact}` 分類：**輸入問題／生成層輸出**（schema/trace 等）→ 修輸入或重生該段，**用相同 `--run-id` 重跑**（引擎對同 run-id 的**失敗**次數計數、超過 `max_fix_retries`（預設 3）會自行拒跑＝程式封頂）；**工具碼/recompute/cmd bug** → 診斷並提修正建議、不盲跑、不偷改輸出，交人；**判斷/受控步驟** → 不自動修，交人。
   2. `stalled:true`（原地打轉：`stall_reason` = idle/thrash）→ **STOP，回報卡住的 gate、重複的 `repeated_signature`、撞了 `stall_rounds` 圈**，不得佯稱成功、不得換 `--run-id` 規避。
   3. `fix_exhausted:true` 或不可自動修 → **STOP，據實回報每次嘗試與原因**，不得佯稱成功。
   4. `revisit_exhausted:true`（退回邊撞上界）或 `topology_invalid:true`（拓撲不合法，未執行即拒跑）

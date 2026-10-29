@@ -6,7 +6,9 @@
 Before v1.11.0 SOPKIT_ROOT / SOPKIT_SCHEMA_DIR were frozen at import: setting them after
 the first `import kit` did nothing. These tests set the env AFTER importing."""
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -59,6 +61,69 @@ class CallTime(unittest.TestCase):
                 if "environ" in src and "SOPKIT_" in src.split("environ", 1)[1][:80]:
                     offenders.append(os.path.relpath(p, KIT))
         self.assertEqual(offenders, [])
+
+
+
+def _clean_env(**extra):
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith(("SOPKIT_", "CLAUDE_PLUGIN_OPTION_", "CLAUDE_PLUGIN_DATA"))}
+    env.update(extra)
+    return mock.patch.dict(os.environ, env, clear=True)
+
+
+class UserConfigPrecedence(unittest.TestCase):
+    """env SOPKIT_* > plugin userConfig (CLAUDE_PLUGIN_OPTION_*) > default."""
+
+    def test_option_used_when_no_env(self):
+        with _clean_env(CLAUDE_PLUGIN_OPTION_MAX_FIX_RETRIES="5", CLAUDE_PLUGIN_OPTION_STALL_WINDOW="0",
+                        CLAUDE_PLUGIN_OPTION_KEEP_RUNS="9"):
+            self.assertEqual((config.max_fix_retries(), config.stall_window(), config.keep_runs()), (5, 0, 9))
+
+    def test_env_beats_option(self):
+        with _clean_env(SOPKIT_MAX_FIX_RETRIES="1", CLAUDE_PLUGIN_OPTION_MAX_FIX_RETRIES="5"):
+            self.assertEqual(config.max_fix_retries(), 1)
+
+    def test_unsubstituted_or_bad_option_is_ignored(self):
+        # bootstrap-generated project commands carry the literal ${user_config.x}
+        for raw in ("${user_config.max_fix_retries}", "", "abc"):
+            with _clean_env(CLAUDE_PLUGIN_OPTION_MAX_FIX_RETRIES=raw):
+                self.assertEqual(config.max_fix_retries(), 3, raw)
+
+    def test_numeric_option_as_float_text(self):
+        with _clean_env(CLAUDE_PLUGIN_OPTION_KEEP_RUNS="12.0"):
+            self.assertEqual(config.keep_runs(), 12)
+
+
+class RunsBase(unittest.TestCase):
+    """--out-base > $CLAUDE_PLUGIN_DATA/runs (kit inside an installed plugin) > <kit>/runs."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.plugin_kit = os.path.join(self.tmp, "plugin", "kit")
+        os.makedirs(os.path.join(self.tmp, "plugin", ".claude-plugin"))
+        open(os.path.join(self.tmp, "plugin", ".claude-plugin", "plugin.json"), "w").close()
+        os.makedirs(self.plugin_kit)
+        self.project_kit = os.path.join(self.tmp, "proj", "agentic-sop-kit")
+        os.makedirs(self.project_kit)
+
+    def test_out_base_wins(self):
+        with _clean_env(SOPKIT_ROOT=self.plugin_kit, CLAUDE_PLUGIN_DATA="/data"):
+            self.assertEqual(config.runs_base("/explicit"), ("/explicit", None))
+
+    def test_plugin_data_when_installed(self):
+        with _clean_env(SOPKIT_ROOT=self.plugin_kit, CLAUDE_PLUGIN_DATA="/data"):
+            self.assertEqual(config.runs_base(None), (os.path.join("/data", "runs"), None))
+
+    def test_legacy_in_plugin_cache_warns(self):
+        with _clean_env(SOPKIT_ROOT=self.plugin_kit):
+            base, notice = config.runs_base(None)
+            self.assertEqual(base, os.path.join(self.plugin_kit, "runs"))
+            self.assertIn("deprecated", notice.lower())
+
+    def test_project_kit_keeps_its_runs_dir_even_with_plugin_data(self):
+        with _clean_env(SOPKIT_ROOT=self.project_kit, CLAUDE_PLUGIN_DATA="/data"):
+            self.assertEqual(config.runs_base(None), (os.path.join(self.project_kit, "runs"), None))
 
 
 if __name__ == "__main__":

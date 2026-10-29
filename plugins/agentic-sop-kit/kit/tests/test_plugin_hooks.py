@@ -107,6 +107,33 @@ class PluginHooksDedupe(unittest.TestCase):
         self.assertTrue(self._ran(".verify_ran"), "a broken settings file must not silently disable the gate")
 
 
+
+@unittest.skipUnless(os.path.isdir(PLUGIN_HOOKS), "plugin hooks/ not beside this kit")
+class PythonVersionGuard(unittest.TestCase):
+    """The hook entry scripts no-op with a clear message on a too-old interpreter."""
+
+    def test_old_python_noops_with_message(self):
+        for name in ("stop_gate.py", "session_check.py"):
+            path = os.path.join(PLUGIN_HOOKS, name)
+            code = ("import sys\nsys.version_info = (3, 7, 0, 'final', 0)\n"
+                    f"sys.argv = [{path!r}]\n__file__ = {path!r}\n"
+                    f"exec(compile(open({path!r}, encoding='utf-8').read(), {path!r}, 'exec'))\n")
+            r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                               env=dict(os.environ, CLAUDE_PROJECT_DIR=tempfile.gettempdir()))
+            self.assertEqual(r.returncode, 0, name + r.stderr)
+            self.assertIn("Python >= 3.8", r.stderr, name)
+            self.assertEqual(r.stdout, "", name)
+
+    def test_hooks_json_uses_exec_form(self):
+        with open(os.path.join(PLUGIN_HOOKS, "hooks.json"), encoding="utf-8") as f:
+            hooks = json.load(f)["hooks"]
+        for event, entries in hooks.items():
+            for e in entries:
+                for h in e["hooks"]:
+                    self.assertIn("args", h, f"{event}: use exec form (command + args), no shell quoting")
+                    self.assertNotIn(" ", h["command"], event)
+
+
 class BootstrapNoLongerWritesHooks(unittest.TestCase):
     def setUp(self):
         self.proj = tempfile.mkdtemp()
@@ -134,6 +161,22 @@ class BootstrapNoLongerWritesHooks(unittest.TestCase):
         r = self._bootstrap("--with-hooks")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("stop_regression.py", json.dumps(self._hooks()))
+
+    def test_command_is_generated_from_the_plugin_skill(self):
+        skill = os.path.join(os.path.dirname(KIT), "skills", "sop-flow", "SKILL.md")
+        if not os.path.exists(skill):
+            self.skipTest("plugin skills/ not beside this kit")
+        r = self._bootstrap()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        with open(os.path.join(self.proj, ".claude", "commands", "sop-flow.md"), encoding="utf-8") as f:
+            cmd = f.read()
+        with open(skill, encoding="utf-8") as f:
+            src = f.read()
+        self.assertTrue(cmd.startswith("---\ndescription:"), cmd[:80])
+        self.assertNotIn("disable-model-invocation", cmd)
+        self.assertIn("GENERATED", cmd)
+        body = src.split("\n---\n", 1)[1]
+        self.assertIn(body, cmd, "the command body must be the skill body, verbatim")
 
     def test_no_hooks_flag_still_accepted(self):
         r = self._bootstrap("--no-hooks")

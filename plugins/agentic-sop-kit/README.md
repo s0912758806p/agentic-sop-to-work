@@ -1,14 +1,17 @@
 # agentic-sop-kit — Claude Code plugin
 
-把「人工 SOP」轉成「確定性引擎 + 誠實硬閘門 + 人核准」的 agentic workflow。本 plugin 打包了方法論 skills、`/sop-flow` 指令、**專案範圍**的回歸 Stop-hook，以及可攜的 `agentic-sop-kit`。
+把「人工 SOP」轉成「確定性引擎 + 誠實硬閘門 + 人核准」的 agentic workflow。本 plugin 打包了方法論 skills、`/sop-flow` skill、**專案範圍**的回歸 Stop-hook，以及可攜的 `agentic-sop-kit`。
 
 ## 內容
-- **Skills**（model-invoked，安裝後到處可用）
+- **Skills**（安裝後到處可用；前三支依描述自動觸發，`sop-flow` 手動呼叫）
   - `six-rung-ladder` —「到底該不該做」的極簡過濾網（decide）。
   - `agentic-sop` — 把人工流程工程化成自動代理工作流的方法論與落地入口（build）；含**拓撲宣告**步驟。
   - `agentic-workflow-audit` — 稽核既有 workflow 是否真拆解，或退化成 mega agent（audit）；七項檢查 ＋ 三項試金石。
-- **Command**：`/agentic-sop-kit:sop-flow` — 跑 kit 的編排（線性 demo 或已宣告的拓撲），回報 DRAFT。
+  - `sop-flow` — **手動呼叫**的 `/agentic-sop-kit:sop-flow`：跑 kit 的編排（線性 demo 或已宣告的拓撲），回報 DRAFT。v1.12.0 起由 `commands/` 改成 skill，呼叫方式不變；它也是 bootstrap 產生專案 `/sop-flow` 的唯一來源。
+- **設定（userConfig）**：啟用 plugin 時可設 `max_fix_retries`（預設 3）、`stall_window`（2）、`keep_runs`（20）。優先序：`SOPKIT_*` 環境變數 > userConfig > 預設。
+- **Run 目錄**：`--out-base` > `$CLAUDE_PLUGIN_DATA/runs`（plugin 內附的 kit，更新不會消失）> `kit/runs`（在 plugin 快取裡的這個位置已棄用，會印提醒）。`/sop-flow` 照舊明寫 `--out-base .agentic-sop-runs`，second-opinion／alcoa-guard 找得到。
 - **Hooks（專案範圍，關鍵設計）**
+  - exec form（`command` ＋ `args`，不經 shell）；腳本開頭先檢查 Python ≥ 3.8，太舊就印出原因並 no-op，不讓 session 出錯。
   - `SessionStart` → 若目前專案有 `agentic-sop-kit/` 就跑 `check_deps.py`，否則略過。
   - `Stop` → 若目前專案有 `agentic-sop-kit/tests/verify.py` 就跑回歸閘門（變更偵測 → 兩層測試 → 失敗以 `decision:block` 餵回去修；重試上限防迴圈），否則略過。
   - **不會雙跑**：專案的 `.claude/settings.json`（或 `settings.local.json`）若已註冊 kit 自己的 `stop_regression.py`／`check_deps.py`（v1.10.1 以前 bootstrap 寫入的），plugin hook 自動讓位。兩邊共用同一份實作 `kit/hooks/_regression_core.py`。
@@ -34,7 +37,7 @@
 ```
 > 也可用完整網址：`/plugin marketplace add https://github.com/s0912758806p/agentic-sop-to-work`
 
-驗證：`/help` 應看到 `/agentic-sop-kit:sop-flow`；兩支 skill 會依描述自動觸發。
+驗證：`/help` 應看到 `/agentic-sop-kit:sop-flow`；三支方法論 skill 會依描述自動觸發。
 
 ## 開啟某專案的「強制力」
 Hook 是**專案範圍**的：只有當該專案根目錄有 `agentic-sop-kit/` 時，`Stop` 閘門才會驗證**那個專案的** workflow（否則 no-op，不干擾無關專案）。要讓某專案受閘門保護：
