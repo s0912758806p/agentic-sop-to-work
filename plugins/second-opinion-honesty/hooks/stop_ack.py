@@ -16,6 +16,11 @@ import json
 import os
 import sys
 
+if sys.version_info < (3, 8):   # guard first: an old python3 no-ops (never blocks) with a message
+    sys.stderr.write("[second-opinion] needs python>=3.8 (have %s) — ack gate skipped\n"
+                     % sys.version.split()[0])
+    sys.exit(0)
+
 ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from secondop import gate  # noqa: E402

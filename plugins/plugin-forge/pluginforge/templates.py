@@ -55,13 +55,13 @@ if __name__ == "__main__":
 '''
 
 HOOKS_JSON = '''{
-  "_comment": "SessionStart health-check only.",
+  "_comment": "SessionStart health-check only. Exec form (command + args): no shell, no quoting.",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "startup",
         "hooks": [
-          { "type": "command", "command": "python3 \\"${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py\\"" }
+          { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session_check.py"] }
         ]
       }
     ]
@@ -72,21 +72,15 @@ HOOKS_JSON = '''{
 SKILL_MD = '''---
 name: <<NAME>>
 description: TODO — when to use <<NAME>>.
+argument-hint: "<args>"
 ---
 
 # <<NAME>>
 
+Invoked as `/<<NAME>>:<<NAME>> [args]` (arguments: `$ARGUMENTS`) or auto-triggered by the
+description. Run the engine with `PYTHONPATH="${CLAUDE_PLUGIN_ROOT}" python3 -m <<PKG>>.review`.
+
 TODO: workflow.
-'''
-
-COMMAND_MD = '''---
-description: TODO — what /<<NAME>> does.
-argument-hint: "<args>"
----
-
-# /<<NAME>>
-
-TODO.
 '''
 
 README_MD = '''# <<NAME>>

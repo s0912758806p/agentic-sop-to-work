@@ -116,7 +116,26 @@ class TestCli(unittest.TestCase):
         self.assertEqual((a.run_dir, a.out_base), ("r", "o"))
 
     def test_default_out_base_is_cwd_relative(self):
-        self.assertEqual(cli.default_out_base(".x-runs"), os.path.join(os.getcwd(), ".x-runs"))
+        old = os.environ.pop("CLAUDE_PLUGIN_DATA", None)
+        try:
+            self.assertEqual(cli.default_out_base(".x-runs"), os.path.join(os.getcwd(), ".x-runs"))
+            os.environ["CLAUDE_PLUGIN_DATA"] = ""          # empty counts as unset
+            self.assertEqual(cli.default_out_base(".x-runs"), os.path.join(os.getcwd(), ".x-runs"))
+        finally:
+            os.environ.pop("CLAUDE_PLUGIN_DATA", None)
+            if old is not None:
+                os.environ["CLAUDE_PLUGIN_DATA"] = old
+
+    def test_default_out_base_prefers_plugin_data(self):
+        old = os.environ.get("CLAUDE_PLUGIN_DATA")
+        with tempfile.TemporaryDirectory() as d:
+            os.environ["CLAUDE_PLUGIN_DATA"] = d
+            try:
+                self.assertEqual(cli.default_out_base(".x-runs"), os.path.join(d, ".x-runs"))
+            finally:
+                os.environ.pop("CLAUDE_PLUGIN_DATA", None)
+                if old is not None:
+                    os.environ["CLAUDE_PLUGIN_DATA"] = old
 
 
 class TestVendorStamp(unittest.TestCase):

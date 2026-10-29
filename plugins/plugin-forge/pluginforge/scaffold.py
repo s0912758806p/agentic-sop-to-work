@@ -43,7 +43,6 @@ def generate(spec, dest_root):
         f"{spec.pkg}/review.py": T.REVIEW_PY,
         "hooks/hooks.json": T.HOOKS_JSON,
         f"skills/{spec.name}/SKILL.md": T.SKILL_MD,
-        f"commands/{spec.name}.md": T.COMMAND_MD,
         "tests/test_smoke.py": T.SMOKE_TEST_PY,
     }
     for rel, text in files.items():

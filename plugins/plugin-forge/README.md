@@ -1,6 +1,7 @@
 # plugin-forge
 
-Lint + scaffold Claude Code plugins against a house grammar. A companion in the
+Lint + scaffold Claude Code plugins against a house grammar. Invoke as
+`/plugin-forge:plugin-forge [lint … | new <name>]` (a skill), or run the scripts directly. A companion in the
 agentic-sop-to-work suite — but runs standalone on any plugin.
 
 **Install** (Claude Code):
@@ -24,5 +25,12 @@ python3 plugins/plugin-forge/pluginforge/scaffold.py <name>       # generate a n
   each `_core/` must also match that source module for module.
 - **stdlib-only (strict)** accepts a plugin's own `_core/` but not a sibling plugin's package:
   share code by vendoring, never by a cross-plugin import.
+- **Current plugin format.** Exec-form hooks (`command` + `args`, no shell) are understood — scripts
+  in `args` are checked like shell-form ones, and `args` must be a list of strings (HARD).
+  `agents/*.md` need `name` + `description` (HARD). `plugin.json` `userConfig` options must be
+  well-formed: identifier key, known `type`, `title` + `description`, no unknown fields (HARD).
+  Under `--strict`, shipping `commands/` is SOFT `commands-dir`: use `skills/<name>/SKILL.md`,
+  which keeps the same `/plugin:name` invocation and also auto-triggers.
 - **Scaffolded plugins ship the shared core**: `scaffold` copies the vendored `_core/` into the new
-  package and renders the shared test harness and SessionStart hook.
+  package and renders the shared test harness and SessionStart hook. Since v0.3.0 the skeleton is
+  skills-only (no `commands/`) with an exec-form hook.

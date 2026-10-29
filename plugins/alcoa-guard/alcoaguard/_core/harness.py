@@ -1,5 +1,5 @@
 # GENERATED from shared/sopcore/harness.py by tools/sync_core.py — do not edit this copy; edit the source and re-run `python3 tools/sync_core.py`.
-# sopcore-sha256: 610e044150be8fc027051ce7e60b00245bdab9bbaeead2a0e73dcca9e6860f2a
+# sopcore-sha256: 93c52295d99629fc848906da1f5eb8a439fc4f7bb9c68ab8aaaedd515844b45c
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 s0912758806p
 # Source: https://github.com/s0912758806p/agentic-sop-to-work
@@ -122,8 +122,14 @@ if __name__ == "__main__":
 
 SESSION_CHECK_PY = '''#!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""SessionStart hook: install health check that NEVER blocks (logic in <<PKG>>/_core/session.py)."""
-import os, sys; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: E401,E702
+"""SessionStart hook: install health check that NEVER blocks (logic in <<PKG>>/_core/session.py).
+The version guard comes first and uses only old syntax, so an old python3 no-ops with a message
+instead of crashing on the engine's imports."""
+import os, sys  # noqa: E401
+if sys.version_info < (3, 8):
+    sys.stderr.write("[<<LABEL>>] needs python>=3.8 (have %s) — hook skipped\\n" % sys.version.split()[0])
+    sys.exit(0)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from <<PKG>>._core import session; sys.exit(session.main("<<LABEL>>", "<<PROBE>>"))  # noqa: E402,E702
 '''
 
