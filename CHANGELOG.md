@@ -4,6 +4,16 @@ All notable changes to **agentic-sop-kit** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Changed
+- **README rewritten in plain language (EN + 繁中), 235 → 113 lines.** It now has five numbered "how it works" points that follow the animation, one plain sentence per plugin, install, compatibility, and links to the deeper docs. The technical detail (graph features, gates, settings, iron rules) already lives in `kit/README.md` and `kit/SOP.md`. The generated topology block stays, inside a collapsible section.
+- **`assets/flow.gif` is now a signal-flow animation.** A dot travels the flow: green means passed, red means blocked, orange means a bounded retry or send-back, purple means handed to review. It adds what the old figure lacked: the `--plan` refusal, the bounded back-edge, the companion review step, and the stall stop. The generator's docstring maps each beat to the code that makes it true.
+
+### Fixed
+- **Three README statements did not match the code.**
+  - `cmd` steps were called "allowlisted"; there is no allowlist. Only a step marked `mutates: true` needs `--allow-mutations`.
+  - second-opinion findings were described as always HARD; they are HARD only on a kit run (FULL) and SOFT on a plain document (DEGRADED).
+  - plugin-forge's rule list predated v0.2/v0.3.
+- **The old animation said every step passes a hard gate.** Gates are opt-in per step, and the bundled `flow.json` attaches none. The baseline check is that a step's tool must succeed and write its output.
 
 ## [1.12.0] — 2026-10-29
 Platform alignment (Phase 4, kit part). The run-dir format is unchanged; `test_golden.py` and `tests/test_run_contract.py` still pass.
