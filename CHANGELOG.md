@@ -4,43 +4,6 @@ All notable changes to **agentic-sop-kit** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
-### Added
-- **Repo-level docs-freshness gate** (`tests/test_docs_freshness.py`, in CI). It binds the README skills badge and the "N Skills / N 支 Skills" claims to the real `SKILL.md` count, checks that every marketplace plugin's `version` has a CHANGELOG entry, checks that `marketplace.json` lists exactly the dirs under `plugins/`, and checks that every `SOPKIT_*` env var the code reads is documented in `kit/README.md`. **Fail-closed**: if a claimed phrase can't be found, the test goes RED.
-- **`bootstrap` regression test** (`selftest.py`): a source kit's runtime state must never land in the target project.
-- **Shared core for the companion plugins** (`shared/sopcore/`). It is the single source of the run-dir contract (`run_contract.py`), `Severity` / `Finding` plus dedupe and HARD/SOFT counts (`findings.py`), the DRAFT / `ADVISORY_ONLY` / `human_owns_verdict` frame and md+json dual write (`report.py`), the recompute kernel (`arithmetic.py`), the `【待補】` marker (`markers.py`), the `--run-dir` / `--out-base` skeleton (`cli.py`) and the SessionStart check (`session.py`). It is **vendored**, not imported, into each companion as `<pkg>/_core/`, so every plugin still installs standalone. `tools/sync_core.py` writes the copies, stamped GENERATED with a content hash, plus the shared `tests/verify.py`, `tests/test_no_third_party.py` and one-call `hooks/session_check.py` that used to be copy-pasted. CI runs `sync_core.py --check` and fails on any drift. The kit is not a consumer: it writes the contract.
-- **Run-dir contract test** (`tests/test_run_contract.py`, in CI). It runs the real kit as a subprocess on `workflow/flow.json` and `workflow/examples/graph.json`, reads the result with `shared/sopcore/run_contract.py`, and pins that a `FAILED` run is refused. Writer and reader can no longer drift silently. `tests/test_sopcore.py` unit-tests the core and `sync_core`.
-- **plugin-forge** (v0.2.0) — new HARD rule `vendored-core-drift`, always on: a GENERATED file whose content no longer matches its stamp, or a `_core/` that differs from `shared/sopcore/` when the plugin sits in a repo that has it. `scaffold` now ships the vendored `_core/` and renders the shared harness, and the scaffolded model imports the shared `Finding` base. Lint findings are deduped and counted by the shared core, and the report uses the shared dual write (lint is a gate, so it carries no advisory frame). The stdlib rule accepts a plugin's own `_core/` and still rejects a cross-plugin import (now tested).
-
-### Changed
-- **One copy rule for the kit.** `lib/kit.py` now holds `RUNTIME_STATE` / `COPY_EXCLUDE` / `copy_kit()`, and `bootstrap.py`, `selftest.py`, `test_verify.py`, `test_stop_hook.py` and `test_health_gate.py` all use it. Before, there were four hand-kept exclude lists that had already drifted.
-- CI now runs the `verify.py` and Stop-hook meta-tests (`tests/test_verify.py`, `tests/test_stop_hook.py`). They stay unregistered on purpose, to avoid verify-in-verify recursion, but nothing ran them before. CI also no longer runs `selftest.py` twice (`verify --all` already runs it), and it adds a Python 3.8 / 3.x × ubuntu / macOS matrix.
-- `kit/README.md` documents three env vars that the code already reads: `SOPKIT_HEALTH_SLOWDOWN_FACTOR`, `SOPKIT_HEALTH_FLAKY_WINDOW` and `SOPKIT_SCHEMA_DIR`.
-- **second-opinion-honesty** (v0.3.0) — FULL mode reads the run dir through the shared `run_contract`. **Behavior changes:**
-  - A run that is not `OK_FOR_REVIEW` is refused with exit 2. Before, a `FAILED` run was reviewed as if it had finished.
-  - `branch→` manifest entries are skipped.
-  - Recompute uses the shared arithmetic: an empty list now **fails** `mean` (it used to return `0.0`, so a stated `0` silently matched), and sums use `math.fsum`.
-  - `【待補】` handling is unchanged (still skipped as an honest blank), but now reads the shared marker.
-- **alcoa-guard** (v0.2.0) — FULL mode reads the run dir through the shared `run_contract`. **Behavior changes:**
-  - A `FAILED` (or state-less) run is refused with exit 2.
-  - `branch→` entries are skipped, and a relocated run dir resolves artifacts by basename.
-  - The data comes from the artifact that feeds `final_output`. That is the same file as before for kit runs.
-  - **Default output moved** from `<run_dir>/.alcoa-guard/` to `./.alcoa-guard-runs/<run_id>/` (already gitignored), so a review no longer writes into the run it reviews. An explicit `--out-base` is unchanged.
-  - The Accurate finding now reads `recomputed <op>=X vs stated Y`, and `count` is exact: a stated `3.7` no longer truncates to `3`.
-  - The report gains `run_id`.
-  - `【待補】` in a required field is still a Complete violation — the deliberate opposite of second-opinion, documented in `_core/markers.py`.
-
-- **Companion platform update (Phase 4).**
-  - **second-opinion-honesty** (v0.4.0), **alcoa-guard** (v0.3.0) and **plugin-forge** (v0.3.0) ship skills only. Each `commands/<name>.md` procedure was merged into the existing `skills/<name>/SKILL.md` of the same name, so the invocation is unchanged (`/<plugin>:<name>`) and the skill count is unchanged.
-  - Companion hooks use exec form (`command: "python3"`, `args: [...]`), so no shell quoting is needed. Each hook script now starts with a python>=3.8 guard that no-ops with a message.
-  - **Default output dirs moved.** With no `--out-base`, `secondop.review` and `alcoaguard.review` write under `${CLAUDE_PLUGIN_DATA}` when Claude Code sets it, else the same cwd-relative dir as before. The second-opinion ack gate finds a review in either place. The `/second-opinion` skill still writes project-local.
-  - **plugin-forge rules.** It understands exec-form hooks (scripts in `args` are checked; a non-list `args` is HARD), validates `agents/*.md` frontmatter and `plugin.json` `userConfig` (both HARD), and adds a strict SOFT rule `commands-dir`. Scaffold now emits skills only, with an exec-form hook. The rule also fires (SOFT) on agentic-sop-kit, which still ships `commands/` — kit-track owns that migration.
-  - `marketplace.json`: every plugin entry gains `category` and `tags`.
-### Fixed
-- **`bootstrap.py` carried runtime state into target projects**: `.verify_state.json`, `.retry_count` and `.health_baseline.json`. If the source kit had a passing snapshot, the target's first `verify.py` saw "no change" and skipped every test. `.health_baseline.json` was also missing from `kit/tests/.gitignore`, so a bootstrapped project could commit it.
-- `tests/test_verify.py::test_watch_change_forces_all_units` hard-coded 3 skills, and the registry has 6. The test had been failing unnoticed because nothing ran it. It now derives the expected set from `registry.json`.
-
-### Recorded (missing entry, backfilled)
-- **second-opinion-honesty** (v0.2.0) — opt-in, project-scoped acknowledgement Stop-hook (`hooks/stop_ack.py`). It blocks session stop only when `.second-opinion/require_ack` exists and the latest DRAFT run has no acknowledged review, and it is retry-capped by `SECONDOP_MAX_ACK_RETRIES`. Shipped 2026-06-14 in #3; this entry was never written at the time.
 
 ## [1.12.0] — 2026-10-29
 Platform alignment (Phase 4, kit part). The run-dir format is unchanged; `test_golden.py` and `tests/test_run_contract.py` still pass.
@@ -56,6 +19,14 @@ Platform alignment (Phase 4, kit part). The run-dir format is unchanged; `test_g
   - userConfig precedence and run-dir resolution (`tests/unit/test_config.py`)
   - the hook Python-version guard and exec form, and bootstrap generating the command from the skill (`tests/test_plugin_hooks.py`)
 - Checked locally: `claude plugin validate --strict` passes for the plugin and the marketplace.
+
+### Also in this tag — release docs (#16)
+- **`CONTRIBUTING.md`** (new). It covers layout and ownership, the rules CI enforces, the exact local check commands, the per-plugin SemVer and two-stage versioning policy, and the release procedure: a stamp PR, then annotated tags (`vX.Y.Z` for the kit, `<plugin>-vX.Y.Z` for companions), then GitHub releases.
+- **`MIGRATION.md`** (new, DRAFT for v2.0). It lists every v1.x shim and alias that v2.0 removes: `kit/lib/`, `kit/runs` inside the plugin cache, the project-level `stop_regression.py`, `--no-hooks`, and the pre-v1.11 names. Each row gives the "do this now" step that already works on v1.12. Undecided ideas are kept in a separate list.
+- **README** (EN + 繁中) gains a **Compatibility / 相容性** table: what CI actually runs (Python 3.8 on Linux, 3.x on Linux/macOS, Windows non-blocking). It also gets release/update instructions and links to both new docs. **`SECURITY.md`** gets per-plugin supported versions.
+- **Docs-freshness gate** gains two bindings, each mutation-tested RED:
+  - The README compatibility tables must equal the `ci.yml` test matrix: no claimed coverage CI lacks, and Windows must say non-blocking.
+  - Every `python …` command CI runs must appear in `CONTRIBUTING.md`.
 
 ## [1.11.0] — 2026-10-29
 Zero-break refactor. The run-dir format is unchanged **byte for byte**: `run_manifest.json` keys, key order and the artifact shape are the same. A new golden test pins that.
@@ -82,8 +53,16 @@ Zero-break refactor. The run-dir format is unchanged **byte for byte**: `run_man
   - `tests/compat/test_lib_shims.py` runs a v1.10-style custom tool through the shims.
   - `tests/unit/test_config.py`, `tests/unit/test_console.py` and `tests/integration/test_cmd_forms.py`.
 
+### Also in this tag — companion plugins (#13)
+- **Companion platform update (Phase 4).**
+  - **second-opinion-honesty** (v0.4.0), **alcoa-guard** (v0.3.0) and **plugin-forge** (v0.3.0) ship skills only. Each `commands/<name>.md` procedure was merged into the existing `skills/<name>/SKILL.md` of the same name, so the invocation is unchanged (`/<plugin>:<name>`) and the skill count is unchanged.
+  - Companion hooks use exec form (`command: "python3"`, `args: [...]`), so no shell quoting is needed. Each hook script now starts with a python>=3.8 guard that no-ops with a message.
+  - **Default output dirs moved.** With no `--out-base`, `secondop.review` and `alcoaguard.review` write under `${CLAUDE_PLUGIN_DATA}` when Claude Code sets it, else the same cwd-relative dir as before. The second-opinion ack gate finds a review in either place. The `/second-opinion` skill still writes project-local.
+  - **plugin-forge rules.** It understands exec-form hooks (scripts in `args` are checked; a non-list `args` is HARD), validates `agents/*.md` frontmatter and `plugin.json` `userConfig` (both HARD), and adds a strict SOFT rule `commands-dir`. Scaffold now emits skills only, with an exec-form hook. The rule also fires (SOFT) on agentic-sop-kit, which still ships `commands/` — kit-track owns that migration.
+  - `marketplace.json`: every plugin entry gains `category` and `tags`.
+
 ## [1.10.1] — 2026-10-29
-Bug fixes only; no run-dir format change (`run_manifest.json` keys and the artifact shape are untouched).
+Kit: bug fixes only; no run-dir format change (`run_manifest.json` keys and the artifact shape are untouched).
 
 ### Fixed
 - **Stop / SessionStart hooks ran twice** in a project that was bootstrapped *and* had the plugin installed: the plugin's `hooks/stop_gate.py` and the project's `kit/hooks/stop_regression.py` both ran `verify.py` and shared `tests/.retry_count`, which halved the retry cap. The same doubling hit SessionStart (`hooks/session_check.py` and the snippet's `check_deps.py`). The logic now lives once in `kit/hooks/_regression_core.py`. The plugin hooks step aside when the project's `.claude/settings.json` or `settings.local.json` already registers `stop_regression.py` / `check_deps.py`; an unreadable settings file never disables the gate. `kit/hooks/stop_regression.py` stays as a working shim for older projects.
@@ -97,6 +76,38 @@ Bug fixes only; no run-dir format change (`run_manifest.json` keys and the artif
 ### Changed
 - **`bootstrap.py` no longer writes hooks into the project** by default, because the plugin hook owns them. `--with-hooks` keeps the manual path for people using the kit without the plugin. `--no-hooks` is still accepted and does nothing.
 - New meta-test `kit/tests/test_plugin_hooks.py` (in CI, not registered, because it needs the plugin beside the kit) covers the dedupe and the bootstrap change.
+
+### Also in this tag — repo CI safety net (#10) and the companions' shared core (#12)
+#### Added
+- **Repo-level docs-freshness gate** (`tests/test_docs_freshness.py`, in CI). It binds the README skills badge and the "N Skills / N 支 Skills" claims to the real `SKILL.md` count, checks that every marketplace plugin's `version` has a CHANGELOG entry, checks that `marketplace.json` lists exactly the dirs under `plugins/`, and checks that every `SOPKIT_*` env var the code reads is documented in `kit/README.md`. **Fail-closed**: if a claimed phrase can't be found, the test goes RED.
+- **`bootstrap` regression test** (`selftest.py`): a source kit's runtime state must never land in the target project.
+- **Shared core for the companion plugins** (`shared/sopcore/`). It is the single source of the run-dir contract (`run_contract.py`), `Severity` / `Finding` plus dedupe and HARD/SOFT counts (`findings.py`), the DRAFT / `ADVISORY_ONLY` / `human_owns_verdict` frame and md+json dual write (`report.py`), the recompute kernel (`arithmetic.py`), the `【待補】` marker (`markers.py`), the `--run-dir` / `--out-base` skeleton (`cli.py`) and the SessionStart check (`session.py`). It is **vendored**, not imported, into each companion as `<pkg>/_core/`, so every plugin still installs standalone. `tools/sync_core.py` writes the copies, stamped GENERATED with a content hash, plus the shared `tests/verify.py`, `tests/test_no_third_party.py` and one-call `hooks/session_check.py` that used to be copy-pasted. CI runs `sync_core.py --check` and fails on any drift. The kit is not a consumer: it writes the contract.
+- **Run-dir contract test** (`tests/test_run_contract.py`, in CI). It runs the real kit as a subprocess on `workflow/flow.json` and `workflow/examples/graph.json`, reads the result with `shared/sopcore/run_contract.py`, and pins that a `FAILED` run is refused. Writer and reader can no longer drift silently. `tests/test_sopcore.py` unit-tests the core and `sync_core`.
+- **plugin-forge** (v0.2.0) — new HARD rule `vendored-core-drift`, always on: a GENERATED file whose content no longer matches its stamp, or a `_core/` that differs from `shared/sopcore/` when the plugin sits in a repo that has it. `scaffold` now ships the vendored `_core/` and renders the shared harness, and the scaffolded model imports the shared `Finding` base. Lint findings are deduped and counted by the shared core, and the report uses the shared dual write (lint is a gate, so it carries no advisory frame). The stdlib rule accepts a plugin's own `_core/` and still rejects a cross-plugin import (now tested).
+
+#### Changed
+- **One copy rule for the kit.** `lib/kit.py` now holds `RUNTIME_STATE` / `COPY_EXCLUDE` / `copy_kit()`, and `bootstrap.py`, `selftest.py`, `test_verify.py`, `test_stop_hook.py` and `test_health_gate.py` all use it. Before, there were four hand-kept exclude lists that had already drifted.
+- CI now runs the `verify.py` and Stop-hook meta-tests (`tests/test_verify.py`, `tests/test_stop_hook.py`). They stay unregistered on purpose, to avoid verify-in-verify recursion, but nothing ran them before. CI also no longer runs `selftest.py` twice (`verify --all` already runs it), and it adds a Python 3.8 / 3.x × ubuntu / macOS matrix.
+- `kit/README.md` documents three env vars that the code already reads: `SOPKIT_HEALTH_SLOWDOWN_FACTOR`, `SOPKIT_HEALTH_FLAKY_WINDOW` and `SOPKIT_SCHEMA_DIR`.
+- **second-opinion-honesty** (v0.3.0) — FULL mode reads the run dir through the shared `run_contract`. **Behavior changes:**
+  - A run that is not `OK_FOR_REVIEW` is refused with exit 2. Before, a `FAILED` run was reviewed as if it had finished.
+  - `branch→` manifest entries are skipped.
+  - Recompute uses the shared arithmetic: an empty list now **fails** `mean` (it used to return `0.0`, so a stated `0` silently matched), and sums use `math.fsum`.
+  - `【待補】` handling is unchanged (still skipped as an honest blank), but now reads the shared marker.
+- **alcoa-guard** (v0.2.0) — FULL mode reads the run dir through the shared `run_contract`. **Behavior changes:**
+  - A `FAILED` (or state-less) run is refused with exit 2.
+  - `branch→` entries are skipped, and a relocated run dir resolves artifacts by basename.
+  - The data comes from the artifact that feeds `final_output`. That is the same file as before for kit runs.
+  - **Default output moved** from `<run_dir>/.alcoa-guard/` to `./.alcoa-guard-runs/<run_id>/` (already gitignored), so a review no longer writes into the run it reviews. An explicit `--out-base` is unchanged.
+  - The Accurate finding now reads `recomputed <op>=X vs stated Y`, and `count` is exact: a stated `3.7` no longer truncates to `3`.
+  - The report gains `run_id`.
+  - `【待補】` in a required field is still a Complete violation — the deliberate opposite of second-opinion, documented in `_core/markers.py`.
+#### Fixed
+- **`bootstrap.py` carried runtime state into target projects**: `.verify_state.json`, `.retry_count` and `.health_baseline.json`. If the source kit had a passing snapshot, the target's first `verify.py` saw "no change" and skipped every test. `.health_baseline.json` was also missing from `kit/tests/.gitignore`, so a bootstrapped project could commit it.
+- `tests/test_verify.py::test_watch_change_forces_all_units` hard-coded 3 skills, and the registry has 6. The test had been failing unnoticed because nothing ran it. It now derives the expected set from `registry.json`.
+
+#### Recorded (missing entry, backfilled)
+- **second-opinion-honesty** (v0.2.0) — opt-in, project-scoped acknowledgement Stop-hook (`hooks/stop_ack.py`). It blocks session stop only when `.second-opinion/require_ack` exists and the latest DRAFT run has no acknowledged review, and it is retry-capped by `SECONDOP_MAX_ACK_RETRIES`. Shipped 2026-06-14 in #3; this entry was never written at the time.
 
 ## [1.10.0] — 2026-09-08
 ### Added
@@ -192,6 +203,9 @@ Bug fixes only; no run-dir format change (`run_manifest.json` keys and the artif
 ### Added
 - Initial public release: `agentic-sop` + `agentic-workflow-audit` methodology skills, the portable agentic-sop-kit, and the marketplace publish.
 
+[1.12.0]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.12.0
+[1.11.0]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.11.0
+[1.10.1]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.10.1
 [1.10.0]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.10.0
 [1.9.0]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.9.0
 [1.5.4]: https://github.com/s0912758806p/agentic-sop-to-work/releases/tag/v1.5.4

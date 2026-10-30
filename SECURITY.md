@@ -15,4 +15,12 @@ Please include reproduction steps and the affected version (see the version badg
 - The hooks are **project-scoped**: they only act on a project that has adopted `agentic-sop-kit/`, and no-op elsewhere.
 
 ## Supported versions
-The latest published version on the `main` branch is supported.
+Each plugin is versioned and released separately (tags `vX.Y.Z` for agentic-sop-kit, `<plugin>-vX.Y.Z` for the
+companions; see GitHub Releases). Security fixes go into the **latest release of each plugin** only.
+
+| Plugin | Supported |
+|---|---|
+| agentic-sop-kit | latest 1.x release |
+| second-opinion-honesty · alcoa-guard · plugin-forge | latest 0.x release |
+
+Deprecated v1.x compatibility shims (listed in [`MIGRATION.md`](MIGRATION.md)) receive fixes until v2.0 removes them.
