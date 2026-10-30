@@ -12,6 +12,8 @@ Bound claims:
       agentic-sop-kit → a `## [x.y.z]` heading; companions → `**<name>** (vx.y.z)`
   • marketplace.json lists exactly the plugin dirs under plugins/
   • every SOPKIT_* env var read by plugin code is documented in kit/README.md
+  • README "Compatibility / 相容性" tables == the CI test matrix (ci.yml), incl. which OS is non-blocking
+  • every `python …` command CI runs is listed in CONTRIBUTING.md's local-checks block
 CHANGELOG is a record, not a living doc: it is only checked for presence of entries, never rewritten.
 
 Run: python3 tests/test_docs_freshness.py
@@ -99,6 +101,48 @@ class DocsFreshness(unittest.TestCase):
         doc = _read("plugins", KIT_NAME, "kit", "README.md")
         self.assertEqual([n for n in names if n not in doc], [],
                          "SOPKIT_* env vars read by code but undocumented in kit/README.md")
+
+
+    # ---- CI ↔ docs -------------------------------------------------------------------
+    @staticmethod
+    def _ci_matrix():
+        ci = _read(".github", "workflows", "ci.yml")
+        rows = re.findall(r"-\s*\{\s*os:\s*([\w.-]+),\s*python:\s*\"([\d.x]+)\"(.*?)\}", ci)
+        if not rows:
+            raise AssertionError("no `- { os: …, python: … }` rows in ci.yml — re-bind this check on purpose")
+        return [(os_, py, "experimental: true" in rest) for os_, py, rest in rows]
+
+    def test_compat_table_matches_ci_matrix(self):
+        family = {"ubuntu": ("Linux", "Linux"), "macos": ("macOS", "macOS"), "windows": ("Windows", "Windows")}
+        for heading, ok, warn in (("**Compatibility**", "✅ tested", "⚠️ runs in CI, non-blocking"),
+                                  ("**相容性**", "✅ 已測", "⚠️ CI 有跑，不擋合併")):
+            i = self.readme.find(heading)
+            self.assertNotEqual(i, -1, f"{heading} table not found in README (fail-closed)")
+            table = self.readme[i:self.readme.index("\n\n", self.readme.index("|", i))]
+            claimed = set()
+            for os_, py, experimental in self._ci_matrix():
+                label = family[os_.split("-")[0]][0]
+                col = 1 if py == "3.8" else 2
+                row = next((ln for ln in table.splitlines() if ln.startswith(f"| {label}")), None)
+                self.assertIsNotNone(row, f"{heading}: no row for {label}")
+                cell = row.split("|")[col + 1]
+                self.assertIn(warn if experimental else ok, cell, f"{heading}: {label} / Python {py}")
+                claimed.add((label, col))
+            # nothing claimed as tested that CI does not run
+            for ln in table.splitlines()[2:]:
+                cells = ln.split("|")
+                label = cells[1].strip().split(" ")[0].split("（")[0]
+                for col in (1, 2):
+                    if "✅" in cells[col + 1] or "⚠️" in cells[col + 1]:
+                        self.assertIn((label, col), claimed, f"{heading}: {label} col {col} claims CI coverage it lacks")
+
+    def test_contributing_lists_every_ci_command(self):
+        ci = _read(".github", "workflows", "ci.yml")
+        cmds = sorted(set(re.findall(r"\bpython ((?:plugins|tests|tools)/\S+(?: [-\w]+)*)", ci)))
+        self.assertTrue(cmds, "found no `python <path>` command in ci.yml (fail-closed)")
+        doc = _read("CONTRIBUTING.md")
+        self.assertEqual([c for c in cmds if f"python3 {c}" not in doc], [],
+                         "CI commands missing from CONTRIBUTING.md's local-checks block")
 
 
 if __name__ == "__main__":

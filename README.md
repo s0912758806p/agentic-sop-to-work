@@ -133,12 +133,21 @@ flowchart LR
 ```
 Requires **Python 3.8+** as `python3` (macOS/Linux out of the box; on Windows ensure `python3` resolves). Verify: `/help` lists `/agentic-sop-kit:sop-flow`.
 
+**Compatibility** — what CI actually runs, on every PR, for all four plugins:
+
+| | Python 3.8 | Python 3.x (latest) |
+|---|---|---|
+| Linux (ubuntu) | ✅ tested (22.04) | ✅ tested |
+| macOS | — | ✅ tested |
+| Windows | — | ⚠️ runs in CI, non-blocking |
+
 **Build your own flow** — adopt the kit: `python3 <plugin>/kit/bootstrap.py --project <dir>` → scaffold a step: `new_skill.py --name <x>` (fill `DEPS` / `run()`) → wire `workflow/flow.json` → make it conversation-triggerable: `export_claude_skill.py --skill <x>`. Details: [`kit/SOP.md`](plugins/agentic-sop-kit/kit/SOP.md).
 
 **Layout**
 ```
 agentic-sop-to-work/
 ├── .claude-plugin/marketplace.json
+├── CONTRIBUTING.md · MIGRATION.md · CHANGELOG.md · SECURITY.md
 ├── tests/                        # repo-level: docs-freshness gate · sopcore tests · run-dir contract test
 ├── shared/sopcore/               # shared core of the companions — vendored into each as <pkg>/_core/
 ├── tools/sync_core.py            # vendors shared/sopcore (+ shared test harness); --check runs in CI
@@ -151,7 +160,7 @@ agentic-sop-to-work/
     └── plugin-forge/              # plugin linter + scaffolder (pluginforge/)
 ```
 
-**License** — MIT ([`LICENSE`](LICENSE) · [`NOTICE`](NOTICE)); keep the copyright/license notice in copies, including single files. Updating: `git push` → users run `/plugin marketplace update agentic-sop-to-work`; bump `plugin.json` `version` on each meaningful change.
+**License** — MIT ([`LICENSE`](LICENSE) · [`NOTICE`](NOTICE)); keep the copyright/license notice in copies, including single files. Updating: users run `/plugin marketplace update agentic-sop-to-work` then `/reload-plugins`; each release is a git tag (`vX.Y.Z` for the kit, `<plugin>-vX.Y.Z` for companions) with a GitHub release. Contributing, versioning and the release procedure: [`CONTRIBUTING.md`](CONTRIBUTING.md). Planned v2.0 removals and how to migrate now: [`MIGRATION.md`](MIGRATION.md).
 
 ---
 
@@ -196,12 +205,21 @@ agentic-sop-to-work/
 ```
 需 **Python 3.8+** 且能以 `python3` 呼叫（macOS／Linux 開箱即用；Windows 請確保 `python3` 可解析）。驗證：`/help` 應看到 `/agentic-sop-kit:sop-flow`。
 
+**相容性** — CI 每個 PR 對四個 plugin 實際跑的組合：
+
+| | Python 3.8 | Python 3.x（最新） |
+|---|---|---|
+| Linux（ubuntu） | ✅ 已測（22.04） | ✅ 已測 |
+| macOS | — | ✅ 已測 |
+| Windows | — | ⚠️ CI 有跑，不擋合併 |
+
 **建你自己的流程** — 導入 kit：`python3 <plugin>/kit/bootstrap.py --project <dir>` → scaffold 一步：`new_skill.py --name <x>`（填 `DEPS` / `run()`）→ 在 `workflow/flow.json` 接線 → 讓它對話可觸發：`export_claude_skill.py --skill <x>`。詳見 [`kit/SOP.md`](plugins/agentic-sop-kit/kit/SOP.md)。
 
 **結構**
 ```
 agentic-sop-to-work/
 ├── .claude-plugin/marketplace.json
+├── CONTRIBUTING.md · MIGRATION.md · CHANGELOG.md · SECURITY.md
 ├── tests/                        # repo 層級：文件新鮮度閘門 · sopcore 測試 · run 目錄契約測試
 ├── shared/sopcore/               # companion 共用核心——各自 vendor 成 <pkg>/_core/
 ├── tools/sync_core.py            # vendor shared/sopcore（含共用測試骨架）；CI 跑 --check
@@ -214,4 +232,4 @@ agentic-sop-to-work/
     └── plugin-forge/              # plugin linter + scaffolder (pluginforge/)
 ```
 
-**授權** — MIT（[`LICENSE`](LICENSE) · [`NOTICE`](NOTICE)）；副本需保留版權／授權聲明，含單一檔案。更新：`git push` → 使用者跑 `/plugin marketplace update agentic-sop-to-work`；每次有意義變更調高 `plugin.json` 的 `version`。
+**授權** — MIT（[`LICENSE`](LICENSE) · [`NOTICE`](NOTICE)）；副本需保留版權／授權聲明，含單一檔案。更新：使用者跑 `/plugin marketplace update agentic-sop-to-work` 再 `/reload-plugins`；每個 release 都有 git tag（kit 為 `vX.Y.Z`，伴隨 plugin 為 `<plugin>-vX.Y.Z`）與 GitHub release。貢獻方式、版本策略與發版流程：[`CONTRIBUTING.md`](CONTRIBUTING.md)。v2.0 預計移除的項目與現在就能做的遷移：[`MIGRATION.md`](MIGRATION.md)。

@@ -20,6 +20,14 @@ Platform alignment (Phase 4, kit part). The run-dir format is unchanged; `test_g
   - the hook Python-version guard and exec form, and bootstrap generating the command from the skill (`tests/test_plugin_hooks.py`)
 - Checked locally: `claude plugin validate --strict` passes for the plugin and the marketplace.
 
+### Also in this tag — release docs (#16)
+- **`CONTRIBUTING.md`** (new). It covers layout and ownership, the rules CI enforces, the exact local check commands, the per-plugin SemVer and two-stage versioning policy, and the release procedure: a stamp PR, then annotated tags (`vX.Y.Z` for the kit, `<plugin>-vX.Y.Z` for companions), then GitHub releases.
+- **`MIGRATION.md`** (new, DRAFT for v2.0). It lists every v1.x shim and alias that v2.0 removes: `kit/lib/`, `kit/runs` inside the plugin cache, the project-level `stop_regression.py`, `--no-hooks`, and the pre-v1.11 names. Each row gives the "do this now" step that already works on v1.12. Undecided ideas are kept in a separate list.
+- **README** (EN + 繁中) gains a **Compatibility / 相容性** table: what CI actually runs (Python 3.8 on Linux, 3.x on Linux/macOS, Windows non-blocking). It also gets release/update instructions and links to both new docs. **`SECURITY.md`** gets per-plugin supported versions.
+- **Docs-freshness gate** gains two bindings, each mutation-tested RED:
+  - The README compatibility tables must equal the `ci.yml` test matrix: no claimed coverage CI lacks, and Windows must say non-blocking.
+  - Every `python …` command CI runs must appear in `CONTRIBUTING.md`.
+
 ## [1.11.0] — 2026-10-29
 Zero-break refactor. The run-dir format is unchanged **byte for byte**: `run_manifest.json` keys, key order and the artifact shape are the same. A new golden test pins that.
 
